@@ -192,7 +192,7 @@ demonstração é recriado na próxima subida).
 │   │   ├── app.ts           Monta a aplicação Express
 │   │   ├── logger.ts        Logs em JSON (pino) e campos que nunca são registrados
 │   │   └── server.ts        Conecta ao MongoDB e abre a porta
-│   └── tests/integration/   Testes da API contra bancos de teste
+│   └── tests/               unit/ (sem banco, com mocks) e integration/ (API contra bancos de teste)
 ├── frontend/src/app/
 │   ├── auth/                Login, cadastro, guards e tratamento de sessão expirada
 │   ├── tasks/               Página de tarefas, cartão, painel de detalhes, serviço da API
@@ -226,16 +226,16 @@ Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa qu
 
 O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
 
-| Script            | O que faz                                                                         |
-| ----------------- | --------------------------------------------------------------------------------- |
-| `npm run dev`     | Sobe a API em modo de desenvolvimento (recarrega a cada alteração)                |
-| `npm run build`   | Compila o TypeScript para `dist/`                                                 |
-| `npm start`       | Sobe a versão compilada                                                           |
-| `npm run migrate` | Aplica as migrations pendentes                                                    |
-| `npm run seed`    | Cria o usuário demo com tarefas de exemplo (pode rodar de novo sem duplicar nada) |
-| `npm test`        | Roda os testes de integração                                                      |
-| `npm run lint`    | Analisa o código com ESLint e valida o documento OpenAPI                          |
-| `npm run format`  | Formata o código com Prettier                                                     |
+| Script            | O que faz                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `npm run dev`     | Sobe a API em modo de desenvolvimento (recarrega a cada alteração)                  |
+| `npm run build`   | Compila o TypeScript para `dist/`                                                   |
+| `npm start`       | Sobe a versão compilada                                                             |
+| `npm run migrate` | Aplica as migrations pendentes                                                      |
+| `npm run seed`    | Cria o usuário demo com tarefas de exemplo (pode rodar de novo sem duplicar nada)   |
+| `npm test`        | Roda os testes unitários e de integração (`test:unit`, `test:int`, `test:coverage`) |
+| `npm run lint`    | Analisa o código com ESLint e valida o documento OpenAPI                            |
+| `npm run format`  | Formata o código com Prettier                                                       |
 
 **Situação da API:** veja [Operação](#operação). A API não sobe sem conseguir conectar ao MongoDB e se reconecta
 sozinha quando ele volta.
@@ -491,10 +491,27 @@ proxy já mandar um `X-Request-Id`, ele é aproveitado.
 
 ## Testes e qualidade
 
-**Backend** — testes de integração com [Jest](https://jestjs.io/) + [Supertest](https://github.com/ladjs/supertest):
-cada teste faz requisições HTTP reais à API, que grava em bancos **separados** (`todo_test` no MySQL e no MongoDB) — os
-dados de desenvolvimento nunca são tocados. Cobrem o CRUD, validações, autenticação, isolamento entre contas, filtros,
-detalhes e histórico.
+**Backend** — [Jest](https://jestjs.io/), em duas suítes:
+
+- **Unitários** (`tests/unit`, poucos segundos, sem banco): cada módulo é testado com as dependências trocadas por
+  mocks. Cobrem as regras de validação (zod), o hash de senha e o token, o `requireAuth`, o tratamento de erros, a
+  montagem do SQL da lista (filtros, busca, ordenação), o runner de migrations e as falhas "toleradas" (histórico no
+  MongoDB, e-mail repetido).
+- **Integração** (`tests/integration`, com [Supertest](https://github.com/ladjs/supertest)): requisições HTTP reais à
+  API, que grava em bancos **separados** (`todo_test` no MySQL e no MongoDB). Os dados de desenvolvimento nunca são
+  tocados. Cobrem o CRUD, validações, autenticação, isolamento entre contas, filtros, detalhes, histórico, logs e
+  health checks.
+
+| Script                  | O que roda                                                 |
+| ----------------------- | ---------------------------------------------------------- |
+| `npm test`              | As duas suítes                                             |
+| `npm run test:unit`     | Só os unitários (não precisa de banco)                     |
+| `npm run test:int`      | Só os de integração                                        |
+| `npm run test:coverage` | As duas, com relatório de cobertura em `backend/coverage/` |
+
+O `test:coverage` **falha** abaixo de **90% das linhas** (e de 90% das funções e instruções, 80% dos desvios). Todo o
+`src/` entra na conta, inclusive arquivos que nenhum teste carrega; só o `server.ts`, que apenas abre a porta, fica de
+fora. Hoje: cerca de 98% das linhas.
 
 **Testes de regressão de segurança** — [`security-regression.test.ts`](backend/tests/integration/security-regression.test.ts)
 reúne os ataques que a API precisa continuar barrando, organizados pelas categorias do OWASP Top 10:

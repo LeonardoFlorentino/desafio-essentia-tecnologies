@@ -24,12 +24,6 @@ export async function findByEmail(
   return row ? { id: row.id, email: row.email, passwordHash: row.password_hash } : null;
 }
 
-export async function findById(id: number): Promise<User | null> {
-  const [rows] = await pool.query<UserRow[]>('SELECT id, email FROM users WHERE id = ?', [id]);
-  const row = rows[0];
-  return row ? { id: row.id, email: row.email } : null;
-}
-
 /** Returns null when the email is already registered (unique constraint). */
 export async function create(email: string, passwordHash: string): Promise<User | null> {
   try {
