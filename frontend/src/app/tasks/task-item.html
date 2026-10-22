@@ -1,4 +1,8 @@
-<div class="task" [class.task--completed]="task().completed">
+<div
+  class="task"
+  [class.task--completed]="task().completed"
+  [class.task--overdue]="due() === 'overdue'"
+>
   <input
     class="task__checkbox"
     type="checkbox"
@@ -49,6 +53,23 @@
         ></textarea>
       </div>
 
+      <div class="field-row">
+        <div class="field">
+          <label [for]="'edit-due-' + task().id"
+            >Prazo <span class="field__hint">(opcional)</span></label
+          >
+          <input [id]="'edit-due-' + task().id" type="date" formControlName="dueDate" />
+        </div>
+        <div class="field">
+          <label [for]="'edit-priority-' + task().id">Prioridade</label>
+          <select [id]="'edit-priority-' + task().id" formControlName="priority">
+            @for (option of priorityOptions; track option) {
+              <option [value]="option">{{ priorityLabels[option] }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
       <div class="task__actions">
         <button type="submit" [disabled]="busy()">Salvar</button>
         <button type="button" (click)="cancelEdit()">Cancelar</button>
@@ -59,7 +80,22 @@
     @if (task().description) {
       <p class="task__description">{{ task().description }}</p>
     }
-    <span class="task__status">{{ task().completed ? 'Concluída' : 'Pendente' }}</span>
+    <div class="task__meta">
+      <span class="task__status">{{ task().completed ? 'Concluída' : 'Pendente' }}</span>
+      <span class="badge" [class]="'badge--' + task().priority"
+        >Prioridade {{ priorityLabels[task().priority].toLowerCase() }}</span
+      >
+      @if (task().dueDate; as dueDate) {
+        <span class="task__due">
+          Prazo: <time [attr.datetime]="dueDate">{{ formatDay(dueDate) }}</time>
+          @if (due() === 'overdue') {
+            <strong class="badge badge--overdue">Atrasada</strong>
+          } @else if (due() === 'today') {
+            <strong class="badge badge--today">Vence hoje</strong>
+          }
+        </span>
+      }
+    </div>
     <div class="task__actions">
       <button
         type="button"

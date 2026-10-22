@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   Injector,
   OnInit,
   afterNextRender,
@@ -7,16 +8,29 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription, debounceTime, finalize, map, merge } from 'rxjs';
 import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
+import {
+  DEFAULT_FILTERS,
+  TaskFilters,
+  filtersFromParams,
+  filtersToParams,
+  hasActiveFilters,
+} from './task-filters';
 import { createTaskForm, revealErrors, showFieldError, taskFormValue } from './task-form';
 import { TaskItem } from './task-item';
-import { Task, TaskChanges } from './task.model';
+import { PRIORITY_LABELS, PRIORITY_OPTIONS, Task, TaskChanges } from './task.model';
 import { TaskService } from './task.service';
 
+/** Time the search waits after the last keystroke before asking the API. */
+const SEARCH_DEBOUNCE_MS = 300;
+
 /**
- * Home page: shows every registered task and lets the user add, edit, complete and delete them.
+ * Home page: shows every registered task and lets the user add, edit, complete and delete them,
+ * and search, filter and sort the list (kept in the URL query string).
  * It owns the list state and the API calls; each card (TaskItem) only reports what the user did.
  */
 @Component({
@@ -28,6 +42,19 @@ import { TaskService } from './task.service';
 export class TaskListPage implements OnInit {
   private readonly taskService = inject(TaskService);
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private listRequest?: Subscription;
+
+  /** The filters in effect: always the ones in the URL. */
+  protected readonly filters = signal<TaskFilters>(DEFAULT_FILTERS);
+  protected readonly filtered = computed(() => hasActiveFilters(this.filters()));
+  protected readonly filterForm = inject(NonNullableFormBuilder).group({ ...DEFAULT_FILTERS });
+  protected readonly priorityLabels = PRIORITY_LABELS;
+  protected readonly priorityOptions = PRIORITY_OPTIONS;
+  /** Polite message, e.g. a new task that the current filters hide. */
+  protected readonly notice = signal<string | null>(null);
 
   protected readonly tasks = signal<Task[]>([]);
   protected readonly completedCount = computed(
@@ -48,18 +75,69 @@ export class TaskListPage implements OnInit {
   protected readonly showError = showFieldError;
 
   ngOnInit() {
-    this.loadTasks();
+    // URL → filters → list. Also runs on load, so a reloaded or shared link shows the same list.
+    this.route.queryParamMap
+      .pipe(map(filtersFromParams), takeUntilDestroyed(this.destroyRef))
+      .subscribe((filters) => {
+        this.filters.set(filters);
+        this.notice.set(null);
+        // Leave the fields alone when they already mean the same (e.g. a trailing space being typed).
+        const shown = filtersToParams(this.filterForm.getRawValue());
+        if (JSON.stringify(shown) !== JSON.stringify(filtersToParams(filters))) {
+          this.filterForm.setValue(filters, { emitEvent: false });
+        }
+        this.loadTasks();
+      });
+
+    // Fields → URL: the selects apply at once, the search after a pause in typing.
+    const { search, status, priority, sort } = this.filterForm.controls;
+    merge(
+      search.valueChanges.pipe(debounceTime(SEARCH_DEBOUNCE_MS)),
+      status.valueChanges,
+      priority.valueChanges,
+      sort.valueChanges,
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.applyFilters());
   }
 
-  protected loadTasks() {
-    this.loading.set(true);
-    this.loadFailed.set(false);
-    this.taskService
-      .list()
+  /** Puts the fields in the URL (replacing the history entry, so Back leaves the page). */
+  protected applyFilters() {
+    void this.router.navigate([], {
+      queryParams: filtersToParams(this.filterForm.getRawValue()),
+      replaceUrl: true,
+    });
+  }
+
+  protected clearFilters() {
+    this.filterForm.setValue({ ...DEFAULT_FILTERS }, { emitEvent: false });
+    this.applyFilters();
+    // The "clear" button is gone: keep keyboard users in the toolbar.
+    afterNextRender(() => document.getElementById('filter-search')?.focus(), {
+      injector: this.injector,
+    });
+  }
+
+  /** `quiet` keeps the list on screen (no loading message) while it is fetched again. */
+  protected loadTasks(quiet = false, onLoaded?: (tasks: Task[]) => void) {
+    // Only the latest filters matter: an older request still in flight is dropped.
+    this.listRequest?.unsubscribe();
+    if (!quiet) {
+      this.loading.set(true);
+      this.loadFailed.set(false);
+    }
+    this.listRequest = this.taskService
+      .list(this.filters())
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (tasks) => this.tasks.set(tasks),
-        error: () => this.loadFailed.set(true),
+        next: (tasks) => {
+          this.tasks.set(tasks);
+          onLoaded?.(tasks);
+          if (quiet) this.focusListIfLost();
+        },
+        error: () => {
+          if (!quiet) this.loadFailed.set(true);
+        },
       });
   }
 
@@ -69,15 +147,27 @@ export class TaskListPage implements OnInit {
       return;
     }
     this.actionError.set(null);
+    this.notice.set(null);
     this.saving.set(true);
     this.taskService
       .create(taskFormValue(this.form))
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (task) => {
-          // Newest first, matching the order the API returns.
-          this.tasks.update((tasks) => [task, ...tasks]);
           this.form.reset();
+          if (!this.filtered()) {
+            // Newest first, matching the order the API returns.
+            this.tasks.update((tasks) => [task, ...tasks]);
+            return;
+          }
+          // Filtered or sorted: only the API knows if and where the new task fits.
+          this.loadTasks(true, (tasks) => {
+            if (!tasks.some((t) => t.id === task.id)) {
+              this.notice.set(
+                `Tarefa "${task.title}" adicionada, mas ela não aparece com os filtros atuais.`,
+              );
+            }
+          });
         },
         // The form keeps what was typed, so the user can just try again.
         error: (error) => this.fail(error, 'Não foi possível adicionar a tarefa.'),
@@ -124,6 +214,8 @@ export class TaskListPage implements OnInit {
         next: (updated) => {
           this.tasks.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t)));
           onSaved?.();
+          // The change may take the task out of the filter or move it in the order.
+          if (this.filtered()) this.loadTasks(true);
         },
         // The cards only show saved state, so a failure leaves them as they were.
         error: (error) => this.fail(error, 'Não foi possível salvar a alteração.', task),
@@ -145,10 +237,20 @@ export class TaskListPage implements OnInit {
   private dropTask(task: Task) {
     this.tasks.update((tasks) => tasks.filter((t) => t.id !== task.id));
     if (this.editingId() === task.id) this.editingId.set(null);
-    // The focused button is gone with its task; keep keyboard users on the list.
-    afterNextRender(() => document.getElementById('tasks-heading')?.focus(), {
-      injector: this.injector,
-    });
+    this.focusListIfLost();
+  }
+
+  /** When the focused control left the page with its task, keep keyboard users on the list. */
+  private focusListIfLost() {
+    afterNextRender(
+      () => {
+        const focused = document.activeElement;
+        if (!focused || focused === document.body) {
+          document.getElementById('tasks-heading')?.focus();
+        }
+      },
+      { injector: this.injector },
+    );
   }
 
   private setBusy(id: number, busy: boolean) {

@@ -9,6 +9,8 @@ const task: Task = {
   title: 'Write the report',
   description: null,
   completed: false,
+  dueDate: null,
+  priority: 'medium',
   createdAt: '2026-10-22T12:00:00.000Z',
   updatedAt: '2026-10-22T12:00:00.000Z',
 };
@@ -19,6 +21,8 @@ const history: TaskEvent[] = [
     changes: {
       title: { from: 'Draft', to: 'Write the report' },
       description: { from: null, to: 'Q3' },
+      dueDate: { from: null, to: '2026-11-05' },
+      priority: { from: 'medium', to: 'high' },
     },
     at: '2026-10-22T12:05:00.000Z',
   },
@@ -81,6 +85,8 @@ describe('TaskDetailsPanel', () => {
     expect(entries[0].textContent).toContain('Tarefa editada');
     expect(entries[0].textContent).toContain('Título: “Draft” → “Write the report”');
     expect(entries[0].textContent).toContain('Descrição: (vazio) → “Q3”');
+    expect(entries[0].textContent).toContain('Prazo: (vazio) → 05/11/2026');
+    expect(entries[0].textContent).toContain('Prioridade: Média → Alta');
     expect(entries[1].textContent).toContain('Tarefa criada');
     expect(entries[1].querySelector('time')?.getAttribute('datetime')).toBe(history[1].at);
   });

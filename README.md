@@ -29,10 +29,17 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 ## Funcionalidades
 
 - **Página inicial com todas as tarefas cadastradas** da pessoa conectada, das mais recentes para as mais antigas, com
-  título, descrição e situação, e um resumo com o total, as pendentes e as concluídas.
-- **Criar tarefa:** título (obrigatório) e descrição (opcional); a nova tarefa aparece no topo da lista.
-- **Editar tarefa:** "Editar" abre título e descrição dentro da própria lista; "Salvar" grava, "Cancelar" ou Esc
+  título, descrição, situação, prioridade e prazo, e um resumo com o total, as pendentes e as concluídas.
+- **Criar tarefa:** título (obrigatório), descrição, prazo (opcionais) e prioridade (baixa, média ou alta; média por
+  padrão); a nova tarefa aparece no topo da lista.
+- **Editar tarefa:** "Editar" abre todos os campos dentro da própria lista; "Salvar" grava, "Cancelar" ou Esc
   descarta.
+- **Prazos:** tarefa pendente com prazo vencido aparece como **Atrasada** (com uma barra vermelha na lateral) e a do
+  dia como **Vence hoje**, conforme a data do computador de quem usa.
+- **Busca, filtros e ordenação:** busca no título e na descrição (dispara após uma pausa na digitação), filtros por
+  situação e prioridade, e ordenação por mais recentes, prazo mais próximo (sem prazo por último) ou maior prioridade.
+  Tudo fica no endereço da página (ex.: `/?status=pending&sort=due_date`): recarregar ou compartilhar o link mantém a
+  mesma lista. Sem resultados, um botão limpa os filtros; uma tarefa nova que os filtros escondem gera um aviso.
 - **Marcar como concluída ou não:** uma caixa de seleção em cada tarefa; a concluída aparece riscada.
 - **Excluir tarefa:** pede confirmação com o nome da tarefa antes de apagar.
 - **Notas, tags e histórico:** "Detalhes" abre notas livres e tags (guardadas no MongoDB) e o histórico da tarefa —

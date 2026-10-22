@@ -11,6 +11,8 @@ const tasks: Task[] = [
     title: 'Call the client',
     description: null,
     completed: true,
+    dueDate: null,
+    priority: 'medium',
     createdAt: '2026-10-22T13:00:00.000Z',
     updatedAt: '2026-10-22T13:00:00.000Z',
   },
@@ -19,6 +21,8 @@ const tasks: Task[] = [
     title: 'Write the report',
     description: 'Quarterly numbers',
     completed: false,
+    dueDate: null,
+    priority: 'medium',
     createdAt: '2026-10-22T12:00:00.000Z',
     updatedAt: '2026-10-22T12:00:00.000Z',
   },
@@ -92,7 +96,12 @@ describe('TaskListPage', () => {
 
     const req = http.expectOne('/api/tasks');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ title: 'Send the proposal', description: 'By email' });
+    expect(req.request.body).toEqual({
+      title: 'Send the proposal',
+      description: 'By email',
+      dueDate: null,
+      priority: 'medium',
+    });
     req.flush({ ...tasks[1], id: 3, title: 'Send the proposal', description: 'By email' });
     await fixture.whenStable();
 
@@ -108,7 +117,12 @@ describe('TaskListPage', () => {
     submit();
 
     const req = http.expectOne('/api/tasks');
-    expect(req.request.body).toEqual({ title: 'Only a title', description: null });
+    expect(req.request.body).toEqual({
+      title: 'Only a title',
+      description: null,
+      dueDate: null,
+      priority: 'medium',
+    });
     req.flush({ ...tasks[1], id: 3, title: 'Only a title', description: null });
   });
 
@@ -269,7 +283,12 @@ describe('TaskListPage', () => {
 
       const req = http.expectOne('/api/tasks/1');
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({ title: 'Write the final report', description: null });
+      expect(req.request.body).toEqual({
+        title: 'Write the final report',
+        description: null,
+        dueDate: null,
+        priority: 'medium',
+      });
       req.flush({ ...tasks[1], title: 'Write the final report', description: null });
       await fixture.whenStable();
 

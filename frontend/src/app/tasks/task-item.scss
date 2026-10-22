@@ -41,8 +41,11 @@
   white-space: pre-line;
 }
 
-.task__status {
-  display: inline-block;
+.task__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.75rem;
   margin-top: 0.5rem;
   font-size: 0.875rem;
   color: #475467;
@@ -50,6 +53,57 @@
 
 .task--completed .task__status {
   color: #067647;
+}
+
+.task__due {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+// A left bar marks an overdue task at a glance; the "Atrasada" text says it without relying on color.
+// (An inset shadow, not a border, so the content does not shift.)
+.task--overdue {
+  box-shadow: inset 4px 0 0 #d92d20;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.badge--high {
+  border-color: #fecdca;
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.badge--medium {
+  border-color: #fedf89;
+  background: #fffaeb;
+  color: #93370d;
+}
+
+.badge--low {
+  border-color: #eaecf0;
+  background: #f9fafb;
+  color: #344054;
+}
+
+.badge--overdue {
+  background: #d92d20;
+  color: #fff;
+}
+
+.badge--today {
+  background: #fdb022;
+  color: #101828;
 }
 
 .task__actions {

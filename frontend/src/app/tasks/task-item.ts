@@ -2,6 +2,7 @@ import {
   Component,
   Injector,
   afterNextRender,
+  computed,
   effect,
   inject,
   input,
@@ -10,8 +11,21 @@ import {
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TaskDetailsPanel } from './task-details-panel';
-import { createTaskForm, revealErrors, showFieldError, taskFormValue } from './task-form';
-import { Task, TaskChanges } from './task.model';
+import {
+  createTaskForm,
+  revealErrors,
+  showFieldError,
+  taskFormValue,
+  taskToForm,
+} from './task-form';
+import {
+  PRIORITY_LABELS,
+  PRIORITY_OPTIONS,
+  Task,
+  TaskChanges,
+  dueState,
+  formatDay,
+} from './task.model';
 
 /**
  * One task card: shows the task and its controls, and owns the inline edit form.
@@ -44,6 +58,11 @@ export class TaskItem {
 
   protected readonly form = createTaskForm(inject(NonNullableFormBuilder));
   protected readonly showError = showFieldError;
+  protected readonly priorityLabels = PRIORITY_LABELS;
+  protected readonly priorityOptions = PRIORITY_OPTIONS;
+  protected readonly formatDay = formatDay;
+  /** "overdue" / "today" for a pending task with a due date (checked against the user's today). */
+  protected readonly due = computed(() => dueState(this.task()));
 
   constructor() {
     // Keyboard focus follows the mode: into the title when editing starts, back to "Editar" when it ends.
@@ -64,8 +83,7 @@ export class TaskItem {
   }
 
   protected startEdit() {
-    const { title, description } = this.task();
-    this.form.reset({ title, description: description ?? '' });
+    this.form.reset(taskToForm(this.task()));
     this.editingChange.emit(true);
   }
 

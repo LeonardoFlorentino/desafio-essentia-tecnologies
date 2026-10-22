@@ -3,13 +3,21 @@ import { Component, OnInit, effect, inject, input, signal, untracked } from '@an
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { UNREACHABLE_MESSAGE, isUnreachable } from '../shared/http-errors';
-import { Task, TaskDetails, TaskEvent } from './task.model';
+import { PRIORITY_LABELS, Priority, Task, TaskDetails, TaskEvent, formatDay } from './task.model';
 import { TaskService } from './task.service';
 
 const MAX_TAGS = 10;
 const MAX_TAG_LENGTH = 30;
 
-const FIELD_NAMES = { title: 'Título', description: 'Descrição', completed: 'Situação' } as const;
+const FIELD_NAMES = {
+  title: 'Título',
+  description: 'Descrição',
+  completed: 'Situação',
+  dueDate: 'Prazo',
+  priority: 'Prioridade',
+} as const;
+
+type Field = keyof typeof FIELD_NAMES;
 
 const EVENT_LABELS: Record<TaskEvent['type'], string> = {
   created: 'Tarefa criada',
@@ -28,9 +36,11 @@ export function parseTags(text: string): string[] {
     .filter((tag) => tag.length > 0);
 }
 
-function show(value: unknown): string {
+function show(field: Field, value: unknown): string {
   if (value === null || value === '') return '(vazio)';
   if (typeof value === 'boolean') return value ? 'concluída' : 'pendente';
+  if (field === 'dueDate') return formatDay(String(value));
+  if (field === 'priority') return PRIORITY_LABELS[value as Priority] ?? String(value);
   return `“${value}”`;
 }
 
@@ -128,7 +138,7 @@ export class TaskDetailsPanel implements OnInit {
 
   /** The changed fields of an "updated" event, in a fixed order. */
   protected changesOf(event: TaskEvent) {
-    return (['title', 'description', 'completed'] as const)
+    return (Object.keys(FIELD_NAMES) as Field[])
       .filter((field) => event.changes?.[field])
       .map((field) => ({ field, ...event.changes![field]! }));
   }

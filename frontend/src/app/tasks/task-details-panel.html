@@ -70,7 +70,8 @@
             <ul class="details__changes">
               @for (change of changesOf(event); track change.field) {
                 <li>
-                  {{ fieldNames[change.field] }}: {{ show(change.from) }} → {{ show(change.to) }}
+                  {{ fieldNames[change.field] }}: {{ show(change.field, change.from) }} →
+                  {{ show(change.field, change.to) }}
                 </li>
               }
             </ul>

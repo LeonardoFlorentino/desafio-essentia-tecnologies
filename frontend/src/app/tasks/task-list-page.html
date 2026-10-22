@@ -37,6 +37,21 @@
       ></textarea>
     </div>
 
+    <div class="field-row">
+      <div class="field">
+        <label for="new-task-due">Prazo <span class="field__hint">(opcional)</span></label>
+        <input id="new-task-due" type="date" formControlName="dueDate" />
+      </div>
+      <div class="field">
+        <label for="new-task-priority">Prioridade</label>
+        <select id="new-task-priority" formControlName="priority">
+          @for (option of priorityOptions; track option) {
+            <option [value]="option">{{ priorityLabels[option] }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
     <button type="submit" class="button--primary" [disabled]="saving()">
       {{ saving() ? 'Adicionando…' : 'Adicionar tarefa' }}
     </button>
@@ -64,12 +79,69 @@
     }
   </div>
 
+  <form
+    class="filters"
+    role="search"
+    aria-label="Buscar e filtrar tarefas"
+    [formGroup]="filterForm"
+    (ngSubmit)="applyFilters()"
+  >
+    <div class="field filters__search">
+      <label for="filter-search">Buscar</label>
+      <input
+        id="filter-search"
+        type="search"
+        formControlName="search"
+        maxlength="100"
+        autocomplete="off"
+        placeholder="Título ou descrição"
+      />
+    </div>
+    <div class="field">
+      <label for="filter-status">Situação</label>
+      <select id="filter-status" formControlName="status">
+        <option value="all">Todas</option>
+        <option value="pending">Pendentes</option>
+        <option value="completed">Concluídas</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="filter-priority">Prioridade</label>
+      <select id="filter-priority" formControlName="priority">
+        <option value="">Todas</option>
+        @for (option of priorityOptions; track option) {
+          <option [value]="option">{{ priorityLabels[option] }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="filter-sort">Ordenar por</label>
+      <select id="filter-sort" formControlName="sort">
+        <option value="created_at">Mais recentes</option>
+        <option value="due_date">Prazo mais próximo</option>
+        <option value="priority">Maior prioridade</option>
+      </select>
+    </div>
+    @if (filtered()) {
+      <button type="button" class="filters__clear" (click)="clearFilters()">Limpar filtros</button>
+    }
+  </form>
+
+  @if (notice(); as message) {
+    <p class="notice" role="status">{{ message }}</p>
+  }
+
   @if (loading()) {
     <p class="list-state">Carregando tarefas…</p>
   } @else if (loadFailed()) {
     <div class="list-state list-state--error" role="alert">
       <p>Não foi possível carregar as tarefas. Verifique se a API está no ar.</p>
       <button type="button" (click)="loadTasks()">Tentar novamente</button>
+    </div>
+  } @else if (tasks().length === 0 && filtered()) {
+    <div class="list-state">
+      <p>Nenhuma tarefa encontrada com estes filtros.</p>
+      <button type="button" (click)="clearFilters()">Limpar filtros</button>
     </div>
   } @else if (tasks().length === 0) {
     <p class="list-state">

@@ -1,20 +1,38 @@
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
-import { NewTask } from './task.model';
+import { NewTask, Priority, Task } from './task.model';
 
-/** Title/description form with the same limits as the API; /\S/ rejects a title of only spaces. */
+/** Task form with the same limits as the API; /\S/ rejects a title of only spaces. */
 export function createTaskForm(formBuilder: NonNullableFormBuilder) {
   return formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
     description: ['', Validators.maxLength(5000)],
+    // <input type="date"> gives YYYY-MM-DD, or '' when empty.
+    dueDate: [''],
+    priority: ['medium' as Priority],
   });
 }
 
 export type TaskForm = ReturnType<typeof createTaskForm>;
 
-/** Trimmed title, and a blank description sent as null (stored as NULL by the API). */
+/** Fills the form with a saved task (for editing). */
+export function taskToForm(task: Task) {
+  return {
+    title: task.title,
+    description: task.description ?? '',
+    dueDate: task.dueDate ?? '',
+    priority: task.priority,
+  };
+}
+
+/** Trimmed title; a blank description or due date is sent as null (stored as NULL by the API). */
 export function taskFormValue(form: TaskForm): Required<NewTask> {
-  const { title, description } = form.getRawValue();
-  return { title: title.trim(), description: description.trim() || null };
+  const { title, description, dueDate, priority } = form.getRawValue();
+  return {
+    title: title.trim(),
+    description: description.trim() || null,
+    dueDate: dueDate || null,
+    priority,
+  };
 }
 
 /**
