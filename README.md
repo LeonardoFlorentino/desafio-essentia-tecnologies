@@ -75,11 +75,13 @@ Se o MySQL estiver fora do ar, a resposta é `503 { "status": "error", "database
 
 Todas as rotas ficam sob o prefixo `/api`.
 
-| Método | Rota      | Descrição                                                 | Sucesso |
-| ------ | --------- | --------------------------------------------------------- | ------- |
-| GET    | `/health` | Situação da API e do banco                                | 200     |
-| GET    | `/tasks`  | Lista todas as tarefas, das mais recentes para as antigas | 200     |
-| POST   | `/tasks`  | Cria uma tarefa                                           | 201     |
+| Método | Rota         | Descrição                                                                 | Sucesso |
+| ------ | ------------ | ------------------------------------------------------------------------- | ------- |
+| GET    | `/health`    | Situação da API e do banco                                                | 200     |
+| GET    | `/tasks`     | Lista todas as tarefas, das mais recentes para as antigas                 | 200     |
+| POST   | `/tasks`     | Cria uma tarefa                                                           | 201     |
+| GET    | `/tasks/:id` | Busca uma tarefa pelo id                                                  | 200     |
+| PATCH  | `/tasks/:id` | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
 
 Exemplo de resposta de `GET /api/tasks`:
 
@@ -112,6 +114,16 @@ Resposta `201` com a tarefa criada (`completed: false`). Dados inválidos retorn
 | ------------- | --------------------------------------------------------------- |
 | `title`       | Obrigatório, texto, 1 a 255 caracteres (sem espaços nas pontas) |
 | `description` | Opcional, texto, até 5000 caracteres                            |
+| `completed`   | Só no `PATCH`: `true` ou `false`                                |
+
+O `PATCH /api/tasks/:id` altera apenas os campos enviados (pelo menos um). Para marcar como concluída:
+
+```json
+{ "completed": true }
+```
+
+Respostas de erro das rotas com `:id`: `400 { "error": "Invalid task id" }` quando o id não é um inteiro positivo e
+`404 { "error": "Task not found" }` quando a tarefa não existe.
 
 ### Migrations
 
