@@ -59,6 +59,20 @@ npm run dev            # http://localhost:3000, recarrega a cada alteração
 
 Se o `.env` estiver faltando, a API não sobe e informa quais variáveis precisam ser definidas.
 
+#### Variáveis de ambiente (`backend/.env`)
+
+| Variável      | Obrigatória | Padrão                  | Descrição                                            |
+| ------------- | ----------- | ----------------------- | ---------------------------------------------------- |
+| `PORT`        | não         | `3000`                  | Porta HTTP da API                                    |
+| `CORS_ORIGIN` | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API (CORS) |
+| `DB_HOST`     | sim         | —                       | Host do MySQL                                        |
+| `DB_PORT`     | não         | `3306`                  | Porta do MySQL                                       |
+| `DB_USER`     | sim         | —                       | Usuário do MySQL                                     |
+| `DB_PASSWORD` | sim         | —                       | Senha do MySQL                                       |
+| `DB_NAME`     | sim         | —                       | Nome do banco                                        |
+
+O `.env.example` já traz valores que funcionam com o MySQL do `docker-compose.yml`.
+
 | Script            | O que faz                                          |
 | ----------------- | -------------------------------------------------- |
 | `npm run dev`     | Sobe a API em modo de desenvolvimento (hot reload) |

@@ -16,6 +16,8 @@ if (missing.length > 0) {
 
 export const config = {
   port: Number(process.env.PORT ?? 3000),
+  // Browser origin allowed to call the API directly (the Angular dev server by default).
+  corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:4200',
   db: {
     host: process.env.DB_HOST!,
     port: Number(process.env.DB_PORT ?? 3306),
