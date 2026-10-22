@@ -38,6 +38,11 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
   descarta.
 - **Prazos:** tarefa pendente com prazo vencido aparece como **Atrasada** (com uma barra vermelha na lateral) e a do
   dia como **Vence hoje**, conforme a data do computador de quem usa.
+- **Campo de data em português:** o prazo é digitado no formato dia/mês/ano (`__/__/____`, as barras entram sozinhas)
+  ou escolhido num calendário próprio, em português, com a semana começando no domingo e os botões "Hoje", "Limpar" e
+  "Fechar". Esc ou um clique fora fecham o calendário, e uma data impossível (31/02) não é aceita. O campo nativo do
+  navegador foi substituído porque segue o idioma do sistema e, em muitas máquinas, mostra o calendário em inglês e a
+  data como mês/dia/ano.
 - **Busca, filtros e ordenação:** busca no título e na descrição (dispara após uma pausa na digitação), filtros por
   situação e prioridade, e ordenação por mais recentes, prazo mais próximo (sem prazo por último) ou maior prioridade.
   Tudo fica no endereço da página (ex.: `/?status=pending&sort=due_date`): recarregar ou compartilhar o link mantém a
@@ -196,7 +201,7 @@ demonstração é recriado na próxima subida).
 ├── frontend/src/app/
 │   ├── auth/                Login, cadastro, guards e tratamento de sessão expirada
 │   ├── tasks/               Página de tarefas, cartão, painel de detalhes, serviço da API
-│   └── shared/              Utilitários compartilhados
+│   └── shared/              Campo de data (dd/mm/aaaa + calendário), datas e erros HTTP
 ├── docker/mysql-init/       Cria o banco de testes do MySQL
 ├── e2e/                     Testes de ponta a ponta (Playwright)
 ├── docker-compose.yml       MySQL, MongoDB, API e site (nginx)
@@ -577,8 +582,24 @@ npm run test:e2e:install           # uma vez: baixa o Chromium usado nos testes
 npm run test:e2e
 ```
 
-Por enquanto há um teste de fumaça: um visitante cai no login, cria a conta pelo formulário e adiciona a primeira
-tarefa. Se um teste falhar, a captura de tela e o rastreamento (trace) ficam em `test-results/`.
+Cenários cobertos, sempre localizando os elementos pelo papel e pelo rótulo que um leitor de tela anunciaria (nunca por
+classe CSS):
+
+| Área                    | O que o teste faz na tela                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------- |
+| Primeiro acesso         | Visitante cai no login; cria a conta pelo formulário; lista vazia; primeira tarefa                |
+| Criar                   | Título, descrição, prazo e prioridade aparecem no cartão; sem título, a mensagem explica          |
+| Editar                  | Edição no próprio cartão (foco no título); "Salvar" grava; Esc descarta                           |
+| Concluir                | Marca e desmarca; o resumo muda; continua marcada depois de recarregar a página                   |
+| Excluir                 | Cancelar a confirmação mantém a tarefa; confirmar remove (também do servidor)                     |
+| Prazos                  | "Atrasada" e "Vence hoje"; uma tarefa concluída nunca aparece como atrasada                       |
+| Busca e filtros         | Situação, prioridade e busca; tudo na URL e mantido depois de recarregar; "Limpar filtros"        |
+| Ordenação               | Por prazo (sem prazo por último) e por prioridade                                                 |
+| Notas, tags e histórico | Salva no MongoDB (tags repetidas descartadas); edição aparece com o valor antes e depois          |
+| Falhas da API           | Lista que não carrega mostra "Tentar novamente"; servidor fora do ar não apaga o que foi digitado |
+
+A suíte passou 3 vezes seguidas e também com cada teste repetido 3 vezes (`--repeat-each=3`), sem falhas
+intermitentes. Se um teste falhar, a captura de tela e o rastreamento (trace) ficam em `test-results/`.
 
 **Qualidade:** TypeScript em modo `strict` nos dois projetos, ESLint (com as regras de acessibilidade dos templates
 Angular) e Prettier com uma configuração única para o repositório.
