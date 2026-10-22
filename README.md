@@ -7,6 +7,10 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - **Backend:** API RESTful em Node.js + TypeScript (Express)
 - **Bancos de dados:** MySQL (usuários e tarefas) e MongoDB (notas, tags e histórico das tarefas)
 
+> **API online:** https://techx-tasks-api.onrender.com/api — documentação interativa (Swagger) em
+> https://techx-tasks-api.onrender.com/api/docs. Plano gratuito: depois de um tempo sem uso, a primeira requisição
+> pode levar até cerca de um minuto (o serviço "acorda").
+>
 > **Usuário de demonstração:** `demo@techx.com` / `demo12345` — já vem com algumas tarefas.
 >
 > **Documentação interativa da API (Swagger):** `/api/docs` — http://localhost:8080/api/docs com Docker ou
@@ -639,9 +643,12 @@ o relatório do Playwright, as capturas de tela e os traces. Um push novo na mes
 
 ## Deploy
 
-A API está pronta para o [Render](https://render.com) (plano gratuito), descrita em
-[`render.yaml`](render.yaml), com os bancos em serviços gerenciados gratuitos: **MySQL no
-[Aiven](https://aiven.io)** e **MongoDB no [Atlas](https://www.mongodb.com/atlas)**.
+A API roda no [Render](https://render.com) (plano gratuito), em **https://techx-tasks-api.onrender.com/api**
+([Swagger](https://techx-tasks-api.onrender.com/api/docs)). O serviço é descrito em [`render.yaml`](render.yaml), com os
+bancos em serviços gerenciados gratuitos: **MySQL no [Aiven](https://aiven.io)** e **MongoDB no
+[Atlas](https://www.mongodb.com/atlas)**. A API e o MongoDB ficam na Virgínia (EUA); o MySQL gratuito do Aiven ficou
+em San Francisco. Medido a partir do Brasil, com o serviço acordado: ~0,23 s numa rota sem banco e ~0,4 a 0,65 s para
+listar as tarefas.
 
 - **Container:** o mesmo `backend/Dockerfile` do Docker Compose. A cada início, aplica as migrations, cria o usuário
   de demonstração (`SEED_DEMO_USER=true`) e sobe a API. O Render só passa a mandar tráfego para uma versão nova
