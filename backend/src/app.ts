@@ -1,5 +1,6 @@
 import express from 'express';
 import { pool } from './db/mysql';
+import { errorHandler, notFoundHandler } from './http/errors';
 import { taskRouter } from './tasks/task.routes';
 
 export function createApp() {
@@ -16,6 +17,10 @@ export function createApp() {
   });
 
   app.use('/api/tasks', taskRouter);
+
+  // Must come after every route.
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }

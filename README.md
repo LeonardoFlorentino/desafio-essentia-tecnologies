@@ -123,8 +123,18 @@ O `PATCH /api/tasks/:id` altera apenas os campos enviados (pelo menos um). Para 
 { "completed": true }
 ```
 
-Respostas de erro das rotas com `:id`: `400 { "error": "Invalid task id" }` quando o id não é um inteiro positivo e
-`404 { "error": "Task not found" }` quando a tarefa não existe.
+#### Erros
+
+Todos os erros são respondidos em JSON, no formato `{ "error": "mensagem" }` (validação inclui também `details`):
+
+| Status | Quando                                                              | Exemplo de `error`        |
+| ------ | ------------------------------------------------------------------- | ------------------------- |
+| 400    | Dados inválidos (com `details` por campo)                           | `Validation failed`       |
+| 400    | Corpo da requisição não é um JSON válido                            | `Malformed JSON body`     |
+| 400    | Id da URL não é um inteiro positivo                                 | `Invalid task id`         |
+| 404    | Tarefa não existe                                                   | `Task not found`          |
+| 404    | Rota não existe                                                     | `Route not found: GET /x` |
+| 500    | Erro inesperado (detalhes só no log do servidor, nunca na resposta) | `Internal server error`   |
 
 ### Migrations
 

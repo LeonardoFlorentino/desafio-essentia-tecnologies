@@ -7,5 +7,11 @@ export default defineConfig(
   { ignores: ['dist', 'coverage'] },
   eslint.configs.recommended,
   tseslint.configs.recommended,
+  {
+    rules: {
+      // Parameters required by a signature but not used (e.g. Express error handlers) start with "_".
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
   prettier,
 );
