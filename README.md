@@ -1,192 +1,230 @@
 # TechX Tasks
 
-Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o desafio Full Stack da Essentia Group.
+Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o desafio Full Stack da Essentia Group:
+cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 
-- **Frontend:** Angular
-- **Backend:** API RESTful em Node.js + TypeScript
-- **Bancos de dados:** MySQL (tarefas e usuários) e MongoDB (informações adicionais das tarefas)
+- **Frontend:** Angular 22
+- **Backend:** API RESTful em Node.js + TypeScript (Express)
+- **Bancos de dados:** MySQL (usuários e tarefas) e MongoDB (notas, tags e histórico das tarefas)
 
-> **Usuário de demonstração:** `demo@techx.com` / `demo12345` — já vem com algumas tarefas (criado pelo
-> `npm run seed`, que o `npm start` roda sozinho).
+> **Usuário de demonstração:** `demo@techx.com` / `demo12345` — já vem com algumas tarefas.
+
+## Sumário
+
+- [Funcionalidades](#funcionalidades)
+- [Requisitos do desafio](#requisitos-do-desafio)
+- [Tecnologias e decisões](#tecnologias-e-decisões)
+- [Como rodar](#como-rodar)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Backend](#backend)
+- [API](#api)
+- [Frontend](#frontend)
+- [Testes e qualidade](#testes-e-qualidade)
+- [Problemas comuns](#problemas-comuns)
 
 ## Funcionalidades
 
 - **Página inicial com todas as tarefas cadastradas** da pessoa conectada, das mais recentes para as mais antigas, com
-  título, descrição e situação (pendente ou concluída), e um resumo com o total, as pendentes e as concluídas. Cada
-  pessoa vê e altera só as próprias tarefas; sem login, a página leva à tela de entrada.
-- **Cadastro e login:** telas `/register` e `/login` (link "Entrar" no cabeçalho). O cadastro já entra na conta; depois
-  do login, o cabeçalho mostra o e-mail de quem está conectado e a sessão continua ao recarregar a página. A sessão fica
-  num cookie que os scripts da página não conseguem ler — nada é guardado no `localStorage`.
-- **Sair e sessão expirada:** o botão "Sair" no cabeçalho encerra a sessão. Se a sessão expirar com a página aberta, a
-  próxima ação leva à tela de entrada com o aviso "Sua sessão expirou". Quem já está conectado e abre `/login` ou
-  `/register` vai direto para as tarefas.
-- **Layout responsivo:** funciona do celular (360 px) ao desktop, sem rolagem horizontal, com foco visível para quem
-  navega pelo teclado.
-- **Criar tarefa:** formulário com título (obrigatório) e descrição (opcional); a nova tarefa aparece no topo da lista e
-  o formulário é limpo. Título em branco não é enviado e mostra uma mensagem de erro no campo.
-- **Editar tarefa:** o botão "Editar" abre o título e a descrição para edição dentro da própria lista; "Salvar" grava,
-  "Cancelar" (ou a tecla Esc) descarta. O foco do teclado vai para o campo ao abrir e volta ao botão ao fechar.
-- **Notas, tags e histórico:** o botão "Detalhes" abre, dentro do cartão, notas livres e tags (separadas por vírgula)
-  — guardadas no MongoDB — e o histórico da tarefa: criação, edições (com o valor antes e depois), conclusões e
-  alterações de notas e tags, com data e hora. O painel só busca esses dados quando é aberto.
-- **Excluir tarefa:** o botão "Excluir" pede confirmação com o nome da tarefa antes de apagar.
-- **Carregamento, lista vazia e erros:** mensagem enquanto as tarefas carregam e quando ainda não há nenhuma; se a API
-  não responder, a lista mostra o erro com o botão "Tentar novamente". Quando criar, editar, concluir ou excluir
-  falhar, um aviso no topo da página explica o que aconteceu (inclusive "sem conexão com o servidor") e nada do que foi
-  digitado se perde; uma tarefa que já não existe no servidor sai da lista.
-- **Marcar como concluída ou não:** uma caixa de seleção em cada tarefa; a concluída aparece riscada. Se a API recusar a
-  mudança, a caixa volta ao estado salvo.
+  título, descrição e situação, e um resumo com o total, as pendentes e as concluídas.
+- **Criar tarefa:** título (obrigatório) e descrição (opcional); a nova tarefa aparece no topo da lista.
+- **Editar tarefa:** "Editar" abre título e descrição dentro da própria lista; "Salvar" grava, "Cancelar" ou Esc
+  descarta.
+- **Marcar como concluída ou não:** uma caixa de seleção em cada tarefa; a concluída aparece riscada.
+- **Excluir tarefa:** pede confirmação com o nome da tarefa antes de apagar.
+- **Notas, tags e histórico:** "Detalhes" abre notas livres e tags (guardadas no MongoDB) e o histórico da tarefa —
+  criação, edições com o valor antes e depois, conclusões e alterações de notas e tags, com data e hora.
+- **Contas e sessão:** cadastro (`/register`) e login (`/login`); cada pessoa vê e altera só as próprias tarefas. O
+  botão "Sair" encerra a sessão; se ela expirar com a página aberta, a próxima ação leva ao login com o aviso "Sua
+  sessão expirou".
+- **Estados e erros:** mensagens de carregamento, de lista vazia e de falha (com "Tentar novamente"); quando uma ação
+  falha, um aviso explica o motivo — inclusive "sem conexão com o servidor" — e nada do que foi digitado se perde.
+- **Responsivo e acessível:** do celular (360 px) ao desktop, sem rolagem horizontal; rótulos em todos os campos,
+  foco visível e movido de forma previsível ao editar e excluir.
 
-## Início rápido (Windows)
+## Requisitos do desafio
 
-Com o Docker Desktop aberto, na raiz do projeto:
+| Requisito                                              | Onde está                                                                                                |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Interface em Angular                                   | [`frontend/`](frontend)                                                                                  |
+| Página inicial exibe todas as tarefas cadastradas      | [`task-list-page`](frontend/src/app/tasks/task-list-page.ts), rota `/`                                   |
+| Adicionar, editar e remover tarefas                    | Formulário da página, [`task-item`](frontend/src/app/tasks/task-item.ts)                                 |
+| Marcar tarefas como concluídas ou não                  | Caixa de seleção em cada tarefa → `PATCH /api/tasks/:id`                                                 |
+| API RESTful em Node.js e TypeScript                    | [`backend/src`](backend/src)                                                                             |
+| Criar, listar, atualizar e excluir tarefas             | `POST`, `GET`, `PATCH` e `DELETE` em `/api/tasks` ([API](#api))                                          |
+| Banco MySQL                                            | [`backend/migrations`](backend/migrations), [`task.repository`](backend/src/tasks/task.repository.ts)    |
+| Git com commits incrementais e descritivos             | Histórico da branch, um commit por etapa, no padrão Conventional Commits                                 |
+| README com instruções para configurar e executar       | [Como rodar](#como-rodar)                                                                                |
+| Extra: autenticação com JWT                            | [`backend/src/auth`](backend/src/auth), [`frontend/src/app/auth`](frontend/src/app/auth)                 |
+| Extra: MongoDB para informações adicionais das tarefas | [`task-details`](backend/src/tasks/task-details.ts), [`task-history`](backend/src/tasks/task-history.ts) |
+
+## Tecnologias e decisões
+
+| Tema                   | Escolha                                                         | Motivo                                                                                                             |
+| ---------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| API                    | Express 5 + TypeScript (`strict`)                               | Pouca estrutura imposta; erros de rotas assíncronas chegam sozinhos ao tratador central                            |
+| Acesso ao MySQL        | `mysql2` com SQL escrito à mão, sempre parametrizado            | Mostra o SQL de fato; filtro por dono em todas as consultas; sem risco de SQL injection                            |
+| Esquema do MySQL       | Migrations SQL numeradas + runner próprio                       | Esquema versionado junto com o código e aplicado igual em qualquer máquina                                         |
+| Validação              | zod                                                             | Uma definição por campo valida a entrada e gera o tipo TypeScript                                                  |
+| MySQL e MongoDB juntos | Tarefas e usuários no MySQL; notas, tags e histórico no MongoDB | Dados com relacionamento e regras fixas no relacional; dados de formato livre e um log que só cresce em documentos |
+| Sessão                 | JWT (HS256) em cookie `HttpOnly` + `SameSite=Strict`            | O token nunca fica acessível a scripts da página (XSS não rouba a sessão) e não vai em requisições de outros sites |
+| Senhas                 | bcrypt (custo 12, via `bcryptjs`)                               | Hash lento contra força bruta; versão em JavaScript puro, sem compilação nativa                                    |
+| Acesso entre contas    | Tarefa de outra pessoa responde `404`                           | Não revela nem que a tarefa existe                                                                                 |
+| Frontend               | Angular 22 standalone, signals, sem zone.js                     | Estado explícito e menos código de infraestrutura                                                                  |
+| Front e API            | Mesma origem: o Angular encaminha `/api` para a API             | Sem CORS no navegador e cookie `SameSite=Strict` funcionando                                                       |
+| Ambiente               | Docker Compose para os bancos; `npm start` sobe tudo            | Quem avalia roda o projeto sem instalar banco nenhum                                                               |
+| Testes                 | Jest + Supertest (API), Vitest (Angular)                        | Testes da API fazem requisições HTTP reais contra bancos de teste separados                                        |
+
+## Como rodar
+
+### Pré-requisitos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) aberto (com Docker Compose v2)
+- [Node.js](https://nodejs.org/) 22 ou superior (com npm)
+
+### Início rápido (Windows)
+
+Na raiz do projeto:
 
 ```bash
 npm start
 ```
 
-O comando prepara e sobe tudo, nesta ordem:
+O comando prepara e sobe tudo, nesta ordem, e para com uma explicação se algum passo falhar:
 
-1. Na primeira execução, cria os arquivos `.env` a partir dos `.env.example` e instala as dependências do backend e
-   do frontend.
-2. Sobe o MySQL e espera o container ficar saudável.
-3. Aplica as migrations pendentes do banco e garante o usuário de demonstração (`npm run seed`).
-4. Abre o backend em uma nova aba do terminal (Windows Terminal; sem ele, em uma nova janela do PowerShell) e espera a
-   API responder em `/api/health` (até 60 s).
-5. Só então abre o frontend em outra aba e espera ele responder em `http://localhost:4200` (até 120 s).
-6. Devolve o foco ao terminal onde o comando foi digitado. A aplicação fica em **http://localhost:4200**.
+1. Na primeira execução, cria os arquivos `.env` a partir dos `.env.example` e instala as dependências.
+2. Sobe o MySQL e o MongoDB e espera os dois ficarem saudáveis.
+3. Aplica as migrations do MySQL e garante o usuário de demonstração.
+4. Abre o backend numa nova aba do terminal (Windows Terminal; sem ele, numa janela do PowerShell) e espera a API
+   responder (até 60 s).
+5. Só então abre o frontend em outra aba e espera ele responder (até 120 s).
+6. Devolve o foco ao terminal onde o comando foi digitado.
 
-Se algum passo falhar, o script para e diz o que verificar. Em outros sistemas operacionais, siga o passo a passo
-das seções abaixo.
+Depois, abra **http://localhost:4200** e entre com `demo@techx.com` / `demo12345`.
 
-## Pré-requisitos
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (com Docker Compose v2)
-- [Node.js](https://nodejs.org/) 22 ou superior (com npm)
-
-## Bancos de dados
-
-Os dois bancos rodam em containers Docker:
-
-- **MySQL 8.4** — usuários e tarefas (dados estruturados, com relacionamento entre si);
-- **MongoDB 8.0** — informações adicionais das tarefas (documentos sem esquema fixo).
+### Passo a passo (qualquer sistema)
 
 ```bash
+# 1. Bancos de dados (MySQL e MongoDB)
 docker compose up -d
-```
 
-Os containers ficam prontos quando `docker compose ps` mostra o status `healthy` nos dois.
-
-Os valores padrão funcionam sem configuração: MySQL com banco, usuário e senha `todo` na porta `3306`; MongoDB com
-usuário e senha `todo` na porta `27017`. Para alterá-los, copie `.env.example` para `.env` e edite as variáveis.
-
-Para parar: `docker compose down` (os dados ficam nos volumes `mysql-data` e `mongo-data`; use `docker compose down -v`
-para apagá-los).
-
-## Backend
-
-API REST em Node.js + TypeScript com Express.
-
-```bash
+# 2. Backend — num terminal
 cd backend
 npm install
 cp .env.example .env   # no PowerShell: Copy-Item .env.example .env
-npm run migrate        # cria/atualiza as tabelas no MySQL
-npm run seed           # cria o usuário de demonstração (demo@techx.com / demo12345)
-npm run dev            # http://localhost:3000, recarrega a cada alteração
+npm run migrate        # cria as tabelas no MySQL
+npm run seed           # cria o usuário de demonstração
+npm run dev            # http://localhost:3000
+
+# 3. Frontend — em outro terminal
+cd frontend
+npm install
+npm start              # http://localhost:4200
 ```
 
-Se o `.env` estiver faltando, a API não sobe e informa quais variáveis precisam ser definidas.
+Os containers ficam prontos quando `docker compose ps` mostra `healthy` nos dois. Os valores padrão funcionam sem
+configuração (MySQL e MongoDB com usuário e senha `todo`); para alterá-los, copie o `.env.example` da raiz para `.env`.
 
-#### Variáveis de ambiente (`backend/.env`)
+### Endereços
+
+| O quê           | Endereço                             |
+| --------------- | ------------------------------------ |
+| Aplicação       | http://localhost:4200                |
+| API             | http://localhost:3000/api            |
+| Situação da API | http://localhost:3000/api/health     |
+| MySQL / MongoDB | `localhost:3306` / `localhost:27017` |
+
+### Para parar
+
+Feche as abas do backend e do frontend e rode `docker compose down`. Os dados ficam nos volumes `mysql-data` e
+`mongo-data`; `docker compose down -v` apaga tudo (o próximo `npm start` recria o usuário de demonstração).
+
+## Estrutura do projeto
+
+```
+├── backend/
+│   ├── migrations/          Esquema do MySQL em SQL numerado (001, 002, 003)
+│   ├── src/
+│   │   ├── auth/            Cadastro, login, sessão (JWT em cookie) e usuários
+│   │   ├── db/              Conexões (MySQL, MongoDB), migrations e seed
+│   │   ├── http/            Tratamento central de erros
+│   │   ├── tasks/           Rotas, validação, MySQL (tarefas) e MongoDB (detalhes e histórico)
+│   │   ├── app.ts           Monta a aplicação Express
+│   │   └── server.ts        Conecta ao MongoDB e abre a porta
+│   └── tests/integration/   Testes da API contra bancos de teste
+├── frontend/src/app/
+│   ├── auth/                Login, cadastro, guards e tratamento de sessão expirada
+│   ├── tasks/               Página de tarefas, cartão, painel de detalhes, serviço da API
+│   └── shared/              Utilitários compartilhados
+├── docker/mysql-init/       Cria o banco de testes do MySQL
+├── docker-compose.yml       MySQL e MongoDB
+└── start.ps1                Inicialização com um comando (npm start)
+```
+
+## Backend
+
+Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa quais variáveis precisam ser definidas.
 
 | Variável         | Obrigatória | Padrão                  | Descrição                                                     |
 | ---------------- | ----------- | ----------------------- | ------------------------------------------------------------- |
 | `PORT`           | não         | `3000`                  | Porta HTTP da API                                             |
-| `CORS_ORIGIN`    | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API (CORS)          |
+| `CORS_ORIGIN`    | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente     |
 | `DB_HOST`        | sim         | —                       | Host do MySQL                                                 |
 | `DB_PORT`        | não         | `3306`                  | Porta do MySQL                                                |
 | `DB_USER`        | sim         | —                       | Usuário do MySQL                                              |
 | `DB_PASSWORD`    | sim         | —                       | Senha do MySQL                                                |
-| `DB_NAME`        | sim         | —                       | Nome do banco                                                 |
+| `DB_NAME`        | sim         | —                       | Nome do banco no MySQL                                        |
 | `MONGO_URL`      | sim         | —                       | Endereço do MongoDB, com usuário e senha                      |
 | `MONGO_DB_NAME`  | não         | `todo`                  | Nome do banco no MongoDB                                      |
 | `JWT_SECRET`     | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres) |
 | `JWT_EXPIRES_IN` | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                      |
 
-O `.env.example` já traz valores que funcionam com o MySQL do `docker-compose.yml`.
+O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
 
 | Script            | O que faz                                                                         |
 | ----------------- | --------------------------------------------------------------------------------- |
-| `npm run dev`     | Sobe a API em modo de desenvolvimento (hot reload)                                |
+| `npm run dev`     | Sobe a API em modo de desenvolvimento (recarrega a cada alteração)                |
 | `npm run build`   | Compila o TypeScript para `dist/`                                                 |
 | `npm start`       | Sobe a versão compilada                                                           |
 | `npm run migrate` | Aplica as migrations pendentes                                                    |
 | `npm run seed`    | Cria o usuário demo com tarefas de exemplo (pode rodar de novo sem duplicar nada) |
-| `npm test`        | Roda os testes de integração (banco `todo_test`)                                  |
+| `npm test`        | Roda os testes de integração                                                      |
 | `npm run lint`    | Analisa o código com ESLint                                                       |
 | `npm run format`  | Formata o código com Prettier                                                     |
 
-Para conferir se a API está no ar: `GET http://localhost:3000/api/health` →
-`200 { "status": "ok", "mysql": "ok", "mongo": "ok" }`. Se um dos bancos estiver fora do ar, a resposta é `503` e diz
-qual (ex.: `{ "status": "error", "mysql": "ok", "mongo": "unavailable" }`). A API não sobe se não conseguir conectar ao
-MongoDB, e se reconecta sozinha quando ele volta.
+**Situação da API:** `GET /api/health` responde `200 { "status": "ok", "mysql": "ok", "mongo": "ok" }`. Se um dos
+bancos estiver fora do ar, responde `503` e diz qual. A API não sobe sem conseguir conectar ao MongoDB e se reconecta
+sozinha quando ele volta.
 
-### Endpoints
+**Migrations:** o esquema do MySQL fica em arquivos SQL numerados em `backend/migrations/`. O `npm run migrate` aplica,
+em ordem, os que ainda não constam na tabela `migrations`; rodar de novo não faz nada se estiver tudo aplicado.
 
-Todas as rotas ficam sob o prefixo `/api`. As rotas de **tarefas exigem sessão** (sem ela: `401`) e só enxergam as
-tarefas da pessoa conectada — a tarefa de outra pessoa responde `404`, como se não existisse.
+**Seed:** o `npm run seed` cria o usuário de demonstração com três tarefas de exemplo. Tarefas criadas antes da
+existência de contas (sem dono) passam para ele.
+
+## API
+
+Todas as rotas ficam sob o prefixo `/api` e respondem em JSON. As rotas de **tarefas exigem sessão** (sem ela: `401`)
+e só enxergam as tarefas da pessoa conectada — a tarefa de outra pessoa responde `404`, como se não existisse.
 
 | Método | Rota                 | Descrição                                                                 | Sucesso |
 | ------ | -------------------- | ------------------------------------------------------------------------- | ------- |
 | GET    | `/health`            | Situação da API e dos dois bancos                                         | 200     |
-| GET    | `/tasks`             | Lista todas as tarefas, das mais recentes para as antigas                 | 200     |
-| POST   | `/tasks`             | Cria uma tarefa                                                           | 201     |
-| GET    | `/tasks/:id`         | Busca uma tarefa pelo id                                                  | 200     |
-| PATCH  | `/tasks/:id`         | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
-| DELETE | `/tasks/:id`         | Exclui uma tarefa (resposta sem corpo)                                    | 204     |
-| GET    | `/tasks/:id/details` | Notas e tags da tarefa (MongoDB)                                          | 200     |
-| PUT    | `/tasks/:id/details` | Grava as notas e as tags (substitui as anteriores)                        | 200     |
-| GET    | `/tasks/:id/history` | Histórico de ações da tarefa, das mais recentes para as antigas (MongoDB) | 200     |
 | POST   | `/auth/register`     | Cria a conta e já inicia a sessão                                         | 201     |
 | POST   | `/auth/login`        | Inicia a sessão                                                           | 200     |
 | GET    | `/auth/me`           | Usuário da sessão atual                                                   | 200     |
 | POST   | `/auth/logout`       | Encerra a sessão (resposta sem corpo)                                     | 204     |
+| GET    | `/tasks`             | Lista as tarefas, das mais recentes para as antigas                       | 200     |
+| POST   | `/tasks`             | Cria uma tarefa                                                           | 201     |
+| GET    | `/tasks/:id`         | Busca uma tarefa pelo id                                                  | 200     |
+| PATCH  | `/tasks/:id`         | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
+| DELETE | `/tasks/:id`         | Exclui uma tarefa e os detalhes dela (resposta sem corpo)                 | 204     |
+| GET    | `/tasks/:id/details` | Notas e tags da tarefa (MongoDB)                                          | 200     |
+| PUT    | `/tasks/:id/details` | Grava as notas e as tags (substitui as anteriores)                        | 200     |
+| GET    | `/tasks/:id/history` | Histórico da tarefa, das ações mais recentes para as antigas (MongoDB)    | 200     |
 
-#### Detalhes e histórico (MongoDB)
+### Tarefas
 
-A tarefa em si (título, descrição, situação, dono) fica no **MySQL**; o **MongoDB** guarda as informações adicionais:
-
-- **Detalhes** (`task_details`, um documento por tarefa): notas longas e tags — dados de formato livre, que não pedem
-  colunas fixas. Exemplo de `PUT /api/tasks/:id/details`:
-
-  ```json
-  { "notes": "Levar o notebook para a reunião", "tags": ["reunião", "urgente"] }
-  ```
-
-  Notas até 10000 caracteres; até 10 tags de 1 a 30 caracteres (repetidas, ignorando maiúsculas, são descartadas).
-
-- **Histórico** (`task_events`): cada ação vira um registro — `created`, `updated` (com os valores antes e depois de
-  cada campo alterado), `completed`, `reopened`, `details_updated` e `deleted`. Um registro que só cresce e cujas
-  entradas variam de formato combina com documentos. Se o MongoDB falhar ao registrar, a ação principal (no MySQL)
-  não é desfeita: o erro vai para o log e só aquela entrada do histórico se perde.
-
-Os dois são sempre filtrados pelo dono da tarefa, como no MySQL; ao excluir a tarefa, os detalhes também são excluídos.
-
-#### Autenticação
-
-O login e o cadastro respondem `{ "user": { "id": 1, "email": "ana@techx.com" } }` e guardam a sessão (um JWT assinado
-com HS256) num **cookie `HttpOnly`, `SameSite=Strict`**, restrito ao caminho `/api` e com `Secure` em produção:
-
-- `HttpOnly`: scripts da página não conseguem ler o token, então um ataque XSS não rouba a sessão;
-- `SameSite=Strict`: o navegador não envia o cookie em requisições iniciadas por outros sites (proteção contra CSRF).
-
-O navegador envia o cookie sozinho; com `curl`, use um arquivo de cookies (`-c cookies.txt` no login e
-`-b cookies.txt` nas chamadas seguintes). As senhas são guardadas só como hash bcrypt (custo 12), com 8 caracteres no
-mínimo. Um e-mail inexistente e uma senha errada recebem a mesma resposta (`401 Invalid email or password`), para não
-revelar quais contas existem.
-
-Exemplo de resposta de `GET /api/tasks`:
+`GET /api/tasks`:
 
 ```json
 [
@@ -201,17 +239,14 @@ Exemplo de resposta de `GET /api/tasks`:
 ]
 ```
 
-Exemplo de `POST /api/tasks` (o `description` é opcional; vazio é salvo como `null`):
+`POST /api/tasks` (a descrição é opcional; vazia é salva como `null`) responde `201` com a tarefa criada:
 
 ```json
 { "title": "Revisar o relatório", "description": "Conferir os números do trimestre" }
 ```
 
-Resposta `201` com a tarefa criada (`completed: false`). Dados inválidos retornam `400` com o motivo por campo:
-
-```json
-{ "error": "Validation failed", "details": { "title": ["Title is required"] } }
-```
+`PATCH /api/tasks/:id` altera apenas os campos enviados (pelo menos um). Para marcar como concluída:
+`{ "completed": true }`.
 
 | Campo         | Regras                                                          |
 | ------------- | --------------------------------------------------------------- |
@@ -219,69 +254,94 @@ Resposta `201` com a tarefa criada (`completed: false`). Dados inválidos retorn
 | `description` | Opcional, texto, até 5000 caracteres                            |
 | `completed`   | Só no `PATCH`: `true` ou `false`                                |
 
-O `PATCH /api/tasks/:id` altera apenas os campos enviados (pelo menos um). Para marcar como concluída:
+### Detalhes e histórico (MongoDB)
 
-```json
-{ "completed": true }
-```
+A tarefa em si (título, descrição, situação, dono) fica no MySQL; o MongoDB guarda as informações adicionais:
 
-#### Erros
+- **Detalhes** (coleção `task_details`, um documento por tarefa): notas e tags, dados de formato livre que não pedem
+  colunas fixas. `PUT /api/tasks/:id/details` com
+  `{ "notes": "Levar o notebook para a reunião", "tags": ["reunião", "urgente"] }`. Notas até 10000 caracteres; até
+  10 tags de 1 a 30 caracteres (repetidas, sem diferenciar maiúsculas, são descartadas).
+- **Histórico** (coleção `task_events`): cada ação vira um registro — `created`, `updated` (com o valor antes e depois
+  de cada campo alterado), `completed`, `reopened`, `details_updated` e `deleted`. Se o MongoDB falhar ao registrar, a
+  ação principal (no MySQL) não é desfeita: o erro vai para o log e só aquela entrada do histórico se perde.
 
-Além dos erros abaixo, as rotas de autenticação respondem `401` (sem sessão ou credenciais inválidas) e `409` (e-mail
-já cadastrado).
+Os dois são filtrados pelo dono da tarefa, como no MySQL.
 
-Todos os erros são respondidos em JSON, no formato `{ "error": "mensagem" }` (validação inclui também `details`):
+### Autenticação
 
-| Status | Quando                                                              | Exemplo de `error`        |
-| ------ | ------------------------------------------------------------------- | ------------------------- |
-| 400    | Dados inválidos (com `details` por campo)                           | `Validation failed`       |
-| 400    | Corpo da requisição não é um JSON válido                            | `Malformed JSON body`     |
-| 400    | Id da URL não é um inteiro positivo                                 | `Invalid task id`         |
-| 404    | Tarefa não existe                                                   | `Task not found`          |
-| 404    | Rota não existe                                                     | `Route not found: GET /x` |
-| 500    | Erro inesperado (detalhes só no log do servidor, nunca na resposta) | `Internal server error`   |
+Cadastro e login respondem `{ "user": { "id": 1, "email": "ana@techx.com" } }` e guardam a sessão (um JWT HS256) num
+**cookie `HttpOnly`, `SameSite=Strict`**, restrito ao caminho `/api` e com `Secure` em produção:
 
-### Testes
+- `HttpOnly`: scripts da página não conseguem ler o token, então um ataque XSS não rouba a sessão;
+- `SameSite=Strict`: o navegador não envia o cookie em requisições iniciadas por outros sites (proteção contra CSRF).
 
-Testes de integração com [Jest](https://jestjs.io/) + [Supertest](https://github.com/ladjs/supertest): cada teste faz
-requisições HTTP reais à API, que grava em bancos **separados**, o `todo_test` no MySQL e no MongoDB — os dados de
-desenvolvimento (`todo`) nunca são tocados. As migrations são aplicadas no banco de teste antes da suíte, e as tabelas
-são limpas antes de cada teste. Os dois containers precisam estar no ar (`docker compose up -d`).
+O navegador envia o cookie sozinho; com `curl`, use um arquivo de cookies (`-c cookies.txt` no login e
+`-b cookies.txt` nas chamadas seguintes). As senhas são guardadas só como hash bcrypt, com no mínimo 8 caracteres. Um
+e-mail inexistente e uma senha errada recebem a mesma resposta, para não revelar quais contas existem.
 
-```bash
-docker compose up -d   # o MySQL precisa estar no ar
-cd backend
-npm test
-```
+### Erros
 
-O banco `todo_test` é criado automaticamente pelo script `docker/mysql-init/01-create-test-database.sh` quando o volume
-do MySQL é criado. Se o seu volume é anterior a esse script, recrie-o com `docker compose down -v` (apaga os dados de
-desenvolvimento) e `docker compose up -d`.
+Todos os erros seguem o formato `{ "error": "mensagem" }`; os de validação trazem também `details` por campo, por
+exemplo `{ "error": "Validation failed", "details": { "title": ["Title is required"] } }`.
 
-### Migrations
-
-O esquema do banco é versionado em arquivos SQL numerados em `backend/migrations/` (`001_create_tasks.sql`, ...).
-O `npm run migrate` aplica, em ordem, os arquivos que ainda não constam na tabela `migrations` do banco; rodar de novo
-não faz nada se estiver tudo aplicado.
+| Status | Quando                                                              | Exemplo de `error`         |
+| ------ | ------------------------------------------------------------------- | -------------------------- |
+| 400    | Dados inválidos (com `details` por campo)                           | `Validation failed`        |
+| 400    | Corpo da requisição não é um JSON válido                            | `Malformed JSON body`      |
+| 400    | Id da URL não é um inteiro positivo                                 | `Invalid task id`          |
+| 401    | Sem sessão, sessão expirada ou credenciais inválidas                | `Authentication required`  |
+| 404    | Tarefa não existe (ou é de outra pessoa)                            | `Task not found`           |
+| 404    | Rota não existe                                                     | `Route not found: GET /x`  |
+| 409    | E-mail já cadastrado                                                | `Email already registered` |
+| 500    | Erro inesperado (detalhes só no log do servidor, nunca na resposta) | `Internal server error`    |
 
 ## Frontend
 
-Interface em Angular 22 (componentes standalone, sem zone.js), com a API rodando em `http://localhost:3000`.
-
-O frontend chama a API pelo caminho relativo `/api`. Em desenvolvimento, o servidor do Angular encaminha `/api` para
-`http://localhost:3000` (configurado em `frontend/proxy.conf.json`), então a página e a API ficam na mesma origem e o
-navegador não precisa de CORS. Se a API rodar em outra porta, ajuste o `target` desse arquivo.
-
-```bash
-cd frontend
-npm install
-npm start              # http://localhost:4200, recarrega a cada alteração
-```
+Angular 22 com componentes standalone e signals, sem zone.js. O frontend chama a API pelo caminho relativo `/api`;
+em desenvolvimento, o servidor do Angular encaminha `/api` para `http://localhost:3000`
+([`frontend/proxy.conf.json`](frontend/proxy.conf.json)). Se a API rodar em outra porta, ajuste o `target` desse
+arquivo.
 
 | Script           | O que faz                                                          |
 | ---------------- | ------------------------------------------------------------------ |
 | `npm start`      | Sobe o servidor de desenvolvimento em `http://localhost:4200`      |
 | `npm run build`  | Gera a versão de produção em `dist/`                               |
-| `npm test`       | Roda os testes unitários (Vitest)                                  |
+| `npm test`       | Roda os testes de componentes e serviços (Vitest)                  |
 | `npm run lint`   | Analisa o código e os templates com ESLint (inclui acessibilidade) |
 | `npm run format` | Formata o código com Prettier                                      |
+
+## Testes e qualidade
+
+**Backend** — testes de integração com [Jest](https://jestjs.io/) + [Supertest](https://github.com/ladjs/supertest):
+cada teste faz requisições HTTP reais à API, que grava em bancos **separados** (`todo_test` no MySQL e no MongoDB) — os
+dados de desenvolvimento nunca são tocados. Cobrem o CRUD, validações, autenticação (inclusive tokens adulterados,
+expirados e sem assinatura), isolamento entre contas, detalhes e histórico.
+
+```bash
+docker compose up -d   # os dois bancos precisam estar no ar
+cd backend
+npm test
+```
+
+**Frontend** — testes de componentes, serviços, guards e interceptor com Vitest:
+
+```bash
+cd frontend
+npm test
+```
+
+**Qualidade:** TypeScript em modo `strict` nos dois projetos, ESLint (com as regras de acessibilidade dos templates
+Angular) e Prettier com uma configuração única para o repositório.
+
+## Problemas comuns
+
+| Sintoma                                                             | O que fazer                                                                                                         |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `npm start` diz que o Docker não está respondendo                   | Abra o Docker Desktop, espere ele terminar de iniciar e rode de novo                                                |
+| Erro de porta ocupada (3306, 27017, 3000 ou 4200)                   | Outro programa usa a porta: feche-o, ou mude `MYSQL_PORT`/`MONGO_PORT` no `.env` da raiz e `PORT` no `backend/.env` |
+| A API não sobe: "Missing required environment variables"            | Crie o `backend/.env` a partir do `backend/.env.example`                                                            |
+| A API não sobe: "API failed to start: MongooseServerSelectionError" | O MongoDB não está no ar: `docker compose up -d` e confira `docker compose ps`                                      |
+| A tela mostra "Sem conexão com o servidor"                          | A API está parada: suba o backend (`npm run dev` em `backend/`)                                                     |
+| Testes do backend: "Could not prepare the test database"            | O volume do MySQL é anterior ao script do banco de testes: `docker compose down -v` e `docker compose up -d`        |
+| Não consigo entrar com o usuário demo                               | Rode `npm run seed` em `backend/` (é seguro rodar mais de uma vez)                                                  |
