@@ -1,0 +1,417 @@
+openapi: 3.0.3
+info:
+  title: TechX Tasks API
+  version: 1.0.0
+  description: |
+    API REST do gerenciador de tarefas TechX.
+
+    **Como testar por aqui:** use `POST /auth/login` (usuário de demonstração `demo@techx.com` /
+    `demo12345`). A sessão fica num cookie `HttpOnly` que o navegador envia sozinho nas chamadas
+    seguintes — não é preciso copiar token nenhum. `POST /auth/logout` encerra.
+
+    Tarefas, usuários e a situação de cada tarefa ficam no **MySQL**; notas, tags e histórico, no
+    **MongoDB**. Cada pessoa só enxerga as próprias tarefas: a tarefa de outra pessoa responde `404`.
+servers:
+  - url: /api
+tags:
+  - name: Saúde
+  - name: Autenticação
+  - name: Tarefas
+    description: Guardadas no MySQL.
+  - name: Detalhes e histórico
+    description: Informações adicionais das tarefas, guardadas no MongoDB.
+
+paths:
+  /health:
+    get:
+      tags: [Saúde]
+      summary: Situação da API e dos dois bancos
+      responses:
+        '200':
+          description: API e bancos funcionando
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+              example: { status: ok, mysql: ok, mongo: ok }
+        '503':
+          description: Um dos bancos está fora do ar (indicado no corpo)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+              example: { status: error, mysql: ok, mongo: unavailable }
+
+  /auth/register:
+    post:
+      tags: [Autenticação]
+      summary: Cria a conta e já inicia a sessão
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterInput' }
+      responses:
+        '201':
+          description: Conta criada; o cookie de sessão vem no cabeçalho `Set-Cookie`
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserResponse' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '409':
+          description: E-mail já cadastrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: Email already registered }
+
+  /auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Inicia a sessão
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginInput' }
+            example: { email: demo@techx.com, password: demo12345 }
+      responses:
+        '200':
+          description: Sessão iniciada; o cookie vem no cabeçalho `Set-Cookie`
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserResponse' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401':
+          description: E-mail ou senha inválidos (mesma resposta nos dois casos)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: Invalid email or password }
+
+  /auth/me:
+    get:
+      tags: [Autenticação]
+      summary: Usuário da sessão atual
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Usuário conectado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/logout:
+    post:
+      tags: [Autenticação]
+      summary: Encerra a sessão (apaga o cookie)
+      responses:
+        '204': { description: Sessão encerrada }
+
+  /tasks:
+    get:
+      tags: [Tarefas]
+      summary: Lista as tarefas da pessoa conectada, das mais recentes para as antigas
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Lista de tarefas (vazia se não houver nenhuma)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Task' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Tarefas]
+      summary: Cria uma tarefa
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewTask' }
+            example: { title: Revisar o relatório, description: Conferir os números do trimestre }
+      responses:
+        '201':
+          description: Tarefa criada (pendente)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /tasks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [Tarefas]
+      summary: Busca uma tarefa
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: A tarefa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        '400': { $ref: '#/components/responses/InvalidId' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/TaskNotFound' }
+    patch:
+      tags: [Tarefas]
+      summary: Altera só os campos enviados (inclui marcar e desmarcar como concluída)
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaskUpdate' }
+            examples:
+              concluir: { value: { completed: true } }
+              editar: { value: { title: Revisar o relatório anual, description: null } }
+      responses:
+        '200':
+          description: Tarefa atualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/TaskNotFound' }
+    delete:
+      tags: [Tarefas]
+      summary: Exclui a tarefa e as notas e tags dela
+      security: [{ sessionCookie: [] }]
+      responses:
+        '204': { description: Tarefa excluída }
+        '400': { $ref: '#/components/responses/InvalidId' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/TaskNotFound' }
+
+  /tasks/{id}/details:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [Detalhes e histórico]
+      summary: Notas e tags da tarefa
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Notas e tags (vazias se nunca foram preenchidas)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TaskDetails' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/TaskNotFound' }
+    put:
+      tags: [Detalhes e histórico]
+      summary: Grava notas e tags (substitui as anteriores)
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaskDetails' }
+            example: { notes: Levar o notebook para a reunião, tags: [reunião, urgente] }
+      responses:
+        '200':
+          description: O que foi gravado (tags aparadas e sem repetição)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TaskDetails' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/TaskNotFound' }
+
+  /tasks/{id}/history:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [Detalhes e histórico]
+      summary: Histórico da tarefa, das ações mais recentes para as antigas
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Registros do histórico
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TaskEvent' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/TaskNotFound' }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+      description: JWT da sessão, num cookie HttpOnly gravado pelo login ou pelo cadastro.
+
+  headers:
+    SessionCookie:
+      description: '`session=<jwt>; Path=/api; HttpOnly; SameSite=Strict` (e `Secure` em produção)'
+      schema: { type: string }
+
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      description: Id da tarefa (inteiro positivo, só dígitos)
+      schema: { type: integer, minimum: 1, example: 1 }
+
+  responses:
+    ValidationFailed:
+      description: Dados inválidos, com o motivo por campo
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ValidationError' }
+          example: { error: Validation failed, details: { title: [Title is required] } }
+    InvalidId:
+      description: O id da URL não é um inteiro positivo
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: Invalid task id }
+    Unauthorized:
+      description: Sem sessão, ou sessão expirada ou inválida
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: Authentication required }
+    TaskNotFound:
+      description: A tarefa não existe ou é de outra pessoa
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: Task not found }
+
+  schemas:
+    Health:
+      type: object
+      required: [status, mysql, mongo]
+      properties:
+        status: { type: string, enum: [ok, error] }
+        mysql: { type: string, enum: [ok, unavailable] }
+        mongo: { type: string, enum: [ok, unavailable] }
+
+    User:
+      type: object
+      required: [id, email]
+      properties:
+        id: { type: integer, example: 1 }
+        email: { type: string, format: email, example: demo@techx.com }
+
+    UserResponse:
+      type: object
+      required: [user]
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+
+    RegisterInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Guardado em minúsculas e sem espaços nas pontas
+        password:
+          type: string
+          minLength: 8
+          description: De 8 caracteres a 72 bytes (limite do bcrypt)
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    Task:
+      type: object
+      required: [id, title, description, completed, createdAt, updatedAt]
+      properties:
+        id: { type: integer, example: 1 }
+        title: { type: string, example: Revisar o relatório }
+        description: { type: string, nullable: true, example: Conferir os números do trimestre }
+        completed: { type: boolean, example: false }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    NewTask:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Espaços nas pontas são removidos; não pode ficar em branco
+        description:
+          type: string
+          nullable: true
+          maxLength: 5000
+          description: Opcional; vazia é salva como `null`
+
+    TaskUpdate:
+      type: object
+      minProperties: 1
+      description: Pelo menos um campo; os ausentes não são alterados
+      properties:
+        title: { type: string, minLength: 1, maxLength: 255 }
+        description: { type: string, nullable: true, maxLength: 5000 }
+        completed: { type: boolean }
+
+    TaskDetails:
+      type: object
+      required: [notes, tags]
+      properties:
+        notes: { type: string, maxLength: 10000 }
+        tags:
+          type: array
+          maxItems: 10
+          description: Repetidas (sem diferenciar maiúsculas) são descartadas
+          items: { type: string, minLength: 1, maxLength: 30 }
+
+    TaskEvent:
+      type: object
+      required: [type, at]
+      properties:
+        type:
+          type: string
+          enum: [created, updated, completed, reopened, details_updated, deleted]
+        changes:
+          type: object
+          description: Só em `updated` — cada campo alterado, com o valor antes e depois
+          additionalProperties:
+            type: object
+            properties:
+              from: {}
+              to: {}
+          example: { title: { from: Rascunho, to: Revisar o relatório } }
+        at: { type: string, format: date-time }
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+
+    ValidationError:
+      type: object
+      required: [error, details]
+      properties:
+        error: { type: string, example: Validation failed }
+        details:
+          type: object
+          description: Mensagens por campo (`_errors` para problemas do corpo inteiro)
+          additionalProperties:
+            type: array
+            items: { type: string }

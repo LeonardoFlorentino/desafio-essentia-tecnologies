@@ -8,6 +8,9 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - **Bancos de dados:** MySQL (usuários e tarefas) e MongoDB (notas, tags e histórico das tarefas)
 
 > **Usuário de demonstração:** `demo@techx.com` / `demo12345` — já vem com algumas tarefas.
+>
+> **Documentação interativa da API (Swagger):** `/api/docs` — http://localhost:8080/api/docs com Docker ou
+> http://localhost:3000/api/docs em desenvolvimento.
 
 ## Sumário
 
@@ -149,12 +152,13 @@ configuração (MySQL e MongoDB com usuário e senha `todo`); para alterá-los, 
 
 ### Endereços
 
-| O quê           | Opção 1 (Docker)                     | Opção 2 (desenvolvimento)            |
-| --------------- | ------------------------------------ | ------------------------------------ |
-| Aplicação       | http://localhost:8080                | http://localhost:4200                |
-| API             | http://localhost:8080/api            | http://localhost:3000/api            |
-| Situação da API | http://localhost:8080/api/health     | http://localhost:3000/api/health     |
-| MySQL / MongoDB | `localhost:3306` / `localhost:27017` | `localhost:3306` / `localhost:27017` |
+| O quê               | Opção 1 (Docker)                     | Opção 2 (desenvolvimento)            |
+| ------------------- | ------------------------------------ | ------------------------------------ |
+| Aplicação           | http://localhost:8080                | http://localhost:4200                |
+| API                 | http://localhost:8080/api            | http://localhost:3000/api            |
+| Situação da API     | http://localhost:8080/api/health     | http://localhost:3000/api/health     |
+| Documentação da API | http://localhost:8080/api/docs       | http://localhost:3000/api/docs       |
+| MySQL / MongoDB     | `localhost:3306` / `localhost:27017` | `localhost:3306` / `localhost:27017` |
 
 ### Para parar
 
@@ -213,7 +217,7 @@ O `backend/.env.example` já traz valores que funcionam com o `docker-compose.ym
 | `npm run migrate` | Aplica as migrations pendentes                                                    |
 | `npm run seed`    | Cria o usuário demo com tarefas de exemplo (pode rodar de novo sem duplicar nada) |
 | `npm test`        | Roda os testes de integração                                                      |
-| `npm run lint`    | Analisa o código com ESLint                                                       |
+| `npm run lint`    | Analisa o código com ESLint e valida o documento OpenAPI                          |
 | `npm run format`  | Formata o código com Prettier                                                     |
 
 **Situação da API:** `GET /api/health` responde `200 { "status": "ok", "mysql": "ok", "mongo": "ok" }`. Se um dos
@@ -227,6 +231,16 @@ em ordem, os que ainda não constam na tabela `migrations`; rodar de novo não f
 existência de contas (sem dono) passam para ele.
 
 ## API
+
+A especificação completa está em **OpenAPI 3** ([`backend/docs/openapi.yaml`](backend/docs/openapi.yaml)), com
+schemas, exemplos e todas as respostas de erro. Ela é servida pela própria API:
+
+- **`/api/docs`** — Swagger UI: dá para testar cada rota pelo navegador. Faça `POST /auth/login` com o usuário de
+  demonstração e as chamadas seguintes já saem autenticadas (o cookie de sessão vai sozinho).
+- **`/api/openapi.json`** — o documento em JSON, para importar no Postman, Insomnia ou gerar clientes.
+
+O documento é validado contra o padrão OpenAPI no `npm run lint`, e um teste chama cada operação documentada para
+garantir que ela existe de fato na API.
 
 Todas as rotas ficam sob o prefixo `/api` e respondem em JSON. As rotas de **tarefas exigem sessão** (sem ela: `401`)
 e só enxergam as tarefas da pessoa conectada — a tarefa de outra pessoa responde `404`, como se não existisse.

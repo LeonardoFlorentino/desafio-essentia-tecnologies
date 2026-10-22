@@ -13,5 +13,12 @@ export default defineConfig(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
+  {
+    // Plain Node scripts (outside TypeScript): declare the Node globals they use.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly', URL: 'readonly' },
+    },
+  },
   prettier,
 );

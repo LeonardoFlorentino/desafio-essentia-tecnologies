@@ -15,6 +15,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./
 COPY migrations ./migrations
+COPY docs ./docs
 USER node
 EXPOSE 3000
 # Brings the schema up to date and makes sure the demo user exists (both idempotent), then serves.

@@ -5,6 +5,7 @@ import { authRouter } from './auth/auth.routes';
 import { config } from './config';
 import { pingMongo } from './db/mongo';
 import { pool } from './db/mysql';
+import { docsRouter } from './http/docs';
 import { errorHandler, notFoundHandler } from './http/errors';
 import { taskRouter } from './tasks/task.routes';
 
@@ -28,6 +29,7 @@ export function createApp() {
 
   app.use('/api/auth', authRouter);
   app.use('/api/tasks', taskRouter);
+  app.use('/api', docsRouter);
 
   // Must come after every route.
   app.use(notFoundHandler);
