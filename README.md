@@ -79,6 +79,7 @@ Todas as rotas ficam sob o prefixo `/api`.
 | ------ | --------- | --------------------------------------------------------- | ------- |
 | GET    | `/health` | Situação da API e do banco                                | 200     |
 | GET    | `/tasks`  | Lista todas as tarefas, das mais recentes para as antigas | 200     |
+| POST   | `/tasks`  | Cria uma tarefa                                           | 201     |
 
 Exemplo de resposta de `GET /api/tasks`:
 
@@ -94,6 +95,23 @@ Exemplo de resposta de `GET /api/tasks`:
   }
 ]
 ```
+
+Exemplo de `POST /api/tasks` (o `description` é opcional; vazio é salvo como `null`):
+
+```json
+{ "title": "Revisar o relatório", "description": "Conferir os números do trimestre" }
+```
+
+Resposta `201` com a tarefa criada (`completed: false`). Dados inválidos retornam `400` com o motivo por campo:
+
+```json
+{ "error": "Validation failed", "details": { "title": ["Title is required"] } }
+```
+
+| Campo         | Regras                                                          |
+| ------------- | --------------------------------------------------------------- |
+| `title`       | Obrigatório, texto, 1 a 255 caracteres (sem espaços nas pontas) |
+| `description` | Opcional, texto, até 5000 caracteres                            |
 
 ### Migrations
 
