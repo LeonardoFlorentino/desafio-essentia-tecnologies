@@ -1,0 +1,8 @@
+{
+  "name": "techx-tasks",
+  "private": true,
+  "description": "TechX task manager: Angular frontend + Node.js/TypeScript API",
+  "scripts": {
+    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File start.ps1"
+  }
+}

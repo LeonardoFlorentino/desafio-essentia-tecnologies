@@ -6,6 +6,24 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
 - **Backend:** API RESTful em Node.js + TypeScript
 - **Banco de dados:** MySQL
 
+## Início rápido (Windows)
+
+Com o Docker Desktop aberto, na raiz do projeto:
+
+```bash
+npm start
+```
+
+O comando prepara e sobe tudo, nesta ordem:
+
+1. Na primeira execução, cria os arquivos `.env` a partir dos `.env.example` e instala as dependências do backend.
+2. Sobe o MySQL e espera o container ficar saudável.
+3. Abre o backend em uma nova aba do terminal (Windows Terminal; sem ele, em uma nova janela do PowerShell).
+4. Espera a API responder em `/api/health` (até 60 s) e devolve o foco ao terminal onde o comando foi digitado.
+
+Se algum passo falhar, o script para e diz o que verificar. Em outros sistemas operacionais, siga o passo a passo
+das seções abaixo.
+
 ## Pré-requisitos
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (com Docker Compose v2)
@@ -39,12 +57,12 @@ npm run dev            # http://localhost:3000, recarrega a cada alteração
 
 Se o `.env` estiver faltando, a API não sobe e informa quais variáveis precisam ser definidas.
 
-| Script | O que faz |
-|---|---|
-| `npm run dev` | Sobe a API em modo de desenvolvimento (hot reload) |
-| `npm run build` | Compila o TypeScript para `dist/` |
-| `npm start` | Sobe a versão compilada |
-| `npm run lint` | Analisa o código com ESLint |
-| `npm run format` | Formata o código com Prettier |
+| Script           | O que faz                                          |
+| ---------------- | -------------------------------------------------- |
+| `npm run dev`    | Sobe a API em modo de desenvolvimento (hot reload) |
+| `npm run build`  | Compila o TypeScript para `dist/`                  |
+| `npm start`      | Sobe a versão compilada                            |
+| `npm run lint`   | Analisa o código com ESLint                        |
+| `npm run format` | Formata o código com Prettier                      |
 
 Para conferir se a API está no ar: `GET http://localhost:3000/api/health` → `{ "status": "ok" }`.
