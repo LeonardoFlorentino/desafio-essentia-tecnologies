@@ -157,6 +157,46 @@ describe('TaskListPage', () => {
     },
   );
 
+  describe('deleting', () => {
+    function deleteButtonOf(item: number) {
+      return page
+        .querySelectorAll('li')
+        [item].querySelector<HTMLButtonElement>('button[aria-label^="Excluir"]')!;
+    }
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it('asks for confirmation naming the task', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      deleteButtonOf(1).click();
+      expect(confirmSpy).toHaveBeenCalledWith('Excluir a tarefa "Write the report"?');
+    });
+
+    it('deletes the task with DELETE and removes it from the list when confirmed', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      deleteButtonOf(1).click();
+
+      const req = http.expectOne('/api/tasks/1');
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+
+      const items = page.querySelectorAll('li');
+      expect(items).toHaveLength(1);
+      expect(items[0].textContent).toContain('Call the client');
+      expect(document.activeElement?.id).toBe('tasks-heading');
+    });
+
+    it('does nothing when the user gives up', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(false);
+      deleteButtonOf(1).click();
+      await fixture.whenStable();
+
+      http.expectNone('/api/tasks/1');
+      expect(page.querySelectorAll('li')).toHaveLength(2);
+    });
+  });
+
   describe('inline editing', () => {
     async function openEditor(id: number) {
       page.querySelector<HTMLButtonElement>(`#edit-button-${id}`)!.click();

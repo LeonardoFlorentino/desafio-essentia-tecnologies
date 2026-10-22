@@ -4,7 +4,7 @@ import { finalize } from 'rxjs';
 import { Task } from './task.model';
 import { TaskService } from './task.service';
 
-/** Home page: shows every registered task and lets the user add, edit and complete them. */
+/** Home page: shows every registered task and lets the user add, edit, complete and delete them. */
 @Component({
   selector: 'app-task-list-page',
   imports: [ReactiveFormsModule],
@@ -86,6 +86,20 @@ export class TaskListPage implements OnInit {
       .subscribe((updated) => {
         this.replaceTask(updated);
         this.cancelEdit(task);
+      });
+  }
+
+  protected deleteTask(task: Task) {
+    if (!confirm(`Excluir a tarefa "${task.title}"?`)) return;
+
+    this.setBusy(task.id, true);
+    this.taskService
+      .remove(task.id)
+      .pipe(finalize(() => this.setBusy(task.id, false)))
+      .subscribe(() => {
+        this.tasks.update((tasks) => tasks.filter((t) => t.id !== task.id));
+        // The focused button is gone with its task; keep keyboard users on the list.
+        this.focusAfterRender('tasks-heading');
       });
   }
 

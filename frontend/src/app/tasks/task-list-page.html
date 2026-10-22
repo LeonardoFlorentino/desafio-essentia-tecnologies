@@ -37,7 +37,7 @@
 </section>
 
 <section aria-labelledby="tasks-heading">
-  <h2 id="tasks-heading">Tarefas</h2>
+  <h2 id="tasks-heading" tabindex="-1">Tarefas</h2>
 
   <ul class="task-list">
     @for (task of tasks(); track task.id) {
@@ -113,6 +113,15 @@
               (click)="startEdit(task)"
             >
               Editar
+            </button>
+            <button
+              type="button"
+              class="button--danger"
+              [attr.aria-label]="'Excluir: ' + task.title"
+              [disabled]="editingId() !== null || busyIds().has(task.id)"
+              (click)="deleteTask(task)"
+            >
+              Excluir
             </button>
           </div>
         }
