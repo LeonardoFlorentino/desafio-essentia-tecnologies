@@ -1,0 +1,84 @@
+<div class="task" [class.task--completed]="task().completed">
+  <input
+    class="task__checkbox"
+    type="checkbox"
+    [checked]="task().completed"
+    [disabled]="busy()"
+    [attr.aria-label]="'Concluída: ' + task().title"
+    (click)="requestToggle($event)"
+  />
+
+  @if (editing()) {
+    <form
+      class="task-form task__edit"
+      [formGroup]="form"
+      (ngSubmit)="submitEdit()"
+      (keydown.escape)="cancelEdit()"
+      [attr.aria-label]="'Editar tarefa: ' + task().title"
+      novalidate
+    >
+      <div class="field">
+        <label [for]="'edit-title-' + task().id">Título</label>
+        <input
+          [id]="'edit-title-' + task().id"
+          type="text"
+          formControlName="title"
+          maxlength="255"
+          autocomplete="off"
+          [attr.aria-invalid]="showError(form, 'title')"
+          [attr.aria-describedby]="
+            showError(form, 'title') ? 'edit-title-error-' + task().id : null
+          "
+        />
+        @if (showError(form, 'title')) {
+          <p [id]="'edit-title-error-' + task().id" class="field__error">
+            Informe o título da tarefa.
+          </p>
+        }
+      </div>
+
+      <div class="field">
+        <label [for]="'edit-description-' + task().id"
+          >Descrição <span class="field__hint">(opcional)</span></label
+        >
+        <textarea
+          [id]="'edit-description-' + task().id"
+          formControlName="description"
+          rows="2"
+          maxlength="5000"
+        ></textarea>
+      </div>
+
+      <div class="task__actions">
+        <button type="submit" [disabled]="busy()">Salvar</button>
+        <button type="button" (click)="cancelEdit()">Cancelar</button>
+      </div>
+    </form>
+  } @else {
+    <h3 class="task__title">{{ task().title }}</h3>
+    @if (task().description) {
+      <p class="task__description">{{ task().description }}</p>
+    }
+    <span class="task__status">{{ task().completed ? 'Concluída' : 'Pendente' }}</span>
+    <div class="task__actions">
+      <button
+        type="button"
+        [id]="'edit-button-' + task().id"
+        [attr.aria-label]="'Editar: ' + task().title"
+        [disabled]="locked()"
+        (click)="startEdit()"
+      >
+        Editar
+      </button>
+      <button
+        type="button"
+        class="button--danger"
+        [attr.aria-label]="'Excluir: ' + task().title"
+        [disabled]="locked() || busy()"
+        (click)="remove.emit()"
+      >
+        Excluir
+      </button>
+    </div>
+  }
+</div>

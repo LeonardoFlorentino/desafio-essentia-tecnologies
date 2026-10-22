@@ -1,0 +1,61 @@
+.task {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.75rem;
+  align-items: start;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 0.5rem;
+
+  > :not(.task__checkbox) {
+    grid-column: 2;
+  }
+}
+
+.task__checkbox {
+  grid-row: span 4;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0.125rem 0 0;
+  cursor: pointer;
+}
+
+.task__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.task--completed .task__title {
+  text-decoration: line-through;
+  color: #667085;
+}
+
+.task__description {
+  margin: 0.25rem 0 0;
+  color: #475467;
+}
+
+.task__status {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #475467;
+}
+
+.task--completed .task__status {
+  color: #067647;
+}
+
+.task__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.task__edit {
+  max-width: none;
+}
+
+.button--danger {
+  color: #b42318;
+}

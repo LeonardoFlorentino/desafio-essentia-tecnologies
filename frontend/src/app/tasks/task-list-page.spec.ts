@@ -114,7 +114,7 @@ describe('TaskListPage', () => {
     await fixture.whenStable();
 
     const item = page.querySelectorAll('li')[1];
-    expect(item.classList).toContain('task--completed');
+    expect(item.querySelector('.task')!.classList).toContain('task--completed');
     expect(item.textContent).toContain('Concluída');
     expect(checkboxOf(1).disabled).toBe(false);
   });
@@ -128,7 +128,7 @@ describe('TaskListPage', () => {
     await fixture.whenStable();
 
     const item = page.querySelectorAll('li')[0];
-    expect(item.classList).not.toContain('task--completed');
+    expect(item.querySelector('.task')!.classList).not.toContain('task--completed');
     expect(item.textContent).toContain('Pendente');
   });
 

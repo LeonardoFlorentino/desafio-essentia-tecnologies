@@ -2,62 +2,6 @@
   margin-bottom: 2rem;
 }
 
-.task-form {
-  display: grid;
-  gap: 0.75rem;
-  max-width: 40rem;
-}
-
-.field {
-  display: grid;
-  gap: 0.25rem;
-
-  input,
-  textarea {
-    font: inherit;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #98a2b3;
-    border-radius: 0.375rem;
-  }
-
-  [aria-invalid='true'] {
-    border-color: #d92d20;
-  }
-}
-
-.field__hint {
-  color: #475467;
-  font-weight: normal;
-}
-
-.field__error {
-  margin: 0;
-  color: #b42318;
-  font-size: 0.875rem;
-}
-
-.task-form > button,
-.task__actions button {
-  justify-self: start;
-  font: inherit;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-}
-
-.task__actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.task__edit {
-  max-width: none;
-}
-
-.button--danger {
-  color: #b42318;
-}
-
 // Focus target after a deletion (tabindex="-1"): no outline for a programmatic focus on a heading.
 #tasks-heading:focus {
   outline: none;
@@ -69,52 +13,4 @@
   padding: 0;
   display: grid;
   gap: 0.75rem;
-}
-
-.task {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 0.75rem;
-  align-items: start;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d0d5dd;
-  border-radius: 0.5rem;
-
-  > :not(.task__checkbox) {
-    grid-column: 2;
-  }
-}
-
-.task__checkbox {
-  grid-row: span 4;
-  width: 1.125rem;
-  height: 1.125rem;
-  margin: 0.125rem 0 0;
-  cursor: pointer;
-}
-
-.task__title {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.task--completed .task__title {
-  text-decoration: line-through;
-  color: #667085;
-}
-
-.task__description {
-  margin: 0.25rem 0 0;
-  color: #475467;
-}
-
-.task__status {
-  display: inline-block;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: #475467;
-}
-
-.task--completed .task__status {
-  color: #067647;
 }
