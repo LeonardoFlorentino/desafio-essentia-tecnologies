@@ -71,6 +71,30 @@ Se o `.env` estiver faltando, a API não sobe e informa quais variáveis precisa
 Para conferir se a API está no ar: `GET http://localhost:3000/api/health` → `200 { "status": "ok", "database": "ok" }`.
 Se o MySQL estiver fora do ar, a resposta é `503 { "status": "error", "database": "unavailable" }`.
 
+### Endpoints
+
+Todas as rotas ficam sob o prefixo `/api`.
+
+| Método | Rota      | Descrição                                                 | Sucesso |
+| ------ | --------- | --------------------------------------------------------- | ------- |
+| GET    | `/health` | Situação da API e do banco                                | 200     |
+| GET    | `/tasks`  | Lista todas as tarefas, das mais recentes para as antigas | 200     |
+
+Exemplo de resposta de `GET /api/tasks`:
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Revisar o relatório",
+    "description": "Conferir os números do trimestre",
+    "completed": false,
+    "createdAt": "2026-10-22T13:39:15.000Z",
+    "updatedAt": "2026-10-22T13:39:15.000Z"
+  }
+]
+```
+
 ### Migrations
 
 O esquema do banco é versionado em arquivos SQL numerados em `backend/migrations/` (`001_create_tasks.sql`, ...).

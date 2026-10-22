@@ -1,5 +1,6 @@
 import express from 'express';
 import { pool } from './db/mysql';
+import { taskRouter } from './tasks/task.routes';
 
 export function createApp() {
   const app = express();
@@ -13,6 +14,8 @@ export function createApp() {
       res.status(503).json({ status: 'error', database: 'unavailable' });
     }
   });
+
+  app.use('/api/tasks', taskRouter);
 
   return app;
 }
