@@ -637,8 +637,11 @@ A cada push e pull request, o [GitHub Actions](.github/workflows/ci.yml) roda, e
 | E2E                  | A suíte do Playwright num Chromium, com a API e o Angular de verdade                                                           |
 | Imagens Docker       | Build das imagens `api` e `web` do `docker-compose.yml`                                                                        |
 
-O MySQL 8.4 e o MongoDB 8.0 sobem como containers de serviço do próprio GitHub Actions, com as mesmas versões do
-Docker Compose. Os relatórios de cobertura ficam disponíveis por 7 dias em cada execução; se o E2E falhar, também ficam
+Os bancos sobem como containers de serviço do próprio GitHub Actions: **MySQL 8.4**, como no Docker Compose, e
+**MongoDB 7.0**. O Docker Compose e o Atlas usam 8.0, mas o MongoDB 8.x se recusa a iniciar nos kernels Linux 6.19 a
+7.0.13, que são os das máquinas do GitHub
+([SERVER-125742](https://jira.mongodb.org/browse/SERVER-125742)). As suítes de backend e E2E passam inteiras nas duas
+versões, e o CI volta para 8.0 quando o GitHub atualizar o kernel. Os relatórios de cobertura ficam disponíveis por 7 dias em cada execução; se o E2E falhar, também ficam
 o relatório do Playwright, as capturas de tela e os traces. Um push novo na mesma branch cancela a execução anterior.
 
 ## Deploy
