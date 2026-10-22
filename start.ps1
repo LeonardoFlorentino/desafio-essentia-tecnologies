@@ -1,10 +1,12 @@
 ﻿# npm start: prepares a fresh clone, starts MySQL, applies the database
-# migrations, opens the backend in its own terminal tab, waits until the API
-# answers, then gives the focus back to the window where npm start was typed.
+# migrations, then opens the backend and, once the API answers, the frontend,
+# each in its own terminal tab, giving the focus back to the window where
+# npm start was typed.
 # Failures are detected through $LASTEXITCODE: with ErrorActionPreference=Stop,
 # Windows PowerShell 5.1 aborts on any stderr line (even Docker warnings).
 $root = $PSScriptRoot
 $healthUrl = 'http://localhost:3000/api/health'
+$frontendUrl = 'http://localhost:4200'
 
 Add-Type @'
 using System;
@@ -47,8 +49,8 @@ function Invoke-Compose {
   }
 }
 
-function Test-Health {
-  try { (Invoke-WebRequest $healthUrl -TimeoutSec 2 -UseBasicParsing).StatusCode -eq 200 } catch { $false }
+function Test-Url([string]$url) {
+  try { (Invoke-WebRequest $url -TimeoutSec 2 -UseBasicParsing).StatusCode -eq 200 } catch { $false }
 }
 
 function Open-Tab([string]$title, [string]$dir, [string]$command) {
@@ -57,6 +59,24 @@ function Open-Tab([string]$title, [string]$dir, [string]$command) {
   } else {
     Start-Process powershell -WorkingDirectory $dir -ArgumentList '-NoExit', '-Command', "`$host.UI.RawUI.WindowTitle='$title'; $command"
   }
+}
+
+# Opens $command in a new tab unless $url already answers, then waits for $url.
+function Start-App([string]$name, [string]$dir, [string]$command, [string]$url, [int]$timeoutSeconds) {
+  if (Test-Url $url) {
+    Write-Host "  o $name já está rodando em $url"
+    return
+  }
+  Open-Tab $name (Join-Path $root $dir) $command
+  Restore-Focus
+  $timer = [Diagnostics.Stopwatch]::StartNew()
+  while (-not (Test-Url $url)) {
+    if ($timer.Elapsed.TotalSeconds -gt $timeoutSeconds) {
+      Fail "O $name não respondeu em $url após $timeoutSeconds s. Veja o erro na aba $name."
+    }
+    Start-Sleep -Milliseconds 500
+  }
+  Write-Host "  $name respondendo em $url ($([int]$timer.Elapsed.TotalSeconds) s)"
 }
 
 # Gives the focus back to the window where npm start was typed.
@@ -78,6 +98,7 @@ Step 'Preparando o ambiente'
 Copy-EnvExample $root
 Copy-EnvExample (Join-Path $root 'backend')
 Install-Dependencies (Join-Path $root 'backend')
+Install-Dependencies (Join-Path $root 'frontend')
 
 Step 'Subindo o MySQL (Docker)'
 docker info *> $null
@@ -90,19 +111,10 @@ npm run migrate --silent --prefix (Join-Path $root 'backend')
 if ($LASTEXITCODE) { Fail 'As migrations falharam. Veja o erro acima.' }
 
 Step 'Iniciando o backend'
-if (Test-Health) {
-  Write-Host '  o backend já está rodando em http://localhost:3000'
-} else {
-  Open-Tab 'Backend' (Join-Path $root 'backend') 'npm run dev'
-  Restore-Focus
-  $timer = [Diagnostics.Stopwatch]::StartNew()
-  while (-not (Test-Health)) {
-    if ($timer.Elapsed.TotalSeconds -gt 60) {
-      Fail "O backend não respondeu em $healthUrl após 60 s. Veja o erro na aba Backend."
-    }
-    Start-Sleep -Milliseconds 500
-  }
-  Write-Host "  backend respondendo em $healthUrl ($([int]$timer.Elapsed.TotalSeconds) s)"
-}
+Start-App 'Backend' 'backend' 'npm run dev' $healthUrl 60
 
-Write-Host "`nPronto." -ForegroundColor Green
+# Only after the API answers, so the app never opens against a backend that is still starting.
+Step 'Iniciando o frontend'
+Start-App 'Frontend' 'frontend' 'npm start' $frontendUrl 120
+
+Write-Host "`nPronto. Abra $frontendUrl no navegador." -ForegroundColor Green

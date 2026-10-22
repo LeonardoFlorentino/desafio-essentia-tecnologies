@@ -16,11 +16,14 @@ npm start
 
 O comando prepara e sobe tudo, nesta ordem:
 
-1. Na primeira execução, cria os arquivos `.env` a partir dos `.env.example` e instala as dependências do backend.
+1. Na primeira execução, cria os arquivos `.env` a partir dos `.env.example` e instala as dependências do backend e
+   do frontend.
 2. Sobe o MySQL e espera o container ficar saudável.
 3. Aplica as migrations pendentes do banco.
-4. Abre o backend em uma nova aba do terminal (Windows Terminal; sem ele, em uma nova janela do PowerShell).
-5. Espera a API responder em `/api/health` (até 60 s) e devolve o foco ao terminal onde o comando foi digitado.
+4. Abre o backend em uma nova aba do terminal (Windows Terminal; sem ele, em uma nova janela do PowerShell) e espera a
+   API responder em `/api/health` (até 60 s).
+5. Só então abre o frontend em outra aba e espera ele responder em `http://localhost:4200` (até 120 s).
+6. Devolve o foco ao terminal onde o comando foi digitado. A aplicação fica em **http://localhost:4200**.
 
 Se algum passo falhar, o script para e diz o que verificar. Em outros sistemas operacionais, siga o passo a passo
 das seções abaixo.
@@ -173,3 +176,21 @@ desenvolvimento) e `docker compose up -d`.
 O esquema do banco é versionado em arquivos SQL numerados em `backend/migrations/` (`001_create_tasks.sql`, ...).
 O `npm run migrate` aplica, em ordem, os arquivos que ainda não constam na tabela `migrations` do banco; rodar de novo
 não faz nada se estiver tudo aplicado.
+
+## Frontend
+
+Interface em Angular 22 (componentes standalone, sem zone.js), com a API rodando em `http://localhost:3000`.
+
+```bash
+cd frontend
+npm install
+npm start              # http://localhost:4200, recarrega a cada alteração
+```
+
+| Script           | O que faz                                                          |
+| ---------------- | ------------------------------------------------------------------ |
+| `npm start`      | Sobe o servidor de desenvolvimento em `http://localhost:4200`      |
+| `npm run build`  | Gera a versão de produção em `dist/`                               |
+| `npm test`       | Roda os testes unitários (Vitest)                                  |
+| `npm run lint`   | Analisa o código e os templates com ESLint (inclui acessibilidade) |
+| `npm run format` | Formata o código com Prettier                                      |
