@@ -1,3 +1,5 @@
+import { today } from '../shared/dates';
+
 export type Priority = 'low' | 'medium' | 'high';
 
 /** A task as returned by the API (timestamps as ISO 8601 strings, the due date as YYYY-MM-DD). */
@@ -48,18 +50,6 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
 
 /** Order of the options in the selects: highest first. */
 export const PRIORITY_OPTIONS: readonly Priority[] = ['high', 'medium', 'low'];
-
-/** 2026-10-25 → 25/10/2026 (the due date is a calendar day: no time zone to convert). */
-export function formatDay(day: string): string {
-  const [year, month, date] = day.split('-');
-  return `${date}/${month}/${year}`;
-}
-
-/** Today in the user's time zone, as YYYY-MM-DD. */
-export function today(now = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
 
 /** Overdue or due today; completed tasks and tasks without a due date are neither. */
 export function dueState(task: Task, day = today()): 'overdue' | 'today' | null {

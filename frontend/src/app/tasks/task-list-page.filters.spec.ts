@@ -6,7 +6,8 @@ import {
 } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { Task, today } from './task.model';
+import { today } from '../shared/dates';
+import { Task } from './task.model';
 import { TaskListPage } from './task-list-page';
 
 const base: Task = {
@@ -188,7 +189,7 @@ describe('TaskListPage — due date, priority, search and filters', () => {
       await answer(await open('/'), []);
 
       type('#new-task-title', 'Pay the bill');
-      type('#new-task-due', '2026-11-05');
+      type('#new-task-due', '05112026');
       choose('#new-task-priority', 'high');
       page.querySelector('form.task-form')!.dispatchEvent(new Event('submit'));
 
@@ -207,7 +208,7 @@ describe('TaskListPage — due date, priority, search and filters', () => {
 
       field<HTMLButtonElement>('#edit-button-1').click();
       await fixture.whenStable();
-      expect(field('#edit-due-1').value).toBe('2026-11-05');
+      expect(field('#edit-due-1').value).toBe('05/11/2026');
       expect(field<HTMLSelectElement>('#edit-priority-1').value).toBe('high');
 
       type('#edit-due-1', '');

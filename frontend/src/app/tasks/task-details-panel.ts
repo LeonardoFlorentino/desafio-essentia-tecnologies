@@ -2,8 +2,9 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { formatDay } from '../shared/dates';
 import { UNREACHABLE_MESSAGE, isUnreachable } from '../shared/http-errors';
-import { PRIORITY_LABELS, Priority, Task, TaskDetails, TaskEvent, formatDay } from './task.model';
+import { PRIORITY_LABELS, Priority, Task, TaskDetails, TaskEvent } from './task.model';
 import { TaskService } from './task.service';
 
 const MAX_TAGS = 10;

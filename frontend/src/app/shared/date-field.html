@@ -1,0 +1,69 @@
+<div class="date-field__box" [class.date-field__box--disabled]="disabled()">
+  <input
+    [id]="inputId()"
+    type="text"
+    inputmode="numeric"
+    autocomplete="off"
+    maxlength="10"
+    placeholder="__/__/____"
+    [value]="text()"
+    [disabled]="disabled()"
+    (input)="onType($event)"
+    (blur)="onBlur()"
+  />
+  <button
+    type="button"
+    class="date-field__toggle"
+    aria-label="Abrir calendário"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="open()"
+    [disabled]="disabled()"
+    (click)="toggle()"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M16 3v4M8 3v4M3 10h18" />
+    </svg>
+  </button>
+</div>
+
+@if (open()) {
+  <div class="date-field__calendar" role="dialog" aria-label="Escolher data">
+    <div class="date-field__header">
+      <button type="button" aria-label="Mês anterior" (click)="moveMonth(-1)">‹</button>
+      <span class="date-field__month" aria-live="polite">{{ heading() }}</span>
+      <button type="button" aria-label="Próximo mês" (click)="moveMonth(1)">›</button>
+    </div>
+
+    <!-- Each day button reads in full ("19 de agosto de 2026"); the weekday row is visual only. -->
+    <div class="date-field__grid">
+      @for (weekday of weekdays; track weekday) {
+        <span class="date-field__weekday" aria-hidden="true">{{ weekday }}</span>
+      }
+      <!-- Tracked by date: a button always stands for one day, even when the month changes. -->
+      @for (cell of cells(); track cell ? cell.iso : 'blank-' + $index) {
+        @if (cell) {
+          <button
+            type="button"
+            class="date-field__day"
+            [class.date-field__day--today]="cell.iso === today()"
+            [attr.aria-label]="cell.label"
+            [attr.aria-pressed]="cell.iso === selected()"
+            [attr.aria-current]="cell.iso === today() ? 'date' : null"
+            (click)="pick(cell.iso)"
+          >
+            {{ cell.day }}
+          </button>
+        } @else {
+          <span></span>
+        }
+      }
+    </div>
+
+    <div class="date-field__footer">
+      <button type="button" (click)="pick(today())">Hoje</button>
+      <button type="button" (click)="clear()">Limpar</button>
+      <button type="button" (click)="close()">Fechar</button>
+    </div>
+  </div>
+}

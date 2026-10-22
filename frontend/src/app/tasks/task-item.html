@@ -58,7 +58,7 @@
           <label [for]="'edit-due-' + task().id"
             >Prazo <span class="field__hint">(opcional)</span></label
           >
-          <input [id]="'edit-due-' + task().id" type="date" formControlName="dueDate" />
+          <app-date-field [inputId]="'edit-due-' + task().id" formControlName="dueDate" />
         </div>
         <div class="field">
           <label [for]="'edit-priority-' + task().id">Prioridade</label>

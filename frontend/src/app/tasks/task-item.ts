@@ -18,14 +18,9 @@ import {
   taskFormValue,
   taskToForm,
 } from './task-form';
-import {
-  PRIORITY_LABELS,
-  PRIORITY_OPTIONS,
-  Task,
-  TaskChanges,
-  dueState,
-  formatDay,
-} from './task.model';
+import { DateField } from '../shared/date-field';
+import { formatDay } from '../shared/dates';
+import { PRIORITY_LABELS, PRIORITY_OPTIONS, Task, TaskChanges, dueState } from './task.model';
 
 /**
  * One task card: shows the task and its controls, and owns the inline edit form.
@@ -33,7 +28,7 @@ import {
  */
 @Component({
   selector: 'app-task-item',
-  imports: [ReactiveFormsModule, TaskDetailsPanel],
+  imports: [ReactiveFormsModule, TaskDetailsPanel, DateField],
   templateUrl: './task-item.html',
   styleUrl: './task-item.scss',
 })

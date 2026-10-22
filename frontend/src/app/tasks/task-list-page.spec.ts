@@ -302,7 +302,9 @@ describe('TaskListPage', () => {
     it('cancels without sending anything and keeps the original data', async () => {
       await openEditor(1);
       type('#edit-title-1', 'Something else');
-      page.querySelector<HTMLButtonElement>('li form button[type=button]')!.click();
+      [...page.querySelectorAll<HTMLButtonElement>('li form button')]
+        .find((b) => b.textContent?.trim() === 'Cancelar')!
+        .click();
       await fixture.whenStable();
 
       http.expectNone('/api/tasks/1');

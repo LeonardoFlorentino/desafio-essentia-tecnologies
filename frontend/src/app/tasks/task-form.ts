@@ -6,7 +6,7 @@ export function createTaskForm(formBuilder: NonNullableFormBuilder) {
   return formBuilder.group({
     title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
     description: ['', Validators.maxLength(5000)],
-    // <input type="date"> gives YYYY-MM-DD, or '' when empty.
+    // app-date-field gives YYYY-MM-DD, or '' when empty.
     dueDate: [''],
     priority: ['medium' as Priority],
   });

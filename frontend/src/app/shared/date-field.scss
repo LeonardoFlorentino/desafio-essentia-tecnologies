@@ -1,0 +1,136 @@
+:host {
+  position: relative;
+  display: block;
+}
+
+// Looks like the other fields (styles.scss .field input): the border wraps text and button.
+.date-field__box {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  border: 1px solid #98a2b3;
+  border-radius: 0.375rem;
+  background: #fff;
+
+  &:focus-within {
+    outline: 3px solid #2e90fa;
+    outline-offset: 2px;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    // Same width for every digit, so the mask does not jump while typing.
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.date-field__box--disabled {
+  opacity: 0.55;
+}
+
+.date-field__toggle {
+  display: grid;
+  place-items: center;
+  min-height: 2.25rem;
+  margin-right: 0.125rem;
+  padding: 0 0.5rem;
+  border: 0;
+  background: transparent;
+  color: #475467;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.date-field__calendar {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  z-index: 10;
+  width: 18rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.75rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 12px 24px -8px rgb(16 24 40 / 0.18);
+  font-weight: normal;
+}
+
+.date-field__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  button {
+    min-height: 2.25rem;
+    padding: 0 0.75rem;
+    font-size: 1.125rem;
+  }
+}
+
+.date-field__month {
+  font-weight: 600;
+}
+
+.date-field__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.125rem;
+  text-align: center;
+}
+
+.date-field__weekday {
+  padding: 0.25rem 0;
+  color: #475467;
+  font-size: 0.75rem;
+}
+
+.date-field__day {
+  justify-self: stretch;
+  min-height: 2.25rem;
+  padding: 0;
+  border-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+.date-field__day--today {
+  border-color: #175cd3;
+  color: #175cd3;
+}
+
+.date-field__day[aria-pressed='true'] {
+  border-color: #175cd3;
+  background: #175cd3;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #1849a9;
+  }
+}
+
+.date-field__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+
+  button {
+    min-height: 2.25rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}

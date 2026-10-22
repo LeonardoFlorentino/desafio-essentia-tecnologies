@@ -2,7 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TaskItem } from './task-item';
-import { Task, TaskChanges, today } from './task.model';
+import { today } from '../shared/dates';
+import { Task, TaskChanges } from './task.model';
 
 const task: Task = {
   id: 4,
@@ -129,7 +130,7 @@ describe('TaskItem', () => {
 
       expect(emitted.editing).toEqual([true]);
       expect(card.querySelector<HTMLInputElement>('#edit-title-4')!.value).toBe('Write the report');
-      expect(card.querySelector<HTMLInputElement>('#edit-due-4')!.value).toBe('2026-11-05');
+      expect(card.querySelector<HTMLInputElement>('#edit-due-4')!.value).toBe('05/11/2026');
       expect(card.querySelector<HTMLSelectElement>('#edit-priority-4')!.value).toBe('high');
       expect(document.activeElement?.id).toBe('edit-title-4');
     });
@@ -161,7 +162,10 @@ describe('TaskItem', () => {
     it.each([
       [
         'the Cancel button',
-        () => card.querySelector<HTMLButtonElement>('form button[type=button]')!.click(),
+        () =>
+          [...card.querySelectorAll<HTMLButtonElement>('form button')]
+            .find((b) => b.textContent?.trim() === 'Cancelar')!
+            .click(),
       ],
       [
         'the Escape key',

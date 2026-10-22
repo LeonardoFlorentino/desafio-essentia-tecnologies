@@ -5,7 +5,7 @@ import {
   filtersToParams,
   hasActiveFilters,
 } from './task-filters';
-import { Task, dueState, formatDay, today } from './task.model';
+import { Task, dueState } from './task.model';
 
 describe('task filters in the URL', () => {
   it('reads the filters from the query string', () => {
@@ -43,14 +43,6 @@ describe('task filters in the URL', () => {
 
 describe('due dates', () => {
   const task = (dueDate: string | null, completed = false) => ({ dueDate, completed }) as Task;
-
-  it('formats the day without going through a time zone', () => {
-    expect(formatDay('2026-01-05')).toBe('05/01/2026');
-  });
-
-  it("uses the user's local day for today", () => {
-    expect(today(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
-  });
 
   it('marks pending tasks as overdue or due today', () => {
     expect(dueState(task('2026-10-21'), '2026-10-22')).toBe('overdue');

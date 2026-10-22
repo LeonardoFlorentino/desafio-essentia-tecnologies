@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, debounceTime, finalize, map, merge } from 'rxjs';
+import { DateField } from '../shared/date-field';
 import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
 import {
   DEFAULT_FILTERS,
@@ -35,7 +36,7 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 @Component({
   selector: 'app-task-list-page',
-  imports: [ReactiveFormsModule, TaskItem],
+  imports: [ReactiveFormsModule, TaskItem, DateField],
   templateUrl: './task-list-page.html',
   styleUrl: './task-list-page.scss',
 })
