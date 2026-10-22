@@ -5,6 +5,9 @@ node_modules/
 dist/
 .angular/
 coverage/
+# Playwright (E2E) results and reports
+test-results/
+playwright-report/
 
 # environment
 .env

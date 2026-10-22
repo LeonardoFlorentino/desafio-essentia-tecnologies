@@ -198,6 +198,7 @@ demonstração é recriado na próxima subida).
 │   ├── tasks/               Página de tarefas, cartão, painel de detalhes, serviço da API
 │   └── shared/              Utilitários compartilhados
 ├── docker/mysql-init/       Cria o banco de testes do MySQL
+├── e2e/                     Testes de ponta a ponta (Playwright)
 ├── docker-compose.yml       MySQL, MongoDB, API e site (nginx)
 └── start.ps1                Inicialização com um comando (npm start)
 ```
@@ -562,6 +563,22 @@ npm run test:coverage   # uma vez, com cobertura
 
 O `test:coverage` falha abaixo dos mesmos limites do backend (90% das linhas, funções e instruções; 80% dos desvios),
 contando todo o `src/app`. Hoje: cerca de 98% das linhas.
+
+**Ponta a ponta (E2E)** — [Playwright](https://playwright.dev/) em [`e2e/`](e2e), num Chromium de verdade, com a
+aplicação inteira: o Playwright sobe a API e o Angular em **portas próprias** (3100 e 4300), ligados ao banco de testes
+(`todo_test`). Então dá para rodar com os servidores de desenvolvimento abertos, e os dados de desenvolvimento nunca são
+tocados. O banco de testes é esvaziado no início de cada execução, e cada teste cria a própria conta, então um teste
+não vê as tarefas de outro.
+
+```bash
+docker compose up -d mysql mongo   # bancos no ar
+npm install                        # na raiz (instala o Playwright)
+npm run test:e2e:install           # uma vez: baixa o Chromium usado nos testes
+npm run test:e2e
+```
+
+Por enquanto há um teste de fumaça: um visitante cai no login, cria a conta pelo formulário e adiciona a primeira
+tarefa. Se um teste falhar, a captura de tela e o rastreamento (trace) ficam em `test-results/`.
 
 **Qualidade:** TypeScript em modo `strict` nos dois projetos, ESLint (com as regras de acessibilidade dos templates
 Angular) e Prettier com uma configuração única para o repositório.
