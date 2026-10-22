@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
 import { AuthService } from './auth/auth.service';
 
@@ -36,5 +36,24 @@ describe('App', () => {
     const page = await render();
     expect(page.querySelector('nav')?.textContent).toContain('ana@techx.com');
     expect(page.querySelector('nav a')).toBeNull();
+  });
+
+  it('signs out from the header and goes to the sign-in page', async () => {
+    const http = TestBed.inject(HttpTestingController);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    TestBed.inject(AuthService).loadSession().subscribe();
+    http.expectOne('/api/auth/me').flush({ user: { id: 1, email: 'ana@techx.com' } });
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('nav button')!.click();
+    http.expectOne('/api/auth/logout').flush(null, { status: 204, statusText: 'No Content' });
+    await fixture.whenStable();
+
+    expect(TestBed.inject(AuthService).isLoggedIn()).toBe(false);
+    expect(navigate).toHaveBeenCalledWith('/login');
+    expect((fixture.nativeElement as HTMLElement).querySelector('nav a')?.textContent).toContain(
+      'Entrar',
+    );
   });
 });

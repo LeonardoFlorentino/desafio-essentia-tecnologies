@@ -40,6 +40,10 @@ export class AuthPage {
   private readonly router = inject(Router);
 
   readonly mode = input<AuthMode>('login');
+  /** `?expired=true`, set when the session ran out while the user was working. */
+  readonly expired = input(false, {
+    transform: (value: unknown) => value === true || value === 'true',
+  });
   protected readonly texts = computed(() => TEXTS[this.mode()]);
 
   protected readonly submitting = signal(false);

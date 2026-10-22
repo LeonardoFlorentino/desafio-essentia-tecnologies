@@ -49,6 +49,13 @@ describe('AuthPage', () => {
       expect(page.querySelector('a')?.getAttribute('href')).toBe('/register');
     });
 
+    it('explains that the session expired when sent here by ?expired=true', async () => {
+      fixture.componentRef.setInput('expired', 'true');
+      await fixture.whenStable();
+
+      expect(page.querySelector('[role=status]')?.textContent).toContain('Sua sessão expirou.');
+    });
+
     it('signs in and goes to the task list', async () => {
       type('#auth-email', ' ana@techx.com ');
       type('#auth-password', 'correct-horse');

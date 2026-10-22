@@ -61,6 +61,28 @@ describe('AuthService', () => {
     expect(service.currentUser()).toEqual(user);
   });
 
+  it('signs out with POST /api/auth/logout', () => {
+    service.login(credentials).subscribe();
+    http.expectOne('/api/auth/login').flush({ user });
+
+    service.logout().subscribe();
+    const req = http.expectOne('/api/auth/logout');
+    expect(req.request.method).toBe('POST');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(service.isLoggedIn()).toBe(false);
+  });
+
+  it('signs out locally even when the logout request fails', () => {
+    service.login(credentials).subscribe();
+    http.expectOne('/api/auth/login').flush({ user });
+
+    service.logout().subscribe();
+    http.expectOne('/api/auth/logout').flush(null, { status: 502, statusText: 'Bad Gateway' });
+
+    expect(service.isLoggedIn()).toBe(false);
+  });
+
   it('never keeps anything in localStorage', () => {
     service.login(credentials).subscribe();
     http.expectOne('/api/auth/login').flush({ user });

@@ -56,16 +56,6 @@ describe('TaskListPage list states', () => {
     expect(page.querySelector('.summary')).toBeNull();
   });
 
-  it('asks to sign in when the API refuses the list without a session (401)', async () => {
-    http.expectOne('/api/tasks').flush(null, { status: 401, statusText: 'Unauthorized' });
-    await fixture.whenStable();
-
-    const links = [...tasksSection().querySelectorAll('a')].map((a) => a.getAttribute('href'));
-    expect(links).toEqual(['/login', '/register']);
-    expect(tasksSection().textContent).not.toContain('Verifique se a API está no ar');
-    expect(page.querySelector('[role=alert]')).toBeNull();
-  });
-
   it('explains a failed load and retries on request', async () => {
     http.expectOne('/api/tasks').flush(null, { status: 500, statusText: 'Server Error' });
     await fixture.whenStable();

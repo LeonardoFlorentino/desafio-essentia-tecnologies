@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
 
 export interface User {
   id: number;
@@ -42,6 +42,19 @@ export class AuthService {
   /** Creates the account; the API signs the new user in right away. */
   register(credentials: Credentials): Observable<User> {
     return this.startSession(`${AUTH_URL}/register`, credentials);
+  }
+
+  /** Ends the session on the server (clears the cookie); locally it ends even if that request fails. */
+  logout(): Observable<void> {
+    return this.http.post<void>(`${AUTH_URL}/logout`, null).pipe(
+      catchError(() => of(undefined)),
+      finalize(() => this.clearSession()),
+    );
+  }
+
+  /** Forgets the user locally — e.g. when the API answers 401 because the session expired. */
+  clearSession() {
+    this.user.set(null);
   }
 
   private startSession(url: string, credentials: Credentials): Observable<User> {

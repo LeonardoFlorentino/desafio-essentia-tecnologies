@@ -8,7 +8,6 @@ import {
   signal,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
 import { createTaskForm, revealErrors, showFieldError, taskFormValue } from './task-form';
@@ -22,7 +21,7 @@ import { TaskService } from './task.service';
  */
 @Component({
   selector: 'app-task-list-page',
-  imports: [ReactiveFormsModule, RouterLink, TaskItem],
+  imports: [ReactiveFormsModule, TaskItem],
   templateUrl: './task-list-page.html',
   styleUrl: './task-list-page.scss',
 })
@@ -37,8 +36,6 @@ export class TaskListPage implements OnInit {
   protected readonly pendingCount = computed(() => this.tasks().length - this.completedCount());
   protected readonly loading = signal(true);
   protected readonly loadFailed = signal(false);
-  /** The API refused the list because there is no session (401). */
-  protected readonly signedOut = signal(false);
   /** Message about the last action that failed (create, update, delete), shown in an alert. */
   protected readonly actionError = signal<string | null>(null);
   protected readonly saving = signal(false);
@@ -57,13 +54,12 @@ export class TaskListPage implements OnInit {
   protected loadTasks() {
     this.loading.set(true);
     this.loadFailed.set(false);
-    this.signedOut.set(false);
     this.taskService
       .list()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (tasks) => this.tasks.set(tasks),
-        error: (error) => (httpStatus(error) === 401 ? this.signedOut : this.loadFailed).set(true),
+        error: () => this.loadFailed.set(true),
       });
   }
 

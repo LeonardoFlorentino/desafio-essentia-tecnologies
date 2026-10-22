@@ -66,11 +66,6 @@
 
   @if (loading()) {
     <p class="list-state">Carregando tarefas…</p>
-  } @else if (signedOut()) {
-    <p class="list-state">
-      Cada pessoa vê só as próprias tarefas. <a routerLink="/login">Entre</a> ou
-      <a routerLink="/register">crie uma conta</a> para ver as suas.
-    </p>
   } @else if (loadFailed()) {
     <div class="list-state list-state--error" role="alert">
       <p>Não foi possível carregar as tarefas. Verifique se a API está no ar.</p>

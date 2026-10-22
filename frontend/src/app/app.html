@@ -8,6 +8,7 @@
     <nav class="app-header__account" aria-label="Conta">
       @if (auth.currentUser(); as user) {
         <span class="app-header__user">{{ user.email }}</span>
+        <button type="button" (click)="logout()">Sair</button>
       } @else {
         <a routerLink="/login">Entrar</a>
       }
