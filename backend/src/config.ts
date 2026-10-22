@@ -5,7 +5,14 @@ try {
   if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
 }
 
-const requiredVariables = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'JWT_SECRET'] as const;
+const requiredVariables = [
+  'DB_HOST',
+  'DB_USER',
+  'DB_PASSWORD',
+  'DB_NAME',
+  'MONGO_URL',
+  'JWT_SECRET',
+] as const;
 const missing = requiredVariables.filter((name) => !process.env[name]);
 if (missing.length > 0) {
   throw new Error(
@@ -29,6 +36,11 @@ export const config = {
     user: process.env.DB_USER!,
     password: process.env.DB_PASSWORD!,
     database: process.env.DB_NAME!,
+  },
+  mongo: {
+    url: process.env.MONGO_URL!,
+    // Kept apart from the URL so the tests can point at their own database (todo_test).
+    database: process.env.MONGO_DB_NAME ?? 'todo',
   },
   jwt: {
     secret: process.env.JWT_SECRET!,

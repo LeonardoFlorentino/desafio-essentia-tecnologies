@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
 import request from 'supertest';
 import { createApp } from '../../src/app';
+import { connectMongo, disconnectMongo } from '../../src/db/mongo';
 import { pool } from '../../src/db/mysql';
 
 const app = createApp();
@@ -30,9 +31,19 @@ async function createTask(body: object = { title: 'Write the report' }) {
 }
 
 describe('GET /api/health', () => {
-  it('reports the API and the database as healthy', async () => {
+  it('reports the API and both databases as healthy', async () => {
     const res = await owner.get('/api/health').expect(200);
-    expect(res.body).toEqual({ status: 'ok', database: 'ok' });
+    expect(res.body).toEqual({ status: 'ok', mysql: 'ok', mongo: 'ok' });
+  });
+
+  it('answers 503 and names the database that is down', async () => {
+    await disconnectMongo();
+    try {
+      const res = await request(app).get('/api/health').expect(503);
+      expect(res.body).toEqual({ status: 'error', mysql: 'ok', mongo: 'unavailable' });
+    } finally {
+      await connectMongo();
+    }
   });
 });
 

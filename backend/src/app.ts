@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import { authRouter } from './auth/auth.routes';
 import { config } from './config';
+import { pingMongo } from './db/mongo';
 import { pool } from './db/mysql';
 import { errorHandler, notFoundHandler } from './http/errors';
 import { taskRouter } from './tasks/task.routes';
@@ -14,13 +15,15 @@ export function createApp() {
   app.use(express.json());
   app.use(cookieParser());
 
+  // Both databases are checked in parallel; either one down makes the API unhealthy (503).
   app.get('/api/health', async (_req, res) => {
-    try {
-      await pool.query('SELECT 1');
-      res.json({ status: 'ok', database: 'ok' });
-    } catch {
-      res.status(503).json({ status: 'error', database: 'unavailable' });
-    }
+    const [mysql, mongo] = await Promise.allSettled([pool.query('SELECT 1'), pingMongo()]);
+    const state = (result: PromiseSettledResult<unknown>) =>
+      result.status === 'fulfilled' ? 'ok' : 'unavailable';
+    const healthy = mysql.status === 'fulfilled' && mongo.status === 'fulfilled';
+    res
+      .status(healthy ? 200 : 503)
+      .json({ status: healthy ? 'ok' : 'error', mysql: state(mysql), mongo: state(mongo) });
   });
 
   app.use('/api/auth', authRouter);

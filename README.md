@@ -4,7 +4,7 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
 
 - **Frontend:** Angular
 - **Backend:** API RESTful em Node.js + TypeScript
-- **Banco de dados:** MySQL
+- **Bancos de dados:** MySQL (tarefas e usuários) e MongoDB (informações adicionais das tarefas)
 
 > **Usuário de demonstração:** `demo@techx.com` / `demo12345` — já vem com algumas tarefas (criado pelo
 > `npm run seed`, que o `npm start` roda sozinho).
@@ -61,20 +61,24 @@ das seções abaixo.
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (com Docker Compose v2)
 - [Node.js](https://nodejs.org/) 22 ou superior (com npm)
 
-## Banco de dados
+## Bancos de dados
 
-O MySQL 8.4 roda em um container Docker:
+Os dois bancos rodam em containers Docker:
+
+- **MySQL 8.4** — usuários e tarefas (dados estruturados, com relacionamento entre si);
+- **MongoDB 8.0** — informações adicionais das tarefas (documentos sem esquema fixo).
 
 ```bash
 docker compose up -d
 ```
 
-O container fica pronto quando `docker compose ps` mostra o status `healthy`.
+Os containers ficam prontos quando `docker compose ps` mostra o status `healthy` nos dois.
 
-Os valores padrão (banco `todo`, usuário `todo`, senha `todo`, porta `3306`) funcionam sem configuração.
-Para alterá-los, copie `.env.example` para `.env` e edite as variáveis.
+Os valores padrão funcionam sem configuração: MySQL com banco, usuário e senha `todo` na porta `3306`; MongoDB com
+usuário e senha `todo` na porta `27017`. Para alterá-los, copie `.env.example` para `.env` e edite as variáveis.
 
-Para parar: `docker compose down` (os dados ficam no volume `mysql-data`; use `docker compose down -v` para apagá-los).
+Para parar: `docker compose down` (os dados ficam nos volumes `mysql-data` e `mongo-data`; use `docker compose down -v`
+para apagá-los).
 
 ## Backend
 
@@ -102,6 +106,8 @@ Se o `.env` estiver faltando, a API não sobe e informa quais variáveis precisa
 | `DB_USER`        | sim         | —                       | Usuário do MySQL                                              |
 | `DB_PASSWORD`    | sim         | —                       | Senha do MySQL                                                |
 | `DB_NAME`        | sim         | —                       | Nome do banco                                                 |
+| `MONGO_URL`      | sim         | —                       | Endereço do MongoDB, com usuário e senha                      |
+| `MONGO_DB_NAME`  | não         | `todo`                  | Nome do banco no MongoDB                                      |
 | `JWT_SECRET`     | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres) |
 | `JWT_EXPIRES_IN` | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                      |
 
@@ -118,8 +124,10 @@ O `.env.example` já traz valores que funcionam com o MySQL do `docker-compose.y
 | `npm run lint`    | Analisa o código com ESLint                                                       |
 | `npm run format`  | Formata o código com Prettier                                                     |
 
-Para conferir se a API está no ar: `GET http://localhost:3000/api/health` → `200 { "status": "ok", "database": "ok" }`.
-Se o MySQL estiver fora do ar, a resposta é `503 { "status": "error", "database": "unavailable" }`.
+Para conferir se a API está no ar: `GET http://localhost:3000/api/health` →
+`200 { "status": "ok", "mysql": "ok", "mongo": "ok" }`. Se um dos bancos estiver fora do ar, a resposta é `503` e diz
+qual (ex.: `{ "status": "error", "mysql": "ok", "mongo": "unavailable" }`). A API não sobe se não conseguir conectar ao
+MongoDB, e se reconecta sozinha quando ele volta.
 
 ### Endpoints
 
@@ -128,7 +136,7 @@ tarefas da pessoa conectada — a tarefa de outra pessoa responde `404`, como se
 
 | Método | Rota             | Descrição                                                                 | Sucesso |
 | ------ | ---------------- | ------------------------------------------------------------------------- | ------- |
-| GET    | `/health`        | Situação da API e do banco                                                | 200     |
+| GET    | `/health`        | Situação da API e dos dois bancos                                         | 200     |
 | GET    | `/tasks`         | Lista todas as tarefas, das mais recentes para as antigas                 | 200     |
 | POST   | `/tasks`         | Cria uma tarefa                                                           | 201     |
 | GET    | `/tasks/:id`     | Busca uma tarefa pelo id                                                  | 200     |
@@ -210,9 +218,9 @@ Todos os erros são respondidos em JSON, no formato `{ "error": "mensagem" }` (v
 ### Testes
 
 Testes de integração com [Jest](https://jestjs.io/) + [Supertest](https://github.com/ladjs/supertest): cada teste faz
-requisições HTTP reais à API, que grava num banco MySQL **separado**, o `todo_test` — os dados de desenvolvimento
-(`todo`) nunca são tocados. As migrations são aplicadas no banco de teste antes da suíte, e a tabela é limpa antes de
-cada teste.
+requisições HTTP reais à API, que grava em bancos **separados**, o `todo_test` no MySQL e no MongoDB — os dados de
+desenvolvimento (`todo`) nunca são tocados. As migrations são aplicadas no banco de teste antes da suíte, e as tabelas
+são limpas antes de cada teste. Os dois containers precisam estar no ar (`docker compose up -d`).
 
 ```bash
 docker compose up -d   # o MySQL precisa estar no ar
