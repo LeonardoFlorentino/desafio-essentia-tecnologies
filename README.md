@@ -9,7 +9,9 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
 ## Funcionalidades
 
 - **Página inicial com todas as tarefas cadastradas**, das mais recentes para as mais antigas, com título, descrição e
-  situação (pendente ou concluída).
+  situação (pendente ou concluída), e um resumo com o total, as pendentes e as concluídas.
+- **Layout responsivo:** funciona do celular (360 px) ao desktop, sem rolagem horizontal, com foco visível para quem
+  navega pelo teclado.
 - **Criar tarefa:** formulário com título (obrigatório) e descrição (opcional); a nova tarefa aparece no topo da lista e
   o formulário é limpo. Título em branco não é enviado e mostra uma mensagem de erro no campo.
 - **Editar tarefa:** o botão "Editar" abre o título e a descrição para edição dentro da própria lista; "Salvar" grava,

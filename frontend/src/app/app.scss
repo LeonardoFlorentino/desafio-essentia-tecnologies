@@ -1,0 +1,27 @@
+.container {
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.app-header {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #eaecf0;
+  background: #fff;
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+}
+
+.app-header__subtitle {
+  margin: 0.25rem 0 0;
+  color: #475467;
+}
+
+main {
+  padding-bottom: 3rem;
+}

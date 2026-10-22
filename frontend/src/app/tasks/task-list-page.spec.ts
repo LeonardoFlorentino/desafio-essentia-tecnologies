@@ -63,6 +63,27 @@ describe('TaskListPage', () => {
     expect(items[1].textContent).toContain('Pendente');
   });
 
+  function summary() {
+    return Object.fromEntries(
+      [...page.querySelectorAll('.summary div')].map((pair) => [
+        pair.querySelector('dt')!.textContent!.trim(),
+        pair.querySelector('dd')!.textContent!.trim(),
+      ]),
+    );
+  }
+
+  it('counts all, pending and completed tasks', () => {
+    expect(summary()).toEqual({ Total: '2', Pendentes: '1', Concluídas: '1' });
+  });
+
+  it('updates the counts when a task is completed', async () => {
+    checkboxOf(1).click();
+    http.expectOne('/api/tasks/1').flush({ ...tasks[1], completed: true });
+    await fixture.whenStable();
+
+    expect(summary()).toEqual({ Total: '2', Pendentes: '0', Concluídas: '2' });
+  });
+
   it('creates a task, shows it first and clears the form', async () => {
     type('#new-task-title', '  Send the proposal  ');
     type('#new-task-description', 'By email');
@@ -159,6 +180,27 @@ describe('TaskListPage', () => {
       );
     },
   );
+
+  it('does not flag the title just because it was tabbed through while empty', async () => {
+    const input = page.querySelector<HTMLInputElement>('#new-task-title')!;
+    input.dispatchEvent(new Event('focus'));
+    input.dispatchEvent(new Event('blur'));
+    await fixture.whenStable();
+
+    expect(input.getAttribute('aria-invalid')).not.toBe('true');
+    expect(page.querySelector('#new-task-title-error')).toBeNull();
+  });
+
+  it('flags the title once something was typed and erased', async () => {
+    type('#new-task-title', 'x');
+    type('#new-task-title', '');
+    page.querySelector('#new-task-title')!.dispatchEvent(new Event('blur'));
+    await fixture.whenStable();
+
+    expect(page.querySelector('#new-task-title-error')?.textContent).toContain(
+      'Informe o título da tarefa.',
+    );
+  });
 
   describe('deleting', () => {
     function deleteButtonOf(item: number) {

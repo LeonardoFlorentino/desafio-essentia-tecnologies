@@ -17,7 +17,17 @@ export function taskFormValue(form: TaskForm): Required<NewTask> {
   return { title: title.trim(), description: description.trim() || null };
 }
 
+/**
+ * An error shows once the user changed the field and left it, or tried to submit —
+ * not merely because the field was tabbed through while still empty.
+ */
 export function showFieldError(form: TaskForm, field: 'title' | 'description') {
   const control = form.controls[field];
-  return control.invalid && control.touched;
+  return control.invalid && control.touched && control.dirty;
+}
+
+/** On a submit attempt, reveal every error at once (including fields never visited). */
+export function revealErrors(form: TaskForm) {
+  form.markAllAsTouched();
+  form.markAllAsDirty();
 }

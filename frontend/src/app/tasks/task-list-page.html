@@ -37,14 +37,32 @@
       ></textarea>
     </div>
 
-    <button type="submit" [disabled]="saving()">
+    <button type="submit" class="button--primary" [disabled]="saving()">
       {{ saving() ? 'Adicionando…' : 'Adicionar tarefa' }}
     </button>
   </form>
 </section>
 
 <section aria-labelledby="tasks-heading" [attr.aria-busy]="loading()">
-  <h2 id="tasks-heading" tabindex="-1">Tarefas</h2>
+  <div class="tasks-header">
+    <h2 id="tasks-heading" tabindex="-1">Tarefas</h2>
+    @if (!loading() && !loadFailed() && tasks().length > 0) {
+      <dl class="summary" aria-label="Resumo das tarefas">
+        <div>
+          <dt>Total</dt>
+          <dd>{{ tasks().length }}</dd>
+        </div>
+        <div>
+          <dt>Pendentes</dt>
+          <dd>{{ pendingCount() }}</dd>
+        </div>
+        <div>
+          <dt>Concluídas</dt>
+          <dd>{{ completedCount() }}</dd>
+        </div>
+      </dl>
+    }
+  </div>
 
   @if (loading()) {
     <p class="list-state">Carregando tarefas…</p>

@@ -52,6 +52,7 @@ describe('TaskListPage list states', () => {
     await fixture.whenStable();
 
     expect(tasksSection().textContent).toContain('Nenhuma tarefa cadastrada.');
+    expect(page.querySelector('.summary')).toBeNull();
   });
 
   it('explains a failed load and retries on request', async () => {

@@ -1,8 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Injector, OnInit, afterNextRender, inject, signal } from '@angular/core';
+import {
+  Component,
+  Injector,
+  OnInit,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { createTaskForm, showFieldError, taskFormValue } from './task-form';
+import { createTaskForm, revealErrors, showFieldError, taskFormValue } from './task-form';
 import { TaskItem } from './task-item';
 import { Task, TaskChanges } from './task.model';
 import { TaskService } from './task.service';
@@ -28,6 +36,10 @@ export class TaskListPage implements OnInit {
   private readonly injector = inject(Injector);
 
   protected readonly tasks = signal<Task[]>([]);
+  protected readonly completedCount = computed(
+    () => this.tasks().filter((t) => t.completed).length,
+  );
+  protected readonly pendingCount = computed(() => this.tasks().length - this.completedCount());
   protected readonly loading = signal(true);
   protected readonly loadFailed = signal(false);
   /** Message about the last action that failed (create, update, delete), shown in an alert. */
@@ -59,7 +71,7 @@ export class TaskListPage implements OnInit {
 
   protected addTask() {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      revealErrors(this.form);
       return;
     }
     this.actionError.set(null);

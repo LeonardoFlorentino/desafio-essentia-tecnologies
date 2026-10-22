@@ -1,6 +1,6 @@
 import { Component, Injector, afterNextRender, effect, inject, input, output } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { createTaskForm, showFieldError, taskFormValue } from './task-form';
+import { createTaskForm, revealErrors, showFieldError, taskFormValue } from './task-form';
 import { Task, TaskChanges } from './task.model';
 
 /**
@@ -62,7 +62,7 @@ export class TaskItem {
 
   protected submitEdit() {
     if (this.form.invalid) {
-      this.form.markAllAsTouched();
+      revealErrors(this.form);
       return;
     }
     this.save.emit(taskFormValue(this.form));
