@@ -1,0 +1,36 @@
+.auth-card {
+  max-width: 26rem;
+  margin: 1rem auto;
+  padding: 1.5rem;
+  border: 1px solid #eaecf0;
+  border-radius: 0.75rem;
+  background: #fff;
+
+  h2 {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+  }
+
+  .button--primary {
+    justify-self: stretch;
+  }
+}
+
+.auth-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #fda29b;
+  border-radius: 0.5rem;
+  background: #fef3f2;
+  color: #912018;
+}
+
+.auth-switch {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  color: #475467;
+
+  a {
+    color: #175cd3;
+  }
+}

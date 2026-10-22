@@ -1,7 +1,17 @@
 <header class="app-header">
-  <div class="container">
-    <h1>TechX Tasks</h1>
-    <p class="app-header__subtitle">Organize as tarefas do dia</p>
+  <div class="container app-header__inner">
+    <div>
+      <h1><a routerLink="/">TechX Tasks</a></h1>
+      <p class="app-header__subtitle">Organize as tarefas do dia</p>
+    </div>
+
+    <nav class="app-header__account" aria-label="Conta">
+      @if (auth.currentUser(); as user) {
+        <span class="app-header__user">{{ user.email }}</span>
+      } @else {
+        <a routerLink="/login">Entrar</a>
+      }
+    </nav>
   </div>
 </header>
 

@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   Injector,
@@ -10,16 +9,11 @@ import {
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
 import { createTaskForm, revealErrors, showFieldError, taskFormValue } from './task-form';
 import { TaskItem } from './task-item';
 import { Task, TaskChanges } from './task.model';
 import { TaskService } from './task.service';
-
-/**
- * The API could not be reached: no response at all (0), or the proxy in front of it
- * (Angular dev server, nginx) answering for it — 502/503/504.
- */
-const UNREACHABLE_STATUSES = new Set([0, 502, 503, 504]);
 
 /**
  * Home page: shows every registered task and lets the user add, edit, complete and delete them.
@@ -138,12 +132,11 @@ export class TaskListPage implements OnInit {
 
   /** Explains a failed request; a task already deleted elsewhere (404) also leaves the list. */
   private fail(error: unknown, message: string, task?: Task) {
-    const status = error instanceof HttpErrorResponse ? error.status : undefined;
-    if (task && status === 404) {
+    if (task && httpStatus(error) === 404) {
       this.dropTask(task);
       this.actionError.set('Esta tarefa não existe mais e foi removida da lista.');
-    } else if (status !== undefined && UNREACHABLE_STATUSES.has(status)) {
-      this.actionError.set(`${message} Sem conexão com o servidor; verifique se a API está no ar.`);
+    } else if (isUnreachable(error)) {
+      this.actionError.set(`${message} ${UNREACHABLE_MESSAGE}`);
     } else {
       this.actionError.set(`${message} Tente novamente.`);
     }

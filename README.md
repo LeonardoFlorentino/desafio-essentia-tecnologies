@@ -10,6 +10,9 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
 
 - **Página inicial com todas as tarefas cadastradas**, das mais recentes para as mais antigas, com título, descrição e
   situação (pendente ou concluída), e um resumo com o total, as pendentes e as concluídas.
+- **Cadastro e login:** telas `/register` e `/login` (link "Entrar" no cabeçalho). O cadastro já entra na conta; depois
+  do login, o cabeçalho mostra o e-mail de quem está conectado e a sessão continua ao recarregar a página. A sessão fica
+  num cookie que os scripts da página não conseguem ler — nada é guardado no `localStorage`.
 - **Layout responsivo:** funciona do celular (360 px) ao desktop, sem rolagem horizontal, com foco visível para quem
   navega pelo teclado.
 - **Criar tarefa:** formulário com título (obrigatório) e descrição (opcional); a nova tarefa aparece no topo da lista e

@@ -14,7 +14,33 @@
   h1 {
     margin: 0;
     font-size: 1.5rem;
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
   }
+}
+
+.app-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+
+.app-header__account {
+  color: #475467;
+
+  a {
+    color: #175cd3;
+    font-weight: 500;
+  }
+}
+
+.app-header__user {
+  overflow-wrap: anywhere;
 }
 
 .app-header__subtitle {
