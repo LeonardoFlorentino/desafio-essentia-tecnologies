@@ -41,6 +41,12 @@ export const config = {
     user: process.env.DB_USER!,
     password: process.env.DB_PASSWORD!,
     database: process.env.DB_NAME!,
+    // Managed MySQL (Aiven) only accepts TLS, with a certificate signed by its own authority:
+    // DB_SSL_CA holds that CA certificate (PEM; "\n" written literally also works, for panels that
+    // keep values on one line). Local Docker MySQL needs none.
+    ssl: process.env.DB_SSL_CA
+      ? { ca: process.env.DB_SSL_CA.replace(/\\n/g, '\n'), rejectUnauthorized: true }
+      : undefined,
   },
   mongo: {
     url: process.env.MONGO_URL!,

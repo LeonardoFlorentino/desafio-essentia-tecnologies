@@ -1,7 +1,5 @@
 # TechX Tasks
 
-[![CI](https://github.com/LeonardoFlorentino/desafio-essentia-tecnologies/actions/workflows/ci.yml/badge.svg?branch=leonardo-florentino-fernandes)](https://github.com/LeonardoFlorentino/desafio-essentia-tecnologies/actions/workflows/ci.yml)
-
 Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o desafio Full Stack da Essentia Group:
 cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 
@@ -28,6 +26,7 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - [Operação](#operação)
 - [Testes e qualidade](#testes-e-qualidade)
 - [Integração contínua](#integração-contínua)
+- [Deploy](#deploy)
 - [Contribuindo](#contribuindo)
 - [Problemas comuns](#problemas-comuns)
 
@@ -215,23 +214,24 @@ demonstração é recriado na próxima subida).
 
 Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa quais variáveis precisam ser definidas.
 
-| Variável                   | Obrigatória | Padrão                  | Descrição                                                                 |
-| -------------------------- | ----------- | ----------------------- | ------------------------------------------------------------------------- |
-| `PORT`                     | não         | `3000`                  | Porta HTTP da API                                                         |
-| `CORS_ORIGIN`              | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                 |
-| `DB_HOST`                  | sim         | —                       | Host do MySQL                                                             |
-| `DB_PORT`                  | não         | `3306`                  | Porta do MySQL                                                            |
-| `DB_USER`                  | sim         | —                       | Usuário do MySQL                                                          |
-| `DB_PASSWORD`              | sim         | —                       | Senha do MySQL                                                            |
-| `DB_NAME`                  | sim         | —                       | Nome do banco no MySQL                                                    |
-| `MONGO_URL`                | sim         | —                       | Endereço do MongoDB, com usuário e senha                                  |
-| `MONGO_DB_NAME`            | não         | `todo`                  | Nome do banco no MongoDB                                                  |
-| `JWT_SECRET`               | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)             |
-| `JWT_EXPIRES_IN`           | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                  |
-| `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP) |
-| `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)  |
-| `TRUST_PROXY`              | não         | `0`                     | Quantos proxies há na frente da API (`1` no Docker, por causa do nginx)   |
-| `LOG_LEVEL`                | não         | `info`                  | Detalhe dos logs: `debug`, `info`, `warn`, `error` ou `silent`            |
+| Variável                   | Obrigatória | Padrão                  | Descrição                                                                                           |
+| -------------------------- | ----------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
+| `PORT`                     | não         | `3000`                  | Porta HTTP da API                                                                                   |
+| `CORS_ORIGIN`              | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                                           |
+| `DB_HOST`                  | sim         | —                       | Host do MySQL                                                                                       |
+| `DB_PORT`                  | não         | `3306`                  | Porta do MySQL                                                                                      |
+| `DB_USER`                  | sim         | —                       | Usuário do MySQL                                                                                    |
+| `DB_PASSWORD`              | sim         | —                       | Senha do MySQL                                                                                      |
+| `DB_NAME`                  | sim         | —                       | Nome do banco no MySQL                                                                              |
+| `DB_SSL_CA`                | não         | —                       | Certificado (PEM) da autoridade do MySQL gerenciado; com ele a conexão usa TLS e confere o servidor |
+| `MONGO_URL`                | sim         | —                       | Endereço do MongoDB, com usuário e senha                                                            |
+| `MONGO_DB_NAME`            | não         | `todo`                  | Nome do banco no MongoDB                                                                            |
+| `JWT_SECRET`               | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)                                       |
+| `JWT_EXPIRES_IN`           | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                                            |
+| `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP)                           |
+| `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)                            |
+| `TRUST_PROXY`              | não         | `0`                     | Quantos proxies há na frente da API (`1` no Docker, por causa do nginx)                             |
+| `LOG_LEVEL`                | não         | `info`                  | Detalhe dos logs: `debug`, `info`, `warn`, `error` ou `silent`                                      |
 
 O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
 
@@ -636,6 +636,31 @@ A cada push e pull request, o [GitHub Actions](.github/workflows/ci.yml) roda, e
 O MySQL 8.4 e o MongoDB 8.0 sobem como containers de serviço do próprio GitHub Actions, com as mesmas versões do
 Docker Compose. Os relatórios de cobertura ficam disponíveis por 7 dias em cada execução; se o E2E falhar, também ficam
 o relatório do Playwright, as capturas de tela e os traces. Um push novo na mesma branch cancela a execução anterior.
+
+## Deploy
+
+A API está pronta para o [Render](https://render.com) (plano gratuito), descrita em
+[`render.yaml`](render.yaml), com os bancos em serviços gerenciados gratuitos: **MySQL no
+[Aiven](https://aiven.io)** e **MongoDB no [Atlas](https://www.mongodb.com/atlas)**.
+
+- **Container:** o mesmo `backend/Dockerfile` do Docker Compose. A cada início, aplica as migrations, cria o usuário
+  de demonstração (`SEED_DEMO_USER=true`) e sobe a API. O Render só passa a mandar tráfego para uma versão nova
+  quando o `/api/health/ready` responde 200.
+- **Segredos:** nenhum fica no repositório. O `JWT_SECRET` é gerado pelo próprio Render e mantido entre deploys (as
+  sessões sobrevivem a uma versão nova). Os dados dos bancos são preenchidos no painel ao criar o serviço.
+- **MySQL do Aiven:** só aceita conexão criptografada. Em `DB_SSL_CA` vai o certificado da autoridade do Aiven; a API
+  confere o servidor contra ele e recusa a conexão se não bater.
+- **MongoDB do Atlas:** usuário só com `readWrite` no banco `todo`, não administrador.
+- **HTTPS:** cookie de sessão `Secure` e header HSTS.
+- **Plano gratuito:** o serviço "dorme" depois de 15 minutos sem acesso. A primeira requisição depois disso leva
+  cerca de 30 a 60 segundos.
+
+| Variável                                                  | Onde                                                  |
+| --------------------------------------------------------- | ----------------------------------------------------- |
+| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | Aiven → serviço MySQL → _Connection information_      |
+| `DB_SSL_CA`                                               | Aiven → mesmo lugar → _CA certificate_ (conteúdo PEM) |
+| `MONGO_URL`                                               | Atlas → _Connect_ → _Drivers_ (`mongodb+srv://...`)   |
+| `CORS_ORIGIN`                                             | Endereço do frontend publicado                        |
 
 ## Contribuindo
 

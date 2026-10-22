@@ -1,0 +1,56 @@
+# Render Blueprint: the public demo of the API (Render → New → Blueprint → this repository).
+# The databases are outside Render: MySQL on Aiven and MongoDB on Atlas, both on free plans.
+# Values marked `sync: false` are typed in the Render dashboard when the Blueprint is created;
+# they never live in the repository.
+services:
+  - type: web
+    name: techx-tasks-api
+    runtime: docker
+    plan: free
+    # Closest Render region to Brazil.
+    region: virginia
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Ready = MySQL and MongoDB answer (until then Render keeps sending traffic to the old version).
+    healthCheckPath: /api/health/ready
+    autoDeploy: true
+    envVars:
+      # Generated once by Render and kept across deploys: sessions survive a new version.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      # HTTPS on Render: the session cookie only travels over HTTPS (Secure).
+      - key: COOKIE_SECURE
+        value: 'true'
+      # Render's load balancer sits in front of the API: the client IP comes from X-Forwarded-For.
+      - key: TRUST_PROXY
+        value: '1'
+      # Public demo with the evaluation account (demo@techx.com / demo12345, as in the README).
+      - key: SEED_DEMO_USER
+        value: 'true'
+      - key: LOG_LEVEL
+        value: info
+      # Aiven MySQL (Overview → Connection information). DB_SSL_CA = the "CA certificate" there.
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL_CA
+        sync: false
+      # MongoDB Atlas: mongodb+srv://<user>:<password>@<cluster>/ — a user with readWrite on the
+      # database below only (not an Atlas admin).
+      - key: MONGO_URL
+        sync: false
+      - key: MONGO_DB_NAME
+        value: todo
+      # Browser origin allowed to call the API directly (the frontend URL, from step 49).
+      - key: CORS_ORIGIN
+        sync: false
