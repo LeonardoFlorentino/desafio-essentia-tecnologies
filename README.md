@@ -7,11 +7,11 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - **Backend:** API RESTful em Node.js + TypeScript (Express)
 - **Bancos de dados:** MySQL (usuários e tarefas) e MongoDB (notas, tags e histórico das tarefas)
 
-> **API online:** https://techx-tasks-api.onrender.com/api — documentação interativa (Swagger) em
-> https://techx-tasks-api.onrender.com/api/docs. Plano gratuito: depois de um tempo sem uso, a primeira requisição
-> pode levar até cerca de um minuto (o serviço "acorda").
+> **Demo online: https://techx-tasks.onrender.com** — entre com `demo@techx.com` / `demo12345` (já vem com algumas
+> tarefas) ou crie a sua conta.
 >
-> **Usuário de demonstração:** `demo@techx.com` / `demo12345` — já vem com algumas tarefas.
+> API: https://techx-tasks-api.onrender.com/api · Swagger: https://techx-tasks-api.onrender.com/api/docs. Plano
+> gratuito: depois de um tempo sem uso, a primeira requisição pode levar até cerca de um minuto (o serviço "acorda").
 >
 > **Documentação interativa da API (Swagger):** `/api/docs` — http://localhost:8080/api/docs com Docker ou
 > http://localhost:3000/api/docs em desenvolvimento.
@@ -649,6 +649,12 @@ bancos em serviços gerenciados gratuitos: **MySQL no [Aiven](https://aiven.io)*
 [Atlas](https://www.mongodb.com/atlas)**. A API e o MongoDB ficam na Virgínia (EUA); o MySQL gratuito do Aiven ficou
 em San Francisco. Medido a partir do Brasil, com o serviço acordado: ~0,23 s numa rota sem banco e ~0,4 a 0,65 s para
 listar as tarefas.
+
+O **site** (https://techx-tasks.onrender.com) é o build de produção do Angular servido como arquivos estáticos pela CDN
+do Render, reconstruído a cada push na branch. O Render encaminha o `/api/*` do próprio site para a API, como o nginx
+faz no Docker: página e API ficam no mesmo endereço, o cookie de sessão (`SameSite=Strict`) pertence ao site e não é
+preciso CORS. O `index.html` responde por qualquer caminho do app (recarregar em `/login` funciona), e o site envia os
+mesmos headers de segurança do nginx (CSP, `X-Frame-Options`, etc.).
 
 - **Container:** o mesmo `backend/Dockerfile` do Docker Compose. A cada início, aplica as migrations, cria o usuário
   de demonstração (`SEED_DEMO_USER=true`) e sobe a API. O Render só passa a mandar tráfego para uma versão nova
