@@ -42,6 +42,15 @@
   <ul class="task-list">
     @for (task of tasks(); track task.id) {
       <li class="task" [class.task--completed]="task.completed">
+        <input
+          #completedBox
+          class="task__checkbox"
+          type="checkbox"
+          [checked]="task.completed"
+          [disabled]="busyIds().has(task.id)"
+          [attr.aria-label]="'Concluída: ' + task.title"
+          (change)="toggleCompleted(task, completedBox)"
+        />
         <h3 class="task__title">{{ task.title }}</h3>
         @if (task.description) {
           <p class="task__description">{{ task.description }}</p>

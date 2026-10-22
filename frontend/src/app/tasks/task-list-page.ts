@@ -16,6 +16,8 @@ export class TaskListPage implements OnInit {
 
   protected readonly tasks = signal<Task[]>([]);
   protected readonly saving = signal(false);
+  /** Ids of the tasks with a request in flight (their controls stay disabled meanwhile). */
+  protected readonly busyIds = signal<ReadonlySet<number>>(new Set());
 
   // Same limits as the API; /\S/ rejects a title made only of spaces.
   protected readonly form = inject(NonNullableFormBuilder).group({
@@ -47,5 +49,27 @@ export class TaskListPage implements OnInit {
         this.tasks.update((tasks) => [task, ...tasks]);
         this.form.reset();
       });
+  }
+
+  protected toggleCompleted(task: Task, checkbox: HTMLInputElement) {
+    this.setBusy(task.id, true);
+    this.taskService
+      .update(task.id, { completed: checkbox.checked })
+      .pipe(finalize(() => this.setBusy(task.id, false)))
+      .subscribe({
+        next: (updated) =>
+          this.tasks.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t))),
+        // The browser already flipped the box; put it back so it matches the saved state.
+        error: () => (checkbox.checked = task.completed),
+      });
+  }
+
+  private setBusy(id: number, busy: boolean) {
+    this.busyIds.update((ids) => {
+      const next = new Set(ids);
+      if (busy) next.add(id);
+      else next.delete(id);
+      return next;
+    });
   }
 }

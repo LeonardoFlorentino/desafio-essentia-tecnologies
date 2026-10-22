@@ -90,6 +90,57 @@ describe('TaskListPage', () => {
     req.flush({ ...tasks[1], id: 3, title: 'Only a title', description: null });
   });
 
+  function checkboxOf(item: number) {
+    return page
+      .querySelectorAll('li')
+      [item].querySelector<HTMLInputElement>('input[type=checkbox]')!;
+  }
+
+  it('reflects each task status in its checkbox', () => {
+    expect(checkboxOf(0).checked).toBe(true);
+    expect(checkboxOf(1).checked).toBe(false);
+    expect(checkboxOf(1).getAttribute('aria-label')).toBe('Concluída: Write the report');
+  });
+
+  it('marks a pending task as completed', async () => {
+    checkboxOf(1).click();
+    await fixture.whenStable();
+    expect(checkboxOf(1).disabled).toBe(true);
+
+    const req = http.expectOne('/api/tasks/1');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ completed: true });
+    req.flush({ ...tasks[1], completed: true });
+    await fixture.whenStable();
+
+    const item = page.querySelectorAll('li')[1];
+    expect(item.classList).toContain('task--completed');
+    expect(item.textContent).toContain('Concluída');
+    expect(checkboxOf(1).disabled).toBe(false);
+  });
+
+  it('marks a completed task as pending again', async () => {
+    checkboxOf(0).click();
+
+    const req = http.expectOne('/api/tasks/2');
+    expect(req.request.body).toEqual({ completed: false });
+    req.flush({ ...tasks[0], completed: false });
+    await fixture.whenStable();
+
+    const item = page.querySelectorAll('li')[0];
+    expect(item.classList).not.toContain('task--completed');
+    expect(item.textContent).toContain('Pendente');
+  });
+
+  it('puts the checkbox back when the API refuses the change', async () => {
+    checkboxOf(1).click();
+    http.expectOne('/api/tasks/1').flush(null, { status: 500, statusText: 'Server Error' });
+    await fixture.whenStable();
+
+    expect(checkboxOf(1).checked).toBe(false);
+    expect(page.querySelectorAll('li')[1].textContent).toContain('Pendente');
+  });
+
   it.each(['', '   '])(
     'does not send a task with the title "%s" and explains why',
     async (title) => {
