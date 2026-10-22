@@ -65,7 +65,10 @@ jobs:
           --health-cmd "mysqladmin ping -h 127.0.0.1 -utodo -ptodo --silent"
           --health-interval 5s --health-timeout 5s --health-retries 20
       mongo:
-        image: mongo:8.0
+        # 7.0, not 8.0 (as in docker-compose and Atlas): MongoDB 8.x exits at startup on Linux
+        # kernels 6.19 to 7.0.13, which the GitHub runners use (SERVER-125742). Back to 8.0 once
+        # the runners move to kernel 7.0.14+. The whole suite also passes on 7.0.
+        image: mongo:7.0
         env:
           MONGO_INITDB_ROOT_USERNAME: todo
           MONGO_INITDB_ROOT_PASSWORD: todo
@@ -137,7 +140,10 @@ jobs:
           --health-cmd "mysqladmin ping -h 127.0.0.1 -utodo -ptodo --silent"
           --health-interval 5s --health-timeout 5s --health-retries 20
       mongo:
-        image: mongo:8.0
+        # 7.0, not 8.0 (as in docker-compose and Atlas): MongoDB 8.x exits at startup on Linux
+        # kernels 6.19 to 7.0.13, which the GitHub runners use (SERVER-125742). Back to 8.0 once
+        # the runners move to kernel 7.0.14+. The whole suite also passes on 7.0.
+        image: mongo:7.0
         env:
           MONGO_INITDB_ROOT_USERNAME: todo
           MONGO_INITDB_ROOT_PASSWORD: todo
