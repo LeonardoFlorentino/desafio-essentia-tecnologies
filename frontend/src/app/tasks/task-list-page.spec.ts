@@ -139,6 +139,9 @@ describe('TaskListPage', () => {
 
     expect(checkboxOf(1).checked).toBe(false);
     expect(page.querySelectorAll('li')[1].textContent).toContain('Pendente');
+    expect(page.querySelector('[role=alert]')?.textContent).toContain(
+      'Não foi possível salvar a alteração. Tente novamente.',
+    );
   });
 
   it.each(['', '   '])(
@@ -267,6 +270,99 @@ describe('TaskListPage', () => {
       expect(page.querySelector('#edit-title-error-1')?.textContent).toContain(
         'Informe o título da tarefa.',
       );
+    });
+  });
+
+  describe('when the API fails', () => {
+    const serverError = { status: 500, statusText: 'Server Error' };
+
+    function alertText() {
+      return page.querySelector('[role=alert]')?.textContent ?? '';
+    }
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it('explains a failed creation and keeps what was typed', async () => {
+      type('#new-task-title', 'Send the proposal');
+      submit();
+      http.expectOne('/api/tasks').flush(null, serverError);
+      await fixture.whenStable();
+
+      expect(alertText()).toContain('Não foi possível adicionar a tarefa. Tente novamente.');
+      expect(page.querySelectorAll('li')).toHaveLength(2);
+      expect(page.querySelector<HTMLInputElement>('#new-task-title')!.value).toBe(
+        'Send the proposal',
+      );
+      expect(page.querySelector<HTMLButtonElement>('form > button')!.disabled).toBe(false);
+    });
+
+    it('explains a failed edit and keeps the form open', async () => {
+      page.querySelector<HTMLButtonElement>('#edit-button-1')!.click();
+      await fixture.whenStable();
+      type('#edit-title-1', 'New title');
+      page.querySelector('li form')!.dispatchEvent(new Event('submit'));
+      http.expectOne('/api/tasks/1').flush(null, serverError);
+      await fixture.whenStable();
+
+      expect(alertText()).toContain('Não foi possível salvar a alteração. Tente novamente.');
+      expect(page.querySelector<HTMLInputElement>('#edit-title-1')!.value).toBe('New title');
+    });
+
+    it('explains a failed deletion and keeps the task', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      page.querySelector<HTMLButtonElement>('[aria-label="Excluir: Write the report"]')!.click();
+      http.expectOne('/api/tasks/1').flush(null, serverError);
+      await fixture.whenStable();
+
+      expect(alertText()).toContain('Não foi possível excluir a tarefa. Tente novamente.');
+      expect(page.querySelectorAll('li')).toHaveLength(2);
+    });
+
+    it('drops a task that no longer exists (404) and says so', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      page.querySelector<HTMLButtonElement>('[aria-label="Excluir: Write the report"]')!.click();
+      http.expectOne('/api/tasks/1').flush(null, { status: 404, statusText: 'Not Found' });
+      await fixture.whenStable();
+
+      expect(alertText()).toContain('Esta tarefa não existe mais');
+      expect(page.querySelectorAll('li')).toHaveLength(1);
+    });
+
+    it('says the server is unreachable when there is no connection', async () => {
+      checkboxOf(1).click();
+      http.expectOne('/api/tasks/1').error(new ProgressEvent('error'), { status: 0 });
+      await fixture.whenStable();
+
+      expect(alertText()).toContain('Sem conexão com o servidor');
+    });
+
+    it.each([502, 503, 504])(
+      'also says the server is unreachable when the proxy answers %i',
+      async (status) => {
+        checkboxOf(1).click();
+        http.expectOne('/api/tasks/1').flush(null, { status, statusText: 'Proxy Error' });
+        await fixture.whenStable();
+
+        expect(alertText()).toContain('Sem conexão com o servidor');
+      },
+    );
+
+    it('lets the user dismiss the message, and clears it on the next action', async () => {
+      checkboxOf(1).click();
+      http.expectOne('/api/tasks/1').flush(null, serverError);
+      await fixture.whenStable();
+
+      page.querySelector<HTMLButtonElement>('[role=alert] button')!.click();
+      await fixture.whenStable();
+      expect(page.querySelector('[role=alert]')).toBeNull();
+
+      checkboxOf(1).click();
+      http.expectOne('/api/tasks/1').flush(null, serverError);
+      await fixture.whenStable();
+      checkboxOf(1).click();
+      await fixture.whenStable();
+      expect(page.querySelector('[role=alert]')).toBeNull();
+      http.expectOne('/api/tasks/1').flush({ ...tasks[1], completed: true });
     });
   });
 });

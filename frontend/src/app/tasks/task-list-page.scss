@@ -2,6 +2,39 @@
   margin-bottom: 2rem;
 }
 
+// Stays visible at the top while scrolling, so a failure on a task far down the list is not missed.
+.action-error {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #fda29b;
+  border-radius: 0.5rem;
+  background: #fef3f2;
+  color: #912018;
+
+  p {
+    margin: 0;
+  }
+}
+
+.list-state {
+  color: #475467;
+}
+
+.list-state--error {
+  color: #912018;
+
+  p {
+    margin: 0 0 0.5rem;
+  }
+}
+
 // Focus target after a deletion (tabindex="-1"): no outline for a programmatic focus on a heading.
 #tasks-heading:focus {
   outline: none;

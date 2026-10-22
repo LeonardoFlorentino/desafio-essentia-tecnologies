@@ -15,6 +15,10 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
 - **Editar tarefa:** o botão "Editar" abre o título e a descrição para edição dentro da própria lista; "Salvar" grava,
   "Cancelar" (ou a tecla Esc) descarta. O foco do teclado vai para o campo ao abrir e volta ao botão ao fechar.
 - **Excluir tarefa:** o botão "Excluir" pede confirmação com o nome da tarefa antes de apagar.
+- **Carregamento, lista vazia e erros:** mensagem enquanto as tarefas carregam e quando ainda não há nenhuma; se a API
+  não responder, a lista mostra o erro com o botão "Tentar novamente". Quando criar, editar, concluir ou excluir
+  falhar, um aviso no topo da página explica o que aconteceu (inclusive "sem conexão com o servidor") e nada do que foi
+  digitado se perde; uma tarefa que já não existe no servidor sai da lista.
 - **Marcar como concluída ou não:** uma caixa de seleção em cada tarefa; a concluída aparece riscada. Se a API recusar a
   mudança, a caixa volta ao estado salvo.
 

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Injector, OnInit, afterNextRender, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -5,6 +6,12 @@ import { createTaskForm, showFieldError, taskFormValue } from './task-form';
 import { TaskItem } from './task-item';
 import { Task, TaskChanges } from './task.model';
 import { TaskService } from './task.service';
+
+/**
+ * The API could not be reached: no response at all (0), or the proxy in front of it
+ * (Angular dev server, nginx) answering for it — 502/503/504.
+ */
+const UNREACHABLE_STATUSES = new Set([0, 502, 503, 504]);
 
 /**
  * Home page: shows every registered task and lets the user add, edit, complete and delete them.
@@ -21,6 +28,10 @@ export class TaskListPage implements OnInit {
   private readonly injector = inject(Injector);
 
   protected readonly tasks = signal<Task[]>([]);
+  protected readonly loading = signal(true);
+  protected readonly loadFailed = signal(false);
+  /** Message about the last action that failed (create, update, delete), shown in an alert. */
+  protected readonly actionError = signal<string | null>(null);
   protected readonly saving = signal(false);
   /** Ids of the tasks with a request in flight (their controls stay disabled meanwhile). */
   protected readonly busyIds = signal<ReadonlySet<number>>(new Set());
@@ -31,7 +42,19 @@ export class TaskListPage implements OnInit {
   protected readonly showError = showFieldError;
 
   ngOnInit() {
-    this.taskService.list().subscribe((tasks) => this.tasks.set(tasks));
+    this.loadTasks();
+  }
+
+  protected loadTasks() {
+    this.loading.set(true);
+    this.loadFailed.set(false);
+    this.taskService
+      .list()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (tasks) => this.tasks.set(tasks),
+        error: () => this.loadFailed.set(true),
+      });
   }
 
   protected addTask() {
@@ -39,14 +62,19 @@ export class TaskListPage implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+    this.actionError.set(null);
     this.saving.set(true);
     this.taskService
       .create(taskFormValue(this.form))
       .pipe(finalize(() => this.saving.set(false)))
-      .subscribe((task) => {
-        // Newest first, matching the order the API returns.
-        this.tasks.update((tasks) => [task, ...tasks]);
-        this.form.reset();
+      .subscribe({
+        next: (task) => {
+          // Newest first, matching the order the API returns.
+          this.tasks.update((tasks) => [task, ...tasks]);
+          this.form.reset();
+        },
+        // The form keeps what was typed, so the user can just try again.
+        error: (error) => this.fail(error, 'Não foi possível adicionar a tarefa.'),
       });
   }
 
@@ -65,20 +93,23 @@ export class TaskListPage implements OnInit {
   protected deleteTask(task: Task) {
     if (!confirm(`Excluir a tarefa "${task.title}"?`)) return;
 
+    this.actionError.set(null);
     this.setBusy(task.id, true);
     this.taskService
       .remove(task.id)
       .pipe(finalize(() => this.setBusy(task.id, false)))
-      .subscribe(() => {
-        this.tasks.update((tasks) => tasks.filter((t) => t.id !== task.id));
-        // The focused button is gone with its task; keep keyboard users on the list.
-        afterNextRender(() => document.getElementById('tasks-heading')?.focus(), {
-          injector: this.injector,
-        });
+      .subscribe({
+        next: () => this.dropTask(task),
+        error: (error) => this.fail(error, 'Não foi possível excluir a tarefa.', task),
       });
   }
 
+  protected dismissError() {
+    this.actionError.set(null);
+  }
+
   private updateTask(task: Task, changes: TaskChanges, onSaved?: () => void) {
+    this.actionError.set(null);
     this.setBusy(task.id, true);
     this.taskService
       .update(task.id, changes)
@@ -88,9 +119,31 @@ export class TaskListPage implements OnInit {
           this.tasks.update((tasks) => tasks.map((t) => (t.id === updated.id ? updated : t)));
           onSaved?.();
         },
-        // Nothing to undo: the cards only show saved state, so a failure leaves them unchanged.
-        error: () => undefined,
+        // The cards only show saved state, so a failure leaves them as they were.
+        error: (error) => this.fail(error, 'Não foi possível salvar a alteração.', task),
       });
+  }
+
+  /** Explains a failed request; a task already deleted elsewhere (404) also leaves the list. */
+  private fail(error: unknown, message: string, task?: Task) {
+    const status = error instanceof HttpErrorResponse ? error.status : undefined;
+    if (task && status === 404) {
+      this.dropTask(task);
+      this.actionError.set('Esta tarefa não existe mais e foi removida da lista.');
+    } else if (status !== undefined && UNREACHABLE_STATUSES.has(status)) {
+      this.actionError.set(`${message} Sem conexão com o servidor; verifique se a API está no ar.`);
+    } else {
+      this.actionError.set(`${message} Tente novamente.`);
+    }
+  }
+
+  private dropTask(task: Task) {
+    this.tasks.update((tasks) => tasks.filter((t) => t.id !== task.id));
+    if (this.editingId() === task.id) this.editingId.set(null);
+    // The focused button is gone with its task; keep keyboard users on the list.
+    afterNextRender(() => document.getElementById('tasks-heading')?.focus(), {
+      injector: this.injector,
+    });
   }
 
   private setBusy(id: number, busy: boolean) {
