@@ -1,6 +1,6 @@
-﻿# npm start: prepares a fresh clone, starts MySQL, opens the backend in its own
-# terminal tab, waits until the API answers, then gives the focus back to the
-# window where npm start was typed.
+﻿# npm start: prepares a fresh clone, starts MySQL, applies the database
+# migrations, opens the backend in its own terminal tab, waits until the API
+# answers, then gives the focus back to the window where npm start was typed.
 # Failures are detected through $LASTEXITCODE: with ErrorActionPreference=Stop,
 # Windows PowerShell 5.1 aborts on any stderr line (even Docker warnings).
 $root = $PSScriptRoot
@@ -84,6 +84,10 @@ docker info *> $null
 if ($LASTEXITCODE) { Fail 'O Docker não está respondendo. Abra o Docker Desktop e rode npm start de novo.' }
 Invoke-Compose up -d --wait
 if ($LASTEXITCODE) { Fail 'O MySQL não ficou saudável. Veja os logs com: docker compose logs mysql' }
+
+Step 'Aplicando as migrations do banco'
+npm run migrate --silent --prefix (Join-Path $root 'backend')
+if ($LASTEXITCODE) { Fail 'As migrations falharam. Veja o erro acima.' }
 
 Step 'Iniciando o backend'
 if (Test-Health) {
