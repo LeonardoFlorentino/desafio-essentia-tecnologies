@@ -82,6 +82,7 @@ Todas as rotas ficam sob o prefixo `/api`.
 | POST   | `/tasks`     | Cria uma tarefa                                                           | 201     |
 | GET    | `/tasks/:id` | Busca uma tarefa pelo id                                                  | 200     |
 | PATCH  | `/tasks/:id` | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
+| DELETE | `/tasks/:id` | Exclui uma tarefa (resposta sem corpo)                                    | 204     |
 
 Exemplo de resposta de `GET /api/tasks`:
 

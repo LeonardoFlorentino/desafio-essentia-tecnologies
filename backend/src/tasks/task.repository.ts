@@ -59,3 +59,9 @@ export async function update(id: number, input: UpdateTaskInput): Promise<Task |
   );
   return findById(id);
 }
+
+/** Returns false when there was no task with this id. */
+export async function remove(id: number): Promise<boolean> {
+  const [result] = await pool.query<ResultSetHeader>('DELETE FROM tasks WHERE id = ?', [id]);
+  return result.affectedRows > 0;
+}

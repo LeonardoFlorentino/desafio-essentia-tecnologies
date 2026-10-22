@@ -60,3 +60,17 @@ taskRouter.patch('/:id', async (req, res) => {
   }
   res.json(task);
 });
+
+taskRouter.delete('/:id', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'Invalid task id' });
+    return;
+  }
+
+  if (!(await taskRepository.remove(id))) {
+    res.status(404).json({ error: 'Task not found' });
+    return;
+  }
+  res.status(204).end();
+});
