@@ -156,4 +156,77 @@ describe('TaskListPage', () => {
       );
     },
   );
+
+  describe('inline editing', () => {
+    async function openEditor(id: number) {
+      page.querySelector<HTMLButtonElement>(`#edit-button-${id}`)!.click();
+      await fixture.whenStable();
+    }
+
+    function field(id: string) {
+      return page.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)!;
+    }
+
+    it('opens a form filled with the task data and focuses the title', async () => {
+      await openEditor(1);
+
+      expect(field('edit-title-1').value).toBe('Write the report');
+      expect(field('edit-description-1').value).toBe('Quarterly numbers');
+      expect(document.activeElement).toBe(field('edit-title-1'));
+    });
+
+    it('saves the changes with PATCH and shows the updated task', async () => {
+      await openEditor(1);
+      type('#edit-title-1', '  Write the final report  ');
+      type('#edit-description-1', '');
+      page.querySelector('li form')!.dispatchEvent(new Event('submit'));
+
+      const req = http.expectOne('/api/tasks/1');
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ title: 'Write the final report', description: null });
+      req.flush({ ...tasks[1], title: 'Write the final report', description: null });
+      await fixture.whenStable();
+
+      const item = page.querySelectorAll('li')[1];
+      expect(item.querySelector('form')).toBeNull();
+      expect(item.querySelector('h3')?.textContent).toBe('Write the final report');
+      expect(item.textContent).not.toContain('Quarterly numbers');
+      expect(document.activeElement?.id).toBe('edit-button-1');
+    });
+
+    it('cancels without sending anything and keeps the original data', async () => {
+      await openEditor(1);
+      type('#edit-title-1', 'Something else');
+      page.querySelector<HTMLButtonElement>('li form button[type=button]')!.click();
+      await fixture.whenStable();
+
+      http.expectNone('/api/tasks/1');
+      const item = page.querySelectorAll('li')[1];
+      expect(item.querySelector('form')).toBeNull();
+      expect(item.querySelector('h3')?.textContent).toBe('Write the report');
+    });
+
+    it('cancels with the Escape key', async () => {
+      await openEditor(1);
+      page
+        .querySelector('li form')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await fixture.whenStable();
+
+      expect(page.querySelector('li form')).toBeNull();
+    });
+
+    it('does not save a blank title', async () => {
+      await openEditor(1);
+      type('#edit-title-1', '   ');
+      page.querySelector('li form')!.dispatchEvent(new Event('submit'));
+      await fixture.whenStable();
+
+      http.expectNone('/api/tasks/1');
+      expect(field('edit-title-1').getAttribute('aria-invalid')).toBe('true');
+      expect(page.querySelector('#edit-title-error-1')?.textContent).toContain(
+        'Informe o título da tarefa.',
+      );
+    });
+  });
 });

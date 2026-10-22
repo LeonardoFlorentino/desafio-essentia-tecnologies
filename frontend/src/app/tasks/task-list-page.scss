@@ -36,11 +36,22 @@
   font-size: 0.875rem;
 }
 
-.task-form button {
+.task-form > button,
+.task__actions button {
   justify-self: start;
   font: inherit;
   padding: 0.5rem 1rem;
   cursor: pointer;
+}
+
+.task__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.task__edit {
+  max-width: none;
 }
 
 .task-list {
@@ -66,7 +77,7 @@
 }
 
 .task__checkbox {
-  grid-row: span 3;
+  grid-row: span 4;
   width: 1.125rem;
   height: 1.125rem;
   margin: 0.125rem 0 0;

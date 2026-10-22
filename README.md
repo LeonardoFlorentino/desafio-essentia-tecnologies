@@ -12,6 +12,8 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
   situação (pendente ou concluída).
 - **Criar tarefa:** formulário com título (obrigatório) e descrição (opcional); a nova tarefa aparece no topo da lista e
   o formulário é limpo. Título em branco não é enviado e mostra uma mensagem de erro no campo.
+- **Editar tarefa:** o botão "Editar" abre o título e a descrição para edição dentro da própria lista; "Salvar" grava,
+  "Cancelar" (ou a tecla Esc) descarta. O foco do teclado vai para o campo ao abrir e volta ao botão ao fechar.
 - **Marcar como concluída ou não:** uma caixa de seleção em cada tarefa; a concluída aparece riscada. Se a API recusar a
   mudança, a caixa volta ao estado salvo.
 
