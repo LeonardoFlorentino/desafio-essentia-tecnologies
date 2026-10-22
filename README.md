@@ -181,6 +181,10 @@ não faz nada se estiver tudo aplicado.
 
 Interface em Angular 22 (componentes standalone, sem zone.js), com a API rodando em `http://localhost:3000`.
 
+O frontend chama a API pelo caminho relativo `/api`. Em desenvolvimento, o servidor do Angular encaminha `/api` para
+`http://localhost:3000` (configurado em `frontend/proxy.conf.json`), então a página e a API ficam na mesma origem e o
+navegador não precisa de CORS. Se a API rodar em outra porta, ajuste o `target` desse arquivo.
+
 ```bash
 cd frontend
 npm install
