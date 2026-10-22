@@ -597,6 +597,20 @@ classe CSS):
 | Ordenação               | Por prazo (sem prazo por último) e por prioridade                                                 |
 | Notas, tags e histórico | Salva no MongoDB (tags repetidas descartadas); edição aparece com o valor antes e depois          |
 | Falhas da API           | Lista que não carrega mostra "Tentar novamente"; servidor fora do ar não apaga o que foi digitado |
+| Campo de data           | Calendário em português (Dom a Sáb); escolher um dia do mês seguinte; Esc fecha só o calendário   |
+
+E de autenticação:
+
+| Área                | O que o teste faz na tela                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| Cadastro            | Cria a conta e já entra (e-mail no topo); senha curta explicada antes de enviar; e-mail repetido |
+| Login e logout      | Entra (e-mail em maiúsculas e com espaços também vale); continua conectado ao recarregar; "Sair" |
+| Mensagem genérica   | Senha errada e e-mail inexistente recebem exatamente a mesma mensagem                            |
+| Sessão protegida    | Cookie `HttpOnly` e `SameSite=Strict`; nada em `document.cookie` nem no `localStorage`           |
+| Guards              | Sem sessão, qualquer endereço leva ao login; com sessão, login e cadastro voltam para a lista    |
+| Sessão expirada     | A próxima ação leva ao login com o aviso "Sua sessão expirou"                                    |
+| Logout em outra aba | Um segundo navegador com a mesma sessão para de funcionar assim que o primeiro clica em "Sair"   |
+| Isolamento          | Outra conta não vê, nem pela busca, as tarefas da primeira                                       |
 
 A suíte passou 3 vezes seguidas e também com cada teste repetido 3 vezes (`--repeat-each=3`), sem falhas
 intermitentes. Se um teste falhar, a captura de tela e o rastreamento (trace) ficam em `test-results/`.
