@@ -31,7 +31,9 @@ export default defineConfig({
   webServer: [
     {
       // Variables not set here come from backend/.env (or from the CI environment).
-      command: 'npx tsx src/server.ts',
+      // Migrations first: Playwright starts the web servers *before* globalSetup, and on a fresh
+      // database (CI) the API would fail at startup on missing tables.
+      command: 'npx tsx src/db/migrate.ts && npx tsx src/server.ts',
       cwd: '../backend',
       url: `http://localhost:${API_PORT}/api/health/ready`,
       env: {
