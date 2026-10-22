@@ -1,5 +1,7 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
+import { authRouter } from './auth/auth.routes';
 import { config } from './config';
 import { pool } from './db/mysql';
 import { errorHandler, notFoundHandler } from './http/errors';
@@ -7,9 +9,10 @@ import { taskRouter } from './tasks/task.routes';
 
 export function createApp() {
   const app = express();
-  // credentials: the session cookie (from the authentication steps) must travel on cross-origin calls.
+  // credentials: the session cookie must travel on cross-origin calls.
   app.use(cors({ origin: config.corsOrigin, credentials: true }));
   app.use(express.json());
+  app.use(cookieParser());
 
   app.get('/api/health', async (_req, res) => {
     try {
@@ -20,6 +23,7 @@ export function createApp() {
     }
   });
 
+  app.use('/api/auth', authRouter);
   app.use('/api/tasks', taskRouter);
 
   // Must come after every route.

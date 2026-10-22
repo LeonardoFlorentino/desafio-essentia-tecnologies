@@ -5,13 +5,18 @@ try {
   if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
 }
 
-const requiredVariables = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'] as const;
+const requiredVariables = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'JWT_SECRET'] as const;
 const missing = requiredVariables.filter((name) => !process.env[name]);
 if (missing.length > 0) {
   throw new Error(
     `Missing required environment variables: ${missing.join(', ')}. ` +
       'Copy backend/.env.example to backend/.env and fill in the values.',
   );
+}
+
+// A short secret makes the token signature guessable by brute force.
+if (process.env.JWT_SECRET!.length < 32) {
+  throw new Error('JWT_SECRET must be at least 32 characters long.');
 }
 
 export const config = {
@@ -25,4 +30,11 @@ export const config = {
     password: process.env.DB_PASSWORD!,
     database: process.env.DB_NAME!,
   },
+  jwt: {
+    secret: process.env.JWT_SECRET!,
+    // Any format accepted by jsonwebtoken: "8h", "30m", "7d" or a number of seconds.
+    expiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
+  },
+  // HTTPS-only session cookie outside local development.
+  secureCookies: process.env.NODE_ENV === 'production',
 };

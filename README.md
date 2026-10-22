@@ -82,15 +82,17 @@ Se o `.env` estiver faltando, a API não sobe e informa quais variáveis precisa
 
 #### Variáveis de ambiente (`backend/.env`)
 
-| Variável      | Obrigatória | Padrão                  | Descrição                                            |
-| ------------- | ----------- | ----------------------- | ---------------------------------------------------- |
-| `PORT`        | não         | `3000`                  | Porta HTTP da API                                    |
-| `CORS_ORIGIN` | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API (CORS) |
-| `DB_HOST`     | sim         | —                       | Host do MySQL                                        |
-| `DB_PORT`     | não         | `3306`                  | Porta do MySQL                                       |
-| `DB_USER`     | sim         | —                       | Usuário do MySQL                                     |
-| `DB_PASSWORD` | sim         | —                       | Senha do MySQL                                       |
-| `DB_NAME`     | sim         | —                       | Nome do banco                                        |
+| Variável         | Obrigatória | Padrão                  | Descrição                                                     |
+| ---------------- | ----------- | ----------------------- | ------------------------------------------------------------- |
+| `PORT`           | não         | `3000`                  | Porta HTTP da API                                             |
+| `CORS_ORIGIN`    | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API (CORS)          |
+| `DB_HOST`        | sim         | —                       | Host do MySQL                                                 |
+| `DB_PORT`        | não         | `3306`                  | Porta do MySQL                                                |
+| `DB_USER`        | sim         | —                       | Usuário do MySQL                                              |
+| `DB_PASSWORD`    | sim         | —                       | Senha do MySQL                                                |
+| `DB_NAME`        | sim         | —                       | Nome do banco                                                 |
+| `JWT_SECRET`     | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres) |
+| `JWT_EXPIRES_IN` | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                      |
 
 O `.env.example` já traz valores que funcionam com o MySQL do `docker-compose.yml`.
 
@@ -111,14 +113,31 @@ Se o MySQL estiver fora do ar, a resposta é `503 { "status": "error", "database
 
 Todas as rotas ficam sob o prefixo `/api`.
 
-| Método | Rota         | Descrição                                                                 | Sucesso |
-| ------ | ------------ | ------------------------------------------------------------------------- | ------- |
-| GET    | `/health`    | Situação da API e do banco                                                | 200     |
-| GET    | `/tasks`     | Lista todas as tarefas, das mais recentes para as antigas                 | 200     |
-| POST   | `/tasks`     | Cria uma tarefa                                                           | 201     |
-| GET    | `/tasks/:id` | Busca uma tarefa pelo id                                                  | 200     |
-| PATCH  | `/tasks/:id` | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
-| DELETE | `/tasks/:id` | Exclui uma tarefa (resposta sem corpo)                                    | 204     |
+| Método | Rota             | Descrição                                                                 | Sucesso |
+| ------ | ---------------- | ------------------------------------------------------------------------- | ------- |
+| GET    | `/health`        | Situação da API e do banco                                                | 200     |
+| GET    | `/tasks`         | Lista todas as tarefas, das mais recentes para as antigas                 | 200     |
+| POST   | `/tasks`         | Cria uma tarefa                                                           | 201     |
+| GET    | `/tasks/:id`     | Busca uma tarefa pelo id                                                  | 200     |
+| PATCH  | `/tasks/:id`     | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
+| DELETE | `/tasks/:id`     | Exclui uma tarefa (resposta sem corpo)                                    | 204     |
+| POST   | `/auth/register` | Cria a conta e já inicia a sessão                                         | 201     |
+| POST   | `/auth/login`    | Inicia a sessão                                                           | 200     |
+| GET    | `/auth/me`       | Usuário da sessão atual                                                   | 200     |
+| POST   | `/auth/logout`   | Encerra a sessão (resposta sem corpo)                                     | 204     |
+
+#### Autenticação
+
+O login e o cadastro respondem `{ "user": { "id": 1, "email": "ana@techx.com" } }` e guardam a sessão (um JWT assinado
+com HS256) num **cookie `HttpOnly`, `SameSite=Strict`**, restrito ao caminho `/api` e com `Secure` em produção:
+
+- `HttpOnly`: scripts da página não conseguem ler o token, então um ataque XSS não rouba a sessão;
+- `SameSite=Strict`: o navegador não envia o cookie em requisições iniciadas por outros sites (proteção contra CSRF).
+
+O navegador envia o cookie sozinho; com `curl`, use um arquivo de cookies (`-c cookies.txt` no login e
+`-b cookies.txt` nas chamadas seguintes). As senhas são guardadas só como hash bcrypt (custo 12), com 8 caracteres no
+mínimo. Um e-mail inexistente e uma senha errada recebem a mesma resposta (`401 Invalid email or password`), para não
+revelar quais contas existem.
 
 Exemplo de resposta de `GET /api/tasks`:
 
@@ -160,6 +179,9 @@ O `PATCH /api/tasks/:id` altera apenas os campos enviados (pelo menos um). Para 
 ```
 
 #### Erros
+
+Além dos erros abaixo, as rotas de autenticação respondem `401` (sem sessão ou credenciais inválidas) e `409` (e-mail
+já cadastrado).
 
 Todos os erros são respondidos em JSON, no formato `{ "error": "mensagem" }` (validação inclui também `details`):
 
