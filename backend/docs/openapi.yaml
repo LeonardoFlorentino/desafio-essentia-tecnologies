@@ -22,10 +22,41 @@ tags:
     description: Informações adicionais das tarefas, guardadas no MongoDB.
 
 paths:
+  /health/live:
+    get:
+      tags: [Saúde]
+      summary: Liveness — o processo da API está de pé
+      description: Não consulta os bancos, para que uma queda deles não faça a plataforma reiniciar a API à toa.
+      responses:
+        '200':
+          description: Processo respondendo
+          content:
+            application/json:
+              schema: { type: object, properties: { status: { type: string, enum: [ok] } } }
+              example: { status: ok }
+
+  /health/ready:
+    get:
+      tags: [Saúde]
+      summary: Readiness — MySQL e MongoDB respondendo (pode atender requisições)
+      responses:
+        '200':
+          description: API e bancos funcionando
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+              example: { status: ok, mysql: ok, mongo: ok }
+        '503':
+          description: Um dos bancos está fora do ar (indicado no corpo)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+              example: { status: error, mysql: ok, mongo: unavailable }
+
   /health:
     get:
       tags: [Saúde]
-      summary: Situação da API e dos dois bancos
+      summary: Mesmo que `/health/ready` (endereço original, mantido)
       responses:
         '200':
           description: API e bancos funcionando

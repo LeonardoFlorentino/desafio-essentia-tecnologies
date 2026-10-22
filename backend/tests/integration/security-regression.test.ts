@@ -244,20 +244,20 @@ describe('A03 — injection', () => {
 describe('A05 — errors do not leak internals', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it('answers a database failure with a generic 500, logging the details only on the server', async () => {
+  // What goes to the server log instead (and what is redacted there): logging.test.ts.
+  it('answers a database failure with a generic 500 and only a request id to quote', async () => {
     const internal = Object.assign(
       new Error("ER_NO_SUCH_TABLE: Table 'todo.tasks' doesn't exist"),
-      {
-        sql: 'SELECT id, title FROM tasks WHERE user_id = 1',
-      },
+      { sql: 'SELECT id, title FROM tasks WHERE user_id = 1' },
     );
     jest.spyOn(pool, 'query').mockRejectedValueOnce(internal as never);
-    const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const res = await owner.get('/api/tasks').expect(500);
 
-    expect(res.body).toEqual({ error: 'Internal server error' });
+    expect(res.body).toEqual({
+      error: 'Internal server error',
+      requestId: res.headers['x-request-id'],
+    });
     expect(res.text).not.toMatch(/ER_NO_SUCH_TABLE|SELECT|todo\.tasks|at .*\.ts/);
-    expect(log).toHaveBeenCalledWith(internal);
   });
 });

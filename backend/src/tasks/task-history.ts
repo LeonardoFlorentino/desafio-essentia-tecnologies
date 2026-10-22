@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import { logger } from '../logger';
 
 export const TASK_EVENT_TYPES = [
   'created',
@@ -51,7 +52,7 @@ export async function recordEvent(
   try {
     await TaskEventModel.create({ taskId, userId, type, changes });
   } catch (error) {
-    console.error(`Could not record the "${type}" event of task ${taskId}:`, error);
+    logger.warn({ err: error, taskId, type }, 'could not record a task history event');
   }
 }
 

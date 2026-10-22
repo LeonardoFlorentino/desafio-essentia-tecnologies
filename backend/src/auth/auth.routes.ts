@@ -11,6 +11,7 @@ authRouter.post('/register', async (req, res) => {
   const credentials = registerSchema.parse(req.body ?? {});
   const user = await authService.register(credentials);
   if (!user) throw new HttpError(409, 'Email already registered');
+  req.log.info({ event: 'auth.register', userId: user.id }, 'account created');
   startSession(res, user);
   res.status(201).json({ user });
 });
@@ -19,7 +20,12 @@ authRouter.post('/login', async (req, res) => {
   const credentials = loginSchema.parse(req.body ?? {});
   const user = await authService.authenticate(credentials);
   // Same answer for an unknown email and a wrong password: it must not reveal which accounts exist.
-  if (!user) throw new HttpError(401, 'Invalid email or password');
+  // The log keeps the IP (in the request), not the email typed: enough to spot brute force.
+  if (!user) {
+    req.log.warn({ event: 'auth.login_failed' }, 'login failed');
+    throw new HttpError(401, 'Invalid email or password');
+  }
+  req.log.info({ event: 'auth.login', userId: user.id }, 'signed in');
   startSession(res, user);
   res.json({ user });
 });

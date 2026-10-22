@@ -5,7 +5,7 @@
 # Failures are detected through $LASTEXITCODE: with ErrorActionPreference=Stop,
 # Windows PowerShell 5.1 aborts on any stderr line (even Docker warnings).
 $root = $PSScriptRoot
-$healthUrl = 'http://localhost:3000/api/health'
+$healthUrl = 'http://localhost:3000/api/health/ready'
 $frontendUrl = 'http://localhost:4200'
 
 Add-Type @'

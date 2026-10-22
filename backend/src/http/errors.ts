@@ -30,7 +30,7 @@ function isBodyParserError(error: unknown): error is BodyParserError {
 }
 
 // Express recognizes an error handler by its four parameters, so `_next` must stay.
-export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   if (error instanceof z.ZodError) {
     const { formErrors, fieldErrors } = z.flattenError(error);
     res.status(400).json({
@@ -50,6 +50,7 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   }
 
   // Unexpected: log the details on the server, never send them (stack, SQL) to the client.
-  console.error(error);
-  res.status(500).json({ error: 'Internal server error' });
+  // The request id lets the user's report be matched with this log line.
+  req.log.error({ err: error }, 'unhandled error');
+  res.status(500).json({ error: 'Internal server error', requestId: req.id });
 };

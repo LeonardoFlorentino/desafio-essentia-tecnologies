@@ -23,6 +23,7 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - [API](#api)
 - [Frontend](#frontend)
 - [Segurança](#segurança)
+- [Operação](#operação)
 - [Testes e qualidade](#testes-e-qualidade)
 - [Contribuindo](#contribuindo)
 - [Problemas comuns](#problemas-comuns)
@@ -164,13 +165,13 @@ configuração (MySQL e MongoDB com usuário e senha `todo`); para alterá-los, 
 
 ### Endereços
 
-| O quê               | Opção 1 (Docker)                     | Opção 2 (desenvolvimento)            |
-| ------------------- | ------------------------------------ | ------------------------------------ |
-| Aplicação           | http://localhost:8080                | http://localhost:4200                |
-| API                 | http://localhost:8080/api            | http://localhost:3000/api            |
-| Situação da API     | http://localhost:8080/api/health     | http://localhost:3000/api/health     |
-| Documentação da API | http://localhost:8080/api/docs       | http://localhost:3000/api/docs       |
-| MySQL / MongoDB     | `localhost:3306` / `localhost:27017` | `localhost:3306` / `localhost:27017` |
+| O quê               | Opção 1 (Docker)                       | Opção 2 (desenvolvimento)              |
+| ------------------- | -------------------------------------- | -------------------------------------- |
+| Aplicação           | http://localhost:8080                  | http://localhost:4200                  |
+| API                 | http://localhost:8080/api              | http://localhost:3000/api              |
+| Situação da API     | http://localhost:8080/api/health/ready | http://localhost:3000/api/health/ready |
+| Documentação da API | http://localhost:8080/api/docs         | http://localhost:3000/api/docs         |
+| MySQL / MongoDB     | `localhost:3306` / `localhost:27017`   | `localhost:3306` / `localhost:27017`   |
 
 ### Para parar
 
@@ -186,9 +187,10 @@ demonstração é recriado na próxima subida).
 │   ├── src/
 │   │   ├── auth/            Cadastro, login, sessão (JWT em cookie) e usuários
 │   │   ├── db/              Conexões (MySQL, MongoDB), migrations e seed
-│   │   ├── http/            Tratamento central de erros
+│   │   ├── http/            Erros, health checks e documentação (Swagger)
 │   │   ├── tasks/           Rotas, validação, MySQL (tarefas) e MongoDB (detalhes e histórico)
 │   │   ├── app.ts           Monta a aplicação Express
+│   │   ├── logger.ts        Logs em JSON (pino) e campos que nunca são registrados
 │   │   └── server.ts        Conecta ao MongoDB e abre a porta
 │   └── tests/integration/   Testes da API contra bancos de teste
 ├── frontend/src/app/
@@ -220,6 +222,7 @@ Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa qu
 | `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP) |
 | `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)  |
 | `TRUST_PROXY`              | não         | `0`                     | Quantos proxies há na frente da API (`1` no Docker, por causa do nginx)   |
+| `LOG_LEVEL`                | não         | `info`                  | Detalhe dos logs: `debug`, `info`, `warn`, `error` ou `silent`            |
 
 O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
 
@@ -234,8 +237,7 @@ O `backend/.env.example` já traz valores que funcionam com o `docker-compose.ym
 | `npm run lint`    | Analisa o código com ESLint e valida o documento OpenAPI                          |
 | `npm run format`  | Formata o código com Prettier                                                     |
 
-**Situação da API:** `GET /api/health` responde `200 { "status": "ok", "mysql": "ok", "mongo": "ok" }`. Se um dos
-bancos estiver fora do ar, responde `503` e diz qual. A API não sobe sem conseguir conectar ao MongoDB e se reconecta
+**Situação da API:** veja [Operação](#operação). A API não sobe sem conseguir conectar ao MongoDB e se reconecta
 sozinha quando ele volta.
 
 **Migrations:** o esquema do MySQL fica em arquivos SQL numerados em `backend/migrations/`. O `npm run migrate` aplica,
@@ -262,7 +264,8 @@ e só enxergam as tarefas da pessoa conectada — a tarefa de outra pessoa respo
 
 | Método | Rota                 | Descrição                                                                 | Sucesso |
 | ------ | -------------------- | ------------------------------------------------------------------------- | ------- |
-| GET    | `/health`            | Situação da API e dos dois bancos                                         | 200     |
+| GET    | `/health/live`       | O processo da API está de pé (não consulta os bancos)                     | 200     |
+| GET    | `/health/ready`      | MySQL e MongoDB respondendo (`/health` é o mesmo)                         | 200     |
 | POST   | `/auth/register`     | Cria a conta e já inicia a sessão                                         | 201     |
 | POST   | `/auth/login`        | Inicia a sessão                                                           | 200     |
 | GET    | `/auth/me`           | Usuário da sessão atual                                                   | 200     |
@@ -451,6 +454,40 @@ guarda quando o token expiraria; depois disso ela não serve para mais nada e é
 
 `npm audit` sai sem vulnerabilidades no backend, no frontend e na raiz, inclusive nas dependências de
 desenvolvimento.
+
+## Operação
+
+**Health checks.** Duas perguntas diferentes, duas rotas:
+
+| Rota                    | Pergunta                                    | Resposta                                                              |
+| ----------------------- | ------------------------------------------- | --------------------------------------------------------------------- |
+| `GET /api/health/live`  | O processo está de pé?                      | Sempre `200 { "status": "ok" }` enquanto a API responde               |
+| `GET /api/health/ready` | Dá para atender requisições (bancos no ar)? | `200`, ou `503` dizendo qual banco caiu: `{ "mongo": "unavailable" }` |
+
+A separação evita reinícios inúteis: se o MongoDB cair, a API continua _viva_ (reiniciá-la não traria o banco de volta)
+e só deixa de estar _pronta_. O Docker Compose e o `npm start` esperam pelo `ready` antes de seguir. `/api/health`, o
+endereço original, responde o mesmo que o `ready`.
+
+**Logs.** A API escreve uma linha JSON por requisição ([pino](https://getpino.io/)), com método, endereço, status,
+tempo de resposta, IP e um **id da requisição**. Esse id volta no header `X-Request-Id` e, num erro inesperado, também
+no corpo:
+
+```json
+{ "error": "Internal server error", "requestId": "507fde5a-d6f7-4ee3-ac0d-2864890200f3" }
+```
+
+Com o id que a pessoa informar, todas as linhas daquela requisição aparecem no log, inclusive o erro completo. Se um
+proxy já mandar um `X-Request-Id`, ele é aproveitado.
+
+- **Em desenvolvimento** (`npm run dev`), os logs passam pelo `pino-pretty` e aparecem coloridos e legíveis no
+  terminal.
+- **No Docker**, saem em JSON, uma linha por evento, prontos para uma ferramenta de logs. Para acompanhar:
+  `docker compose logs -f api`. Para filtrar uma requisição: `docker compose logs api | grep <requestId>`.
+- **Eventos de segurança** têm o campo `event`: `auth.login_failed` (aviso), `auth.rate_limited` (aviso),
+  `auth.login`, `auth.register` e `auth.logout`. Uma falha de login registra o IP, não o e-mail digitado.
+- **Nunca vão para o log:** senhas, o cookie de sessão, o header `Authorization` e o SQL dos erros do banco, que traz
+  os valores da consulta. Esses campos aparecem como `[redacted]`.
+- As consultas de health check não são registradas, porque o Docker as faz a cada poucos segundos.
 
 ## Testes e qualidade
 

@@ -43,7 +43,10 @@ function sessionClaims(req: Request) {
  */
 export async function endSession(req: Request, res: Response) {
   const claims = sessionClaims(req);
-  if (claims) await revokedTokens.revoke(claims.jti, claims.expiresAt);
+  if (claims) {
+    await revokedTokens.revoke(claims.jti, claims.expiresAt);
+    req.log.info({ event: 'auth.logout', userId: claims.user.id }, 'signed out, token revoked');
+  }
   res.clearCookie(SESSION_COOKIE, cookieOptions);
 }
 

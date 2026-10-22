@@ -52,6 +52,8 @@ export const config = {
     // Any format accepted by jsonwebtoken: "8h", "30m", "7d" or a number of seconds.
     expiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
   },
+  // trace, debug, info, warn, error, fatal or silent (the tests use silent).
+  logLevel: process.env.LOG_LEVEL ?? 'info',
   // Login failures and sign-ups allowed per IP per minute before answering 429.
   authAttemptsPerMinute: Number(process.env.AUTH_ATTEMPTS_PER_MINUTE ?? 5),
   // How many proxies sit in front of the API (nginx in Docker = 1). Only then is the client IP
