@@ -53,6 +53,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-local-compose-secret-change-me-0123456789}
       # Served over plain HTTP on localhost: the session cookie cannot be HTTPS-only here.
       COOKIE_SECURE: 'false'
+      # Requests arrive through nginx (web): the client IP comes from X-Forwarded-For. The API
+      # has no published port, so nobody can reach it directly with a forged header.
+      TRUST_PROXY: 1
     depends_on:
       mysql:
         condition: service_healthy

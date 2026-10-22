@@ -47,6 +47,11 @@ export const config = {
     // Any format accepted by jsonwebtoken: "8h", "30m", "7d" or a number of seconds.
     expiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
   },
+  // Login failures and sign-ups allowed per IP per minute before answering 429.
+  authAttemptsPerMinute: Number(process.env.AUTH_ATTEMPTS_PER_MINUTE ?? 5),
+  // How many proxies sit in front of the API (nginx in Docker = 1). Only then is the client IP
+  // taken from X-Forwarded-For; without a proxy that header is set by the client and could be faked.
+  trustProxy: Number(process.env.TRUST_PROXY ?? 0),
   // HTTPS-only session cookie: on by default in production, but COOKIE_SECURE=false allows a
   // production build served over plain HTTP on localhost (docker compose).
   secureCookies:

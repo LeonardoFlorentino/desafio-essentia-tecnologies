@@ -83,6 +83,20 @@ describe('AuthPage', () => {
       expect(navigate).not.toHaveBeenCalled();
     });
 
+    it('asks to wait after too many attempts (429)', async () => {
+      type('#auth-email', 'ana@techx.com');
+      type('#auth-password', 'wrong-password');
+      await submit();
+      http
+        .expectOne('/api/auth/login')
+        .flush(null, { status: 429, statusText: 'Too Many Requests' });
+      await fixture.whenStable();
+
+      expect(page.querySelector('[role=alert]')?.textContent).toContain(
+        'Muitas tentativas seguidas. Aguarde um minuto e tente novamente.',
+      );
+    });
+
     it('does not send an invalid email', async () => {
       type('#auth-email', 'not-an-email');
       type('#auth-password', 'whatever-123');

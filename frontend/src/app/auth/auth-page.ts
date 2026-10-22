@@ -99,6 +99,7 @@ export class AuthPage {
     const status = httpStatus(error);
     if (status === 401) return 'E-mail ou senha inválidos.';
     if (status === 409) return 'Este e-mail já está cadastrado. Entre com ele ou use outro.';
+    if (status === 429) return 'Muitas tentativas seguidas. Aguarde um minuto e tente novamente.';
     if (isUnreachable(error)) return UNREACHABLE_MESSAGE;
     return 'Não foi possível concluir. Tente novamente.';
   }

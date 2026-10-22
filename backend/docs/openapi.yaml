@@ -64,6 +64,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
               example: { error: Email already registered }
+        '429': { $ref: '#/components/responses/TooManyAttempts' }
 
   /auth/login:
     post:
@@ -90,6 +91,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
               example: { error: Invalid email or password }
+        '429': { $ref: '#/components/responses/TooManyAttempts' }
 
   /auth/me:
     get:
@@ -294,6 +296,17 @@ components:
       schema: { type: integer, minimum: 1, example: 1 }
 
   responses:
+    TooManyAttempts:
+      description: |
+        Limite de tentativas por IP atingido: 5 por minuto (no login, só as que falham contam;
+        no cadastro, todas). `Retry-After` diz em quantos segundos tentar de novo.
+      headers:
+        Retry-After: { schema: { type: integer }, description: Segundos até liberar }
+        RateLimit-Policy: { schema: { type: string }, description: 'Política, ex.: `5;w=60`' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: Too many attempts. Try again in a minute. }
     ValidationFailed:
       description: Dados inválidos, com o motivo por campo
       content:

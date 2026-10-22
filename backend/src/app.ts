@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { authRouter } from './auth/auth.routes';
+import { authRateLimits } from './auth/rate-limit';
 import { config } from './config';
 import { pingMongo } from './db/mongo';
 import { pool } from './db/mysql';
@@ -13,10 +14,16 @@ import { taskRouter } from './tasks/task.routes';
 /** Largest JSON body accepted (the biggest valid one, 10,000 characters of notes, is far below it). */
 export const BODY_LIMIT = '100kb';
 
-export function createApp() {
+export function createApp({
+  authAttemptsPerMinute = config.authAttemptsPerMinute,
+  trustProxy = config.trustProxy,
+} = {}) {
   const app = express();
   // Do not advertise the framework (helmet removes it too; this keeps it off even without helmet).
   app.disable('x-powered-by');
+  // Behind nginx, req.ip must be the browser's address (from X-Forwarded-For), not nginx's —
+  // otherwise every user would share one rate limit.
+  app.set('trust proxy', trustProxy);
   // The API only answers JSON, so its responses may load nothing at all and never be framed.
   // The docs page (/api/docs) sets its own, looser policy in docs.ts.
   app.use(
@@ -46,6 +53,9 @@ export function createApp() {
       .json({ status: healthy ? 'ok' : 'error', mysql: state(mysql), mongo: state(mongo) });
   });
 
+  const limits = authRateLimits(authAttemptsPerMinute);
+  app.use('/api/auth/login', limits.login);
+  app.use('/api/auth/register', limits.register);
   app.use('/api/auth', authRouter);
   app.use('/api/tasks', taskRouter);
   app.use('/api', docsRouter);

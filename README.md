@@ -200,20 +200,22 @@ demonstração é recriado na próxima subida).
 
 Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa quais variáveis precisam ser definidas.
 
-| Variável         | Obrigatória | Padrão                  | Descrição                                                                 |
-| ---------------- | ----------- | ----------------------- | ------------------------------------------------------------------------- |
-| `PORT`           | não         | `3000`                  | Porta HTTP da API                                                         |
-| `CORS_ORIGIN`    | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                 |
-| `DB_HOST`        | sim         | —                       | Host do MySQL                                                             |
-| `DB_PORT`        | não         | `3306`                  | Porta do MySQL                                                            |
-| `DB_USER`        | sim         | —                       | Usuário do MySQL                                                          |
-| `DB_PASSWORD`    | sim         | —                       | Senha do MySQL                                                            |
-| `DB_NAME`        | sim         | —                       | Nome do banco no MySQL                                                    |
-| `MONGO_URL`      | sim         | —                       | Endereço do MongoDB, com usuário e senha                                  |
-| `MONGO_DB_NAME`  | não         | `todo`                  | Nome do banco no MongoDB                                                  |
-| `JWT_SECRET`     | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)             |
-| `JWT_EXPIRES_IN` | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                  |
-| `COOKIE_SECURE`  | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP) |
+| Variável                   | Obrigatória | Padrão                  | Descrição                                                                 |
+| -------------------------- | ----------- | ----------------------- | ------------------------------------------------------------------------- |
+| `PORT`                     | não         | `3000`                  | Porta HTTP da API                                                         |
+| `CORS_ORIGIN`              | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                 |
+| `DB_HOST`                  | sim         | —                       | Host do MySQL                                                             |
+| `DB_PORT`                  | não         | `3306`                  | Porta do MySQL                                                            |
+| `DB_USER`                  | sim         | —                       | Usuário do MySQL                                                          |
+| `DB_PASSWORD`              | sim         | —                       | Senha do MySQL                                                            |
+| `DB_NAME`                  | sim         | —                       | Nome do banco no MySQL                                                    |
+| `MONGO_URL`                | sim         | —                       | Endereço do MongoDB, com usuário e senha                                  |
+| `MONGO_DB_NAME`            | não         | `todo`                  | Nome do banco no MongoDB                                                  |
+| `JWT_SECRET`               | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)             |
+| `JWT_EXPIRES_IN`           | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                  |
+| `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP) |
+| `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)  |
+| `TRUST_PROXY`              | não         | `0`                     | Quantos proxies há na frente da API (`1` no Docker, por causa do nginx)   |
 
 O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
 
@@ -408,6 +410,24 @@ antes de qualquer processamento. O maior corpo válido (10.000 caracteres de not
 
 **CORS.** Só a origem configurada em `CORS_ORIGIN` pode chamar a API a partir de um navegador; qualquer outra não recebe
 permissão. No uso normal nem é preciso: página e API ficam na mesma origem.
+
+**Limite de tentativas (força bruta).** Por endereço IP, a cada minuto:
+
+- **Login:** 5 tentativas **que falharem**; a 6ª responde `429` (com `Retry-After` dizendo em quantos segundos tentar
+  de novo) — até com a senha certa, para que ninguém continue testando senhas durante o bloqueio. Logins que dão certo
+  não contam, então quem acerta a senha nunca é bloqueado. A tela mostra "Muitas tentativas seguidas. Aguarde um
+  minuto e tente novamente."
+- **Cadastro:** 5 contas novas; a 6ª responde `429`.
+
+No Docker, a API só recebe requisições pelo nginx e usa o IP do navegador que ele informa (`TRUST_PROXY=1`); sem isso,
+todos os usuários dividiriam o mesmo limite. Um `X-Forwarded-For` forjado pelo cliente não adianta: vale só o endereço
+acrescentado pelo nginx. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de uma instância da API,
+seria preciso um armazenamento compartilhado, como Redis).
+
+**Senhas.** No mínimo 8 caracteres e no máximo 72 bytes (o limite do bcrypt — acima disso, o resto seria ignorado sem
+aviso), guardadas com bcrypt (custo 12). O login responde a mesma mensagem, "e-mail ou senha inválidos", para e-mail
+inexistente e para senha errada, e leva o mesmo tempo nos dois casos (compara com um hash fictício quando o e-mail não
+existe): nem a resposta nem a demora revelam quais e-mails têm conta.
 
 ## Testes e qualidade
 
