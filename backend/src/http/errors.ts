@@ -21,6 +21,10 @@ interface BodyParserError extends Error {
   type: string;
   expose: boolean;
 }
+const BODY_ERROR_MESSAGES: Record<string, string> = {
+  'entity.parse.failed': 'Malformed JSON body',
+  'entity.too.large': 'Request body too large', // 413, above BODY_LIMIT
+};
 function isBodyParserError(error: unknown): error is BodyParserError {
   return typeof error === 'object' && error !== null && 'type' in error && 'expose' in error;
 }
@@ -40,7 +44,7 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     return;
   }
   if (isBodyParserError(error) && error.expose) {
-    const message = error.type === 'entity.parse.failed' ? 'Malformed JSON body' : error.message;
+    const message = BODY_ERROR_MESSAGES[error.type] ?? error.message;
     res.status(error.status).json({ error: message });
     return;
   }

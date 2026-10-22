@@ -22,6 +22,7 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - [Backend](#backend)
 - [API](#api)
 - [Frontend](#frontend)
+- [Segurança](#segurança)
 - [Testes e qualidade](#testes-e-qualidade)
 - [Contribuindo](#contribuindo)
 - [Problemas comuns](#problemas-comuns)
@@ -380,6 +381,33 @@ arquivo.
 | `npm test`       | Roda os testes de componentes e serviços (Vitest)                  |
 | `npm run lint`   | Analisa o código e os templates com ESLint (inclui acessibilidade) |
 | `npm run format` | Formata o código com Prettier                                      |
+
+## Segurança
+
+**Headers HTTP.** A API usa o [helmet](https://helmetjs.github.io/) e não se identifica (sem `X-Powered-By`). Como ela
+só responde JSON, a política de conteúdo é a mais restrita possível: `Content-Security-Policy: default-src 'none';
+frame-ancestors 'none'` — a resposta não carrega nada e não pode ser exibida dentro de outra página. A documentação
+(`/api/docs`) tem uma política própria: só scripts, estilos e imagens da própria API, nada de outros sites.
+
+O nginx que serve o site (Docker) envia, nas páginas e nos arquivos, os headers de
+[`frontend/security-headers.conf`](frontend/security-headers.conf) e esconde a própria versão:
+
+| Header                         | Efeito                                                                             |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| `Content-Security-Policy`      | Scripts e estilos só do próprio site; bloqueia script injetado ou de outro domínio |
+| `X-Frame-Options: DENY`        | A página não pode ser embutida em outro site (contra clickjacking)                 |
+| `X-Content-Type-Options`       | O navegador não "adivinha" o tipo de um arquivo                                    |
+| `Referrer-Policy: no-referrer` | O endereço da página (com filtros e busca) não vaza para outros sites              |
+| `Permissions-Policy`           | Câmera, microfone, localização e pagamento desligados                              |
+
+O build de produção do Angular não tem nenhum script embutido no HTML (a otimização que inlinava o CSS crítico, e
+precisava de um, foi desligada no `angular.json`), por isso a política pode exigir `script-src 'self'` sem exceções.
+
+**Limite das requisições.** Corpos JSON acima de **100 kB** são recusados com `413 { "error": "Request body too large" }`
+antes de qualquer processamento. O maior corpo válido (10.000 caracteres de notas) fica bem abaixo disso.
+
+**CORS.** Só a origem configurada em `CORS_ORIGIN` pode chamar a API a partir de um navegador; qualquer outra não recebe
+permissão. No uso normal nem é preciso: página e API ficam na mesma origem.
 
 ## Testes e qualidade
 

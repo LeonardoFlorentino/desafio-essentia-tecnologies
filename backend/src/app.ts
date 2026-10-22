@@ -1,6 +1,7 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
 import { authRouter } from './auth/auth.routes';
 import { config } from './config';
 import { pingMongo } from './db/mongo';
@@ -9,11 +10,29 @@ import { docsRouter } from './http/docs';
 import { errorHandler, notFoundHandler } from './http/errors';
 import { taskRouter } from './tasks/task.routes';
 
+/** Largest JSON body accepted (the biggest valid one, 10,000 characters of notes, is far below it). */
+export const BODY_LIMIT = '100kb';
+
 export function createApp() {
   const app = express();
-  // credentials: the session cookie must travel on cross-origin calls.
+  // Do not advertise the framework (helmet removes it too; this keeps it off even without helmet).
+  app.disable('x-powered-by');
+  // The API only answers JSON, so its responses may load nothing at all and never be framed.
+  // The docs page (/api/docs) sets its own, looser policy in docs.ts.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: false,
+        directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] },
+      },
+      // Same rule as frame-ancestors, for browsers that only know the older header.
+      frameguard: { action: 'deny' },
+    }),
+  );
+  // Only the configured origin may call the API from a browser; credentials: the session cookie
+  // must travel on those calls.
   app.use(cors({ origin: config.corsOrigin, credentials: true }));
-  app.use(express.json());
+  app.use(express.json({ limit: BODY_LIMIT }));
   app.use(cookieParser());
 
   // Both databases are checked in parallel; either one down makes the API unhealthy (503).

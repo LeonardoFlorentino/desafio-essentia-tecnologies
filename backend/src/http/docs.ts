@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { Router } from 'express';
+import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { parse } from 'yaml';
 
@@ -19,6 +20,22 @@ docsRouter.get('/openapi.json', (_req, res) => {
 
 docsRouter.use(
   '/docs',
+  // Replaces the API's "load nothing" policy: Swagger UI needs its own scripts and styles, an
+  // inline <style> block, data: images, and calls back to the API. Still no third-party source.
+  helmet.contentSecurityPolicy({
+    useDefaults: false,
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+    },
+  }),
   swaggerUi.serve,
   swaggerUi.setup(openApiSpec, {
     customSiteTitle: 'TechX Tasks API',
