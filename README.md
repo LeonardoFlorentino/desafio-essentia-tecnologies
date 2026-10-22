@@ -383,13 +383,14 @@ em desenvolvimento, o servidor do Angular encaminha `/api` para `http://localhos
 ([`frontend/proxy.conf.json`](frontend/proxy.conf.json)). Se a API rodar em outra porta, ajuste o `target` desse
 arquivo.
 
-| Script           | O que faz                                                          |
-| ---------------- | ------------------------------------------------------------------ |
-| `npm start`      | Sobe o servidor de desenvolvimento em `http://localhost:4200`      |
-| `npm run build`  | Gera a versão de produção em `dist/`                               |
-| `npm test`       | Roda os testes de componentes e serviços (Vitest)                  |
-| `npm run lint`   | Analisa o código e os templates com ESLint (inclui acessibilidade) |
-| `npm run format` | Formata o código com Prettier                                      |
+| Script                  | O que faz                                                             |
+| ----------------------- | --------------------------------------------------------------------- |
+| `npm start`             | Sobe o servidor de desenvolvimento em `http://localhost:4200`         |
+| `npm run build`         | Gera a versão de produção em `dist/`                                  |
+| `npm test`              | Roda os testes de componentes e serviços (Vitest), em modo observação |
+| `npm run test:coverage` | Roda os testes uma vez, com cobertura mínima de 90% das linhas        |
+| `npm run lint`          | Analisa o código e os templates com ESLint (inclui acessibilidade)    |
+| `npm run format`        | Formata o código com Prettier                                         |
 
 ## Segurança
 
@@ -540,12 +541,27 @@ cd backend
 npm test
 ```
 
-**Frontend** — testes de componentes, serviços, guards e interceptor com Vitest:
+**Frontend** — executor de testes do Angular (`ng test`, com Vitest), `TestBed` e `HttpTestingController`: as
+requisições à API são interceptadas, então nenhum teste depende do backend.
+
+- **Página de tarefas:** carregar, criar, editar, concluir, excluir, filtros e busca na URL, tarefas atrasadas,
+  estados de carregamento e de erro.
+- **Cartão da tarefa** (isolado): mostra prioridade, prazo e "Atrasada"; só _avisa_ o que a pessoa fez (concluir,
+  editar, salvar, excluir) e nunca chama a API.
+- **Login e cadastro:** validação, envio, mensagens de 401, 409 e 429.
+- **Rotas:** a tabela de rotas real: sem sessão, qualquer endereço leva ao login; com sessão, login e cadastro voltam
+  para a lista.
+- **Guards e interceptor:** sessão expirada (401) leva ao login com aviso.
+- **Notas, tags, histórico e serviços.**
 
 ```bash
 cd frontend
-npm test
+npm test                # modo observação (roda de novo a cada alteração)
+npm run test:coverage   # uma vez, com cobertura
 ```
+
+O `test:coverage` falha abaixo dos mesmos limites do backend (90% das linhas, funções e instruções; 80% dos desvios),
+contando todo o `src/app`. Hoje: cerca de 98% das linhas.
 
 **Qualidade:** TypeScript em modo `strict` nos dois projetos, ESLint (com as regras de acessibilidade dos templates
 Angular) e Prettier com uma configuração única para o repositório.

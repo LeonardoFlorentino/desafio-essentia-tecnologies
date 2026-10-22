@@ -80,7 +80,10 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "isolate": false,
-            "runnerConfig": "vitest.config.ts"
+            "runnerConfig": "vitest.config.ts",
+            "coverageInclude": ["src/app/**/*.ts"],
+            "coverageExclude": ["src/**/*.spec.ts"],
+            "coverageThresholds": { "lines": 90, "statements": 90, "functions": 90, "branches": 80 }
           }
         },
         "lint": {
