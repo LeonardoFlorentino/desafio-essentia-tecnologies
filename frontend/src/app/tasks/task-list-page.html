@@ -1,3 +1,41 @@
+<section class="new-task" aria-labelledby="new-task-heading">
+  <h2 id="new-task-heading">Nova tarefa</h2>
+
+  <form class="task-form" [formGroup]="form" (ngSubmit)="addTask()" novalidate>
+    <div class="field">
+      <label for="new-task-title">Título</label>
+      <input
+        id="new-task-title"
+        type="text"
+        formControlName="title"
+        maxlength="255"
+        autocomplete="off"
+        [attr.aria-invalid]="titleInvalid()"
+        [attr.aria-describedby]="titleInvalid() ? 'new-task-title-error' : null"
+      />
+      @if (titleInvalid()) {
+        <p id="new-task-title-error" class="field__error">Informe o título da tarefa.</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="new-task-description"
+        >Descrição <span class="field__hint">(opcional)</span></label
+      >
+      <textarea
+        id="new-task-description"
+        formControlName="description"
+        rows="2"
+        maxlength="5000"
+      ></textarea>
+    </div>
+
+    <button type="submit" [disabled]="saving()">
+      {{ saving() ? 'Adicionando…' : 'Adicionar tarefa' }}
+    </button>
+  </form>
+</section>
+
 <section aria-labelledby="tasks-heading">
   <h2 id="tasks-heading">Tarefas</h2>
 

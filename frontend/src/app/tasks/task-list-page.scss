@@ -1,3 +1,48 @@
+.new-task {
+  margin-bottom: 2rem;
+}
+
+.task-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 40rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+
+  input,
+  textarea {
+    font: inherit;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #98a2b3;
+    border-radius: 0.375rem;
+  }
+
+  [aria-invalid='true'] {
+    border-color: #d92d20;
+  }
+}
+
+.field__hint {
+  color: #475467;
+  font-weight: normal;
+}
+
+.field__error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.875rem;
+}
+
+.task-form button {
+  justify-self: start;
+  font: inherit;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
 .task-list {
   list-style: none;
   margin: 0;

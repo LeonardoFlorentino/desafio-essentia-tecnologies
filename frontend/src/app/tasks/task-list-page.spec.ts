@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Task } from './task.model';
 import { TaskListPage } from './task-list-page';
 
@@ -24,21 +24,37 @@ const tasks: Task[] = [
 ];
 
 describe('TaskListPage', () => {
-  beforeEach(() => {
+  let fixture: ComponentFixture<TaskListPage>;
+  let http: HttpTestingController;
+  let page: HTMLElement;
+
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [TaskListPage],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
+    fixture = TestBed.createComponent(TaskListPage);
+    http = TestBed.inject(HttpTestingController);
+    page = fixture.nativeElement;
+    fixture.detectChanges();
+    http.expectOne('/api/tasks').flush(tasks);
+    await fixture.whenStable();
   });
 
-  it('loads the tasks from the API and shows every one of them', async () => {
-    const fixture = TestBed.createComponent(TaskListPage);
-    fixture.detectChanges();
+  afterEach(() => http.verify());
 
-    TestBed.inject(HttpTestingController).expectOne('/api/tasks').flush(tasks);
-    await fixture.whenStable();
+  function type(selector: string, value: string) {
+    const field = page.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector)!;
+    field.value = value;
+    field.dispatchEvent(new Event('input'));
+  }
 
-    const items = (fixture.nativeElement as HTMLElement).querySelectorAll('li');
+  function submit() {
+    page.querySelector('form')!.dispatchEvent(new Event('submit'));
+  }
+
+  it('loads the tasks from the API and shows every one of them', () => {
+    const items = page.querySelectorAll('li');
     expect(items).toHaveLength(2);
     expect(items[0].textContent).toContain('Call the client');
     expect(items[0].textContent).toContain('Concluída');
@@ -46,4 +62,47 @@ describe('TaskListPage', () => {
     expect(items[1].textContent).toContain('Quarterly numbers');
     expect(items[1].textContent).toContain('Pendente');
   });
+
+  it('creates a task, shows it first and clears the form', async () => {
+    type('#new-task-title', '  Send the proposal  ');
+    type('#new-task-description', 'By email');
+    submit();
+
+    const req = http.expectOne('/api/tasks');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ title: 'Send the proposal', description: 'By email' });
+    req.flush({ ...tasks[1], id: 3, title: 'Send the proposal', description: 'By email' });
+    await fixture.whenStable();
+
+    const items = page.querySelectorAll('li');
+    expect(items).toHaveLength(3);
+    expect(items[0].textContent).toContain('Send the proposal');
+    expect(page.querySelector<HTMLInputElement>('#new-task-title')!.value).toBe('');
+    expect(page.querySelector<HTMLTextAreaElement>('#new-task-description')!.value).toBe('');
+  });
+
+  it('sends a blank description as null', () => {
+    type('#new-task-title', 'Only a title');
+    submit();
+
+    const req = http.expectOne('/api/tasks');
+    expect(req.request.body).toEqual({ title: 'Only a title', description: null });
+    req.flush({ ...tasks[1], id: 3, title: 'Only a title', description: null });
+  });
+
+  it.each(['', '   '])(
+    'does not send a task with the title "%s" and explains why',
+    async (title) => {
+      type('#new-task-title', title);
+      submit();
+      await fixture.whenStable();
+
+      http.expectNone('/api/tasks');
+      const input = page.querySelector('#new-task-title')!;
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(page.querySelector('#new-task-title-error')?.textContent).toContain(
+        'Informe o título da tarefa.',
+      );
+    },
+  );
 });
