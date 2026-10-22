@@ -6,10 +6,14 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
 - **Backend:** API RESTful em Node.js + TypeScript
 - **Banco de dados:** MySQL
 
+> **Usuário de demonstração:** `demo@techx.com` / `demo12345` — já vem com algumas tarefas (criado pelo
+> `npm run seed`, que o `npm start` roda sozinho).
+
 ## Funcionalidades
 
-- **Página inicial com todas as tarefas cadastradas**, das mais recentes para as mais antigas, com título, descrição e
-  situação (pendente ou concluída), e um resumo com o total, as pendentes e as concluídas.
+- **Página inicial com todas as tarefas cadastradas** da pessoa conectada, das mais recentes para as mais antigas, com
+  título, descrição e situação (pendente ou concluída), e um resumo com o total, as pendentes e as concluídas. Cada
+  pessoa vê e altera só as próprias tarefas; sem login, a página convida a entrar ou criar uma conta.
 - **Cadastro e login:** telas `/register` e `/login` (link "Entrar" no cabeçalho). O cadastro já entra na conta; depois
   do login, o cabeçalho mostra o e-mail de quem está conectado e a sessão continua ao recarregar a página. A sessão fica
   num cookie que os scripts da página não conseguem ler — nada é guardado no `localStorage`.
@@ -40,7 +44,7 @@ O comando prepara e sobe tudo, nesta ordem:
 1. Na primeira execução, cria os arquivos `.env` a partir dos `.env.example` e instala as dependências do backend e
    do frontend.
 2. Sobe o MySQL e espera o container ficar saudável.
-3. Aplica as migrations pendentes do banco.
+3. Aplica as migrations pendentes do banco e garante o usuário de demonstração (`npm run seed`).
 4. Abre o backend em uma nova aba do terminal (Windows Terminal; sem ele, em uma nova janela do PowerShell) e espera a
    API responder em `/api/health` (até 60 s).
 5. Só então abre o frontend em outra aba e espera ele responder em `http://localhost:4200` (até 120 s).
@@ -78,6 +82,7 @@ cd backend
 npm install
 cp .env.example .env   # no PowerShell: Copy-Item .env.example .env
 npm run migrate        # cria/atualiza as tabelas no MySQL
+npm run seed           # cria o usuário de demonstração (demo@techx.com / demo12345)
 npm run dev            # http://localhost:3000, recarrega a cada alteração
 ```
 
@@ -99,22 +104,24 @@ Se o `.env` estiver faltando, a API não sobe e informa quais variáveis precisa
 
 O `.env.example` já traz valores que funcionam com o MySQL do `docker-compose.yml`.
 
-| Script            | O que faz                                          |
-| ----------------- | -------------------------------------------------- |
-| `npm run dev`     | Sobe a API em modo de desenvolvimento (hot reload) |
-| `npm run build`   | Compila o TypeScript para `dist/`                  |
-| `npm start`       | Sobe a versão compilada                            |
-| `npm run migrate` | Aplica as migrations pendentes                     |
-| `npm test`        | Roda os testes de integração (banco `todo_test`)   |
-| `npm run lint`    | Analisa o código com ESLint                        |
-| `npm run format`  | Formata o código com Prettier                      |
+| Script            | O que faz                                                                         |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `npm run dev`     | Sobe a API em modo de desenvolvimento (hot reload)                                |
+| `npm run build`   | Compila o TypeScript para `dist/`                                                 |
+| `npm start`       | Sobe a versão compilada                                                           |
+| `npm run migrate` | Aplica as migrations pendentes                                                    |
+| `npm run seed`    | Cria o usuário demo com tarefas de exemplo (pode rodar de novo sem duplicar nada) |
+| `npm test`        | Roda os testes de integração (banco `todo_test`)                                  |
+| `npm run lint`    | Analisa o código com ESLint                                                       |
+| `npm run format`  | Formata o código com Prettier                                                     |
 
 Para conferir se a API está no ar: `GET http://localhost:3000/api/health` → `200 { "status": "ok", "database": "ok" }`.
 Se o MySQL estiver fora do ar, a resposta é `503 { "status": "error", "database": "unavailable" }`.
 
 ### Endpoints
 
-Todas as rotas ficam sob o prefixo `/api`.
+Todas as rotas ficam sob o prefixo `/api`. As rotas de **tarefas exigem sessão** (sem ela: `401`) e só enxergam as
+tarefas da pessoa conectada — a tarefa de outra pessoa responde `404`, como se não existisse.
 
 | Método | Rota             | Descrição                                                                 | Sucesso |
 | ------ | ---------------- | ------------------------------------------------------------------------- | ------- |

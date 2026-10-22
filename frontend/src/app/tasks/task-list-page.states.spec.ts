@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Task } from './task.model';
 import { TaskListPage } from './task-list-page';
 
@@ -22,7 +23,7 @@ describe('TaskListPage list states', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TaskListPage],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     fixture = TestBed.createComponent(TaskListPage);
     http = TestBed.inject(HttpTestingController);
@@ -53,6 +54,16 @@ describe('TaskListPage list states', () => {
 
     expect(tasksSection().textContent).toContain('Nenhuma tarefa cadastrada.');
     expect(page.querySelector('.summary')).toBeNull();
+  });
+
+  it('asks to sign in when the API refuses the list without a session (401)', async () => {
+    http.expectOne('/api/tasks').flush(null, { status: 401, statusText: 'Unauthorized' });
+    await fixture.whenStable();
+
+    const links = [...tasksSection().querySelectorAll('a')].map((a) => a.getAttribute('href'));
+    expect(links).toEqual(['/login', '/register']);
+    expect(tasksSection().textContent).not.toContain('Verifique se a API está no ar');
+    expect(page.querySelector('[role=alert]')).toBeNull();
   });
 
   it('explains a failed load and retries on request', async () => {

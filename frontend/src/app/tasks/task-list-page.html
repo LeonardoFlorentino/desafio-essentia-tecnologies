@@ -46,7 +46,7 @@
 <section aria-labelledby="tasks-heading" [attr.aria-busy]="loading()">
   <div class="tasks-header">
     <h2 id="tasks-heading" tabindex="-1">Tarefas</h2>
-    @if (!loading() && !loadFailed() && tasks().length > 0) {
+    @if (tasks().length > 0) {
       <dl class="summary" aria-label="Resumo das tarefas">
         <div>
           <dt>Total</dt>
@@ -66,6 +66,11 @@
 
   @if (loading()) {
     <p class="list-state">Carregando tarefas…</p>
+  } @else if (signedOut()) {
+    <p class="list-state">
+      Cada pessoa vê só as próprias tarefas. <a routerLink="/login">Entre</a> ou
+      <a routerLink="/register">crie uma conta</a> para ver as suas.
+    </p>
   } @else if (loadFailed()) {
     <div class="list-state list-state--error" role="alert">
       <p>Não foi possível carregar as tarefas. Verifique se a API está no ar.</p>

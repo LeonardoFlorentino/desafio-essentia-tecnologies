@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Task } from './task.model';
 import { TaskListPage } from './task-list-page';
 
@@ -31,7 +32,7 @@ describe('TaskListPage', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [TaskListPage],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     fixture = TestBed.createComponent(TaskListPage);
     http = TestBed.inject(HttpTestingController);

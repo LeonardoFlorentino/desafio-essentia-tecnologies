@@ -26,42 +26,56 @@ function toTask(row: TaskRow): Task {
   };
 }
 
-export async function findAll(): Promise<Task[]> {
+// Every query is scoped by user_id: another user's task behaves exactly like one that does not
+// exist (null / false → 404), so ids cannot be probed to learn about other accounts.
+
+export async function findAll(userId: number): Promise<Task[]> {
   const [rows] = await pool.query<TaskRow[]>(
-    `SELECT ${columns} FROM tasks ORDER BY created_at DESC, id DESC`,
+    `SELECT ${columns} FROM tasks WHERE user_id = ? ORDER BY created_at DESC, id DESC`,
+    [userId],
   );
   return rows.map(toTask);
 }
 
-export async function findById(id: number): Promise<Task | null> {
-  const [rows] = await pool.query<TaskRow[]>(`SELECT ${columns} FROM tasks WHERE id = ?`, [id]);
+export async function findById(id: number, userId: number): Promise<Task | null> {
+  const [rows] = await pool.query<TaskRow[]>(
+    `SELECT ${columns} FROM tasks WHERE id = ? AND user_id = ?`,
+    [id, userId],
+  );
   return rows[0] ? toTask(rows[0]) : null;
 }
 
-export async function create(input: CreateTaskInput): Promise<Task> {
+export async function create(input: CreateTaskInput, userId: number): Promise<Task> {
   const [result] = await pool.query<ResultSetHeader>(
-    'INSERT INTO tasks (title, description) VALUES (?, ?)',
-    [input.title, input.description],
+    'INSERT INTO tasks (user_id, title, description) VALUES (?, ?, ?)',
+    [userId, input.title, input.description],
   );
   // Read back so the response carries the defaults set by MySQL (completed, timestamps).
-  return (await findById(result.insertId))!;
+  return (await findById(result.insertId, userId))!;
 }
 
-/** Updates only the fields present in `input`; returns null when the task does not exist. */
-export async function update(id: number, input: UpdateTaskInput): Promise<Task | null> {
+/** Updates only the fields present in `input`; returns null when the user has no such task. */
+export async function update(
+  id: number,
+  userId: number,
+  input: UpdateTaskInput,
+): Promise<Task | null> {
   // Column names come from this fixed list, never from the request, so they are safe to interpolate.
   const fields = (['title', 'description', 'completed'] as const).filter(
     (field) => input[field] !== undefined,
   );
   await pool.query(
-    `UPDATE tasks SET ${fields.map((field) => `${field} = ?`).join(', ')} WHERE id = ?`,
-    [...fields.map((field) => input[field]), id],
+    `UPDATE tasks SET ${fields.map((field) => `${field} = ?`).join(', ')} WHERE id = ? AND user_id = ?`,
+    [...fields.map((field) => input[field]), id, userId],
   );
-  return findById(id);
+  return findById(id, userId);
 }
 
-/** Returns false when there was no task with this id. */
-export async function remove(id: number): Promise<boolean> {
-  const [result] = await pool.query<ResultSetHeader>('DELETE FROM tasks WHERE id = ?', [id]);
+/** Returns false when the user has no task with this id. */
+export async function remove(id: number, userId: number): Promise<boolean> {
+  const [result] = await pool.query<ResultSetHeader>(
+    'DELETE FROM tasks WHERE id = ? AND user_id = ?',
+    [id, userId],
+  );
   return result.affectedRows > 0;
 }

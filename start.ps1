@@ -1,5 +1,5 @@
 ﻿# npm start: prepares a fresh clone, starts MySQL, applies the database
-# migrations, then opens the backend and, once the API answers, the frontend,
+# migrations and the demo user, then opens the backend and, once the API answers, the frontend,
 # each in its own terminal tab, giving the focus back to the window where
 # npm start was typed.
 # Failures are detected through $LASTEXITCODE: with ErrorActionPreference=Stop,
@@ -109,6 +109,10 @@ if ($LASTEXITCODE) { Fail 'O MySQL não ficou saudável. Veja os logs com: docke
 Step 'Aplicando as migrations do banco'
 npm run migrate --silent --prefix (Join-Path $root 'backend')
 if ($LASTEXITCODE) { Fail 'As migrations falharam. Veja o erro acima.' }
+
+Step 'Preparando o usuário de demonstração'
+npm run seed --silent --prefix (Join-Path $root 'backend')
+if ($LASTEXITCODE) { Fail 'O seed falhou. Veja o erro acima.' }
 
 Step 'Iniciando o backend'
 Start-App 'Backend' 'backend' 'npm run dev' $healthUrl 60

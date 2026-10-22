@@ -165,9 +165,3 @@ describe('POST /api/auth/logout', () => {
     await agent.get('/api/auth/me').expect(401);
   });
 });
-
-describe('task routes', () => {
-  it('are still public until they require a session', async () => {
-    await request(app).get('/api/tasks').expect(200);
-  });
-});
