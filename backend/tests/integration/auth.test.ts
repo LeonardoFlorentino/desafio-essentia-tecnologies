@@ -1,8 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
-import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { createApp } from '../../src/app';
-import { config } from '../../src/config';
 import { pool } from '../../src/db/mysql';
 
 const app = createApp();
@@ -130,27 +128,7 @@ describe('GET /api/auth/me', () => {
     expect(res.body).toEqual({ error: 'Authentication required' });
   });
 
-  it.each([
-    ['a tampered token', () => `${jwt.sign({ email: 'x' }, config.jwt.secret, { subject: '1' })}x`],
-    [
-      'a token signed with another secret',
-      () => jwt.sign({ email: 'x' }, 'another-secret-another-secret-123', { subject: '1' }),
-    ],
-    [
-      'an expired token',
-      () =>
-        jwt.sign({ email: 'x', exp: Math.floor(Date.now() / 1000) - 60 }, config.jwt.secret, {
-          subject: '1',
-        }),
-    ],
-    [
-      'an unsigned token (alg none)',
-      () =>
-        `${Buffer.from('{"alg":"none","typ":"JWT"}').toString('base64url')}.${Buffer.from('{"sub":"1","email":"x"}').toString('base64url')}.`,
-    ],
-  ])('answers 401 for %s', async (_case, makeToken) => {
-    await request(app).get('/api/auth/me').set('Cookie', `session=${makeToken()}`).expect(401);
-  });
+  // Forged, tampered, expired, alg:none and revoked tokens: security-regression.test.ts.
 });
 
 describe('POST /api/auth/logout', () => {

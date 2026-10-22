@@ -456,8 +456,29 @@ desenvolvimento.
 
 **Backend** — testes de integração com [Jest](https://jestjs.io/) + [Supertest](https://github.com/ladjs/supertest):
 cada teste faz requisições HTTP reais à API, que grava em bancos **separados** (`todo_test` no MySQL e no MongoDB) — os
-dados de desenvolvimento nunca são tocados. Cobrem o CRUD, validações, autenticação (inclusive tokens adulterados,
-expirados e sem assinatura), isolamento entre contas, detalhes e histórico.
+dados de desenvolvimento nunca são tocados. Cobrem o CRUD, validações, autenticação, isolamento entre contas, filtros,
+detalhes e histórico.
+
+**Testes de regressão de segurança** — [`security-regression.test.ts`](backend/tests/integration/security-regression.test.ts)
+reúne os ataques que a API precisa continuar barrando, organizados pelas categorias do OWASP Top 10:
+
+| Ataque                                                                                               | Resultado esperado                |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Outra conta lê, edita ou exclui a tarefa, as notas/tags ou o histórico (IDOR)                        | `404`, e nada muda                |
+| Outra conta procura as tarefas pela lista, busca ou filtros                                          | não aparecem                      |
+| `userId`/`id` no corpo para criar tarefa em nome de outra pessoa                                     | ignorados                         |
+| Token com payload trocado, outro segredo, expirado, `alg: none`, outro algoritmo, sem id ou revogado | `401`                             |
+| SQL injection no título, na descrição e na busca                                                     | salvo e buscado como texto comum  |
+| Injeção em `sort`/`order`/`status` ou no id da URL                                                   | `400`                             |
+| Operadores do MongoDB (`$ne`, `$gt`, `$set`) nas notas e tags                                        | `400` ou descartados              |
+| `__proto__` no JSON (prototype pollution)                                                            | sem efeito                        |
+| HTML/script no título                                                                                | devolvido como texto JSON         |
+| Falha do banco                                                                                       | `500` genérico, sem SQL nem stack |
+
+Cada caso de token parte de um token **válido** com um único defeito, e um teste de controle confirma que o token sem
+defeito é aceito. Assim, o teste só passa se aquela verificação específica funcionar. Os limites de tentativas (`429`), os
+headers de segurança, o corpo grande (`413`), o CORS e o logout têm arquivos próprios (`rate-limit`, `security`,
+`token-revocation`).
 
 ```bash
 docker compose up -d mysql mongo   # os dois bancos precisam estar no ar
