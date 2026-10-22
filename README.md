@@ -26,6 +26,9 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
   o formulário é limpo. Título em branco não é enviado e mostra uma mensagem de erro no campo.
 - **Editar tarefa:** o botão "Editar" abre o título e a descrição para edição dentro da própria lista; "Salvar" grava,
   "Cancelar" (ou a tecla Esc) descarta. O foco do teclado vai para o campo ao abrir e volta ao botão ao fechar.
+- **Notas, tags e histórico:** o botão "Detalhes" abre, dentro do cartão, notas livres e tags (separadas por vírgula)
+  — guardadas no MongoDB — e o histórico da tarefa: criação, edições (com o valor antes e depois), conclusões e
+  alterações de notas e tags, com data e hora. O painel só busca esses dados quando é aberto.
 - **Excluir tarefa:** o botão "Excluir" pede confirmação com o nome da tarefa antes de apagar.
 - **Carregamento, lista vazia e erros:** mensagem enquanto as tarefas carregam e quando ainda não há nenhuma; se a API
   não responder, a lista mostra o erro com o botão "Tentar novamente". Quando criar, editar, concluir ou excluir

@@ -63,6 +63,15 @@
     <div class="task__actions">
       <button
         type="button"
+        [attr.aria-expanded]="expanded()"
+        [attr.aria-controls]="'details-' + task().id"
+        [attr.aria-label]="(expanded() ? 'Ocultar detalhes: ' : 'Detalhes: ') + task().title"
+        (click)="expanded.set(!expanded())"
+      >
+        {{ expanded() ? 'Ocultar detalhes' : 'Detalhes' }}
+      </button>
+      <button
+        type="button"
         [id]="'edit-button-' + task().id"
         [attr.aria-label]="'Editar: ' + task().title"
         [disabled]="locked()"
@@ -80,5 +89,8 @@
         Excluir
       </button>
     </div>
+    @if (expanded()) {
+      <app-task-details-panel [id]="'details-' + task().id" [task]="task()" />
+    }
   }
 </div>

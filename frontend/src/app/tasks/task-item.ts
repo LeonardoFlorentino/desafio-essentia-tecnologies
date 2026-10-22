@@ -1,5 +1,15 @@
-import { Component, Injector, afterNextRender, effect, inject, input, output } from '@angular/core';
+import {
+  Component,
+  Injector,
+  afterNextRender,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { TaskDetailsPanel } from './task-details-panel';
 import { createTaskForm, revealErrors, showFieldError, taskFormValue } from './task-form';
 import { Task, TaskChanges } from './task.model';
 
@@ -9,7 +19,7 @@ import { Task, TaskChanges } from './task.model';
  */
 @Component({
   selector: 'app-task-item',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TaskDetailsPanel],
   templateUrl: './task-item.html',
   styleUrl: './task-item.scss',
 })
@@ -28,6 +38,9 @@ export class TaskItem {
   readonly editingChange = output<boolean>();
   readonly save = output<TaskChanges>();
   readonly remove = output<void>();
+
+  /** Notes, tags and history open below the card. */
+  protected readonly expanded = signal(false);
 
   protected readonly form = createTaskForm(inject(NonNullableFormBuilder));
   protected readonly showError = showFieldError;

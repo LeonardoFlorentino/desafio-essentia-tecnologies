@@ -1,0 +1,82 @@
+@if (loading()) {
+  <p class="details__state">Carregando detalhes…</p>
+} @else if (loadError(); as message) {
+  <div class="details__state details__state--error" role="alert">
+    <p>{{ message }}</p>
+    <button type="button" (click)="loadDetails()">Tentar novamente</button>
+  </div>
+} @else {
+  <form class="task-form details__form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="field">
+      <label [for]="'notes-' + task().id">Notas</label>
+      <textarea
+        [id]="'notes-' + task().id"
+        formControlName="notes"
+        rows="3"
+        maxlength="10000"
+      ></textarea>
+    </div>
+
+    <div class="field">
+      <label [for]="'tags-' + task().id"
+        >Tags <span class="field__hint">(separadas por vírgula)</span></label
+      >
+      <input
+        [id]="'tags-' + task().id"
+        type="text"
+        formControlName="tags"
+        autocomplete="off"
+        [attr.aria-invalid]="tagsProblem() !== null"
+        [attr.aria-describedby]="tagsProblem() ? 'tags-error-' + task().id : null"
+      />
+      @if (tagsProblem(); as problem) {
+        <p [id]="'tags-error-' + task().id" class="field__error">{{ problem }}</p>
+      }
+    </div>
+
+    @if (savedTags().length > 0) {
+      <ul class="details__tags" aria-label="Tags salvas">
+        @for (tag of savedTags(); track tag) {
+          <li>{{ tag }}</li>
+        }
+      </ul>
+    }
+
+    <div class="details__actions">
+      <button type="submit" [disabled]="saving() || tagsProblem() !== null">
+        {{ saving() ? 'Salvando…' : 'Salvar notas e tags' }}
+      </button>
+      @if (savedNotice()) {
+        <span class="details__saved" role="status">Notas e tags salvas.</span>
+      }
+    </div>
+    @if (saveError(); as message) {
+      <p class="field__error" role="alert">{{ message }}</p>
+    }
+  </form>
+}
+
+<section class="details__history" [attr.aria-labelledby]="'history-heading-' + task().id">
+  <h4 [id]="'history-heading-' + task().id">Histórico</h4>
+  @if (history().length === 0) {
+    <p class="details__state">Nenhum registro ainda.</p>
+  } @else {
+    <ol>
+      @for (event of history(); track $index) {
+        <li>
+          <span>{{ labels[event.type] }}</span>
+          <time [attr.datetime]="event.at">{{ event.at | date: 'dd/MM/yyyy HH:mm' }}</time>
+          @if (event.type === 'updated') {
+            <ul class="details__changes">
+              @for (change of changesOf(event); track change.field) {
+                <li>
+                  {{ fieldNames[change.field] }}: {{ show(change.from) }} → {{ show(change.to) }}
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ol>
+  }
+</section>
