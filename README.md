@@ -79,6 +79,7 @@ O `.env.example` já traz valores que funcionam com o MySQL do `docker-compose.y
 | `npm run build`   | Compila o TypeScript para `dist/`                  |
 | `npm start`       | Sobe a versão compilada                            |
 | `npm run migrate` | Aplica as migrations pendentes                     |
+| `npm test`        | Roda os testes de integração (banco `todo_test`)   |
 | `npm run lint`    | Analisa o código com ESLint                        |
 | `npm run format`  | Formata o código com Prettier                      |
 
@@ -149,6 +150,23 @@ Todos os erros são respondidos em JSON, no formato `{ "error": "mensagem" }` (v
 | 404    | Tarefa não existe                                                   | `Task not found`          |
 | 404    | Rota não existe                                                     | `Route not found: GET /x` |
 | 500    | Erro inesperado (detalhes só no log do servidor, nunca na resposta) | `Internal server error`   |
+
+### Testes
+
+Testes de integração com [Jest](https://jestjs.io/) + [Supertest](https://github.com/ladjs/supertest): cada teste faz
+requisições HTTP reais à API, que grava num banco MySQL **separado**, o `todo_test` — os dados de desenvolvimento
+(`todo`) nunca são tocados. As migrations são aplicadas no banco de teste antes da suíte, e a tabela é limpa antes de
+cada teste.
+
+```bash
+docker compose up -d   # o MySQL precisa estar no ar
+cd backend
+npm test
+```
+
+O banco `todo_test` é criado automaticamente pelo script `docker/mysql-init/01-create-test-database.sh` quando o volume
+do MySQL é criado. Se o seu volume é anterior a esse script, recrie-o com `docker compose down -v` (apaga os dados de
+desenvolvimento) e `docker compose up -d`.
 
 ### Migrations
 
