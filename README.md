@@ -400,6 +400,9 @@ em desenvolvimento, o servidor do Angular encaminha `/api` para `http://localhos
 ([`frontend/proxy.conf.json`](frontend/proxy.conf.json)). Se a API rodar em outra porta, ajuste o `target` desse
 arquivo.
 
+A direção visual está no [design system](docs/design-system.md): cores (e o contraste medido de cada par, nos temas
+claro e escuro), tipografia, escala de espaços, raios, sombras, densidade e movimento, cada decisão com o seu motivo.
+
 | Script                  | O que faz                                                             |
 | ----------------------- | --------------------------------------------------------------------- |
 | `npm start`             | Sobe o servidor de desenvolvimento em `http://localhost:4200`         |
