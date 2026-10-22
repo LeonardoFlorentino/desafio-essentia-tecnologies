@@ -170,7 +170,7 @@ demonstração é recriado na próxima subida).
 
 ```
 ├── backend/
-│   ├── migrations/          Esquema do MySQL em SQL numerado (001, 002, 003)
+│   ├── migrations/          Esquema do MySQL em SQL numerado (001 a 004)
 │   ├── src/
 │   │   ├── auth/            Cadastro, login, sessão (JWT em cookie) e usuários
 │   │   ├── db/              Conexões (MySQL, MongoDB), migrations e seed
@@ -227,7 +227,8 @@ sozinha quando ele volta.
 **Migrations:** o esquema do MySQL fica em arquivos SQL numerados em `backend/migrations/`. O `npm run migrate` aplica,
 em ordem, os que ainda não constam na tabela `migrations`; rodar de novo não faz nada se estiver tudo aplicado.
 
-**Seed:** o `npm run seed` cria o usuário de demonstração com três tarefas de exemplo. Tarefas criadas antes da
+**Seed:** o `npm run seed` cria o usuário de demonstração com três tarefas de exemplo, com prazos relativos ao dia em
+que roda (ontem, hoje e daqui a três dias) e prioridades diferentes. Tarefas criadas antes da
 existência de contas (sem dono) passam para ele.
 
 ## API
@@ -252,7 +253,7 @@ e só enxergam as tarefas da pessoa conectada — a tarefa de outra pessoa respo
 | POST   | `/auth/login`        | Inicia a sessão                                                           | 200     |
 | GET    | `/auth/me`           | Usuário da sessão atual                                                   | 200     |
 | POST   | `/auth/logout`       | Encerra a sessão (resposta sem corpo)                                     | 204     |
-| GET    | `/tasks`             | Lista as tarefas, das mais recentes para as antigas                       | 200     |
+| GET    | `/tasks`             | Lista as tarefas, com filtros, busca e ordenação opcionais                | 200     |
 | POST   | `/tasks`             | Cria uma tarefa                                                           | 201     |
 | GET    | `/tasks/:id`         | Busca uma tarefa pelo id                                                  | 200     |
 | PATCH  | `/tasks/:id`         | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
@@ -272,26 +273,49 @@ e só enxergam as tarefas da pessoa conectada — a tarefa de outra pessoa respo
     "title": "Revisar o relatório",
     "description": "Conferir os números do trimestre",
     "completed": false,
+    "dueDate": "2026-10-30",
+    "priority": "high",
     "createdAt": "2026-10-22T13:39:15.000Z",
     "updatedAt": "2026-10-22T13:39:15.000Z"
   }
 ]
 ```
 
-`POST /api/tasks` (a descrição é opcional; vazia é salva como `null`) responde `201` com a tarefa criada:
+Sem parâmetros, a lista traz todas as tarefas, das mais recentes para as antigas. Parâmetros opcionais (combináveis;
+valor desconhecido responde `400`):
+
+| Parâmetro  | Valores                                       | Efeito                                                                                    |
+| ---------- | --------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `status`   | `all` (padrão), `pending`, `completed`        | Filtra pela situação                                                                      |
+| `priority` | `low`, `medium`, `high`                       | Filtra pela prioridade                                                                    |
+| `search`   | texto, até 100 caracteres                     | Busca no título e na descrição, sem diferenciar maiúsculas (`%` e `_` valem como texto)   |
+| `sort`     | `created_at` (padrão), `due_date`, `priority` | Ordena; por prazo, as tarefas sem prazo ficam por último                                  |
+| `order`    | `asc`, `desc`                                 | Inverte a ordem; o padrão é o natural de cada `sort` (recentes, prazo mais próximo, alta) |
+
+Exemplo: `GET /api/tasks?status=pending&priority=high&sort=due_date` — pendentes de prioridade alta, prazo mais
+próximo primeiro.
+
+`POST /api/tasks` responde `201` com a tarefa criada:
 
 ```json
-{ "title": "Revisar o relatório", "description": "Conferir os números do trimestre" }
+{
+  "title": "Revisar o relatório",
+  "description": "Conferir os números do trimestre",
+  "dueDate": "2026-10-30",
+  "priority": "high"
+}
 ```
 
 `PATCH /api/tasks/:id` altera apenas os campos enviados (pelo menos um). Para marcar como concluída:
-`{ "completed": true }`.
+`{ "completed": true }`; para tirar o prazo: `{ "dueDate": null }`.
 
-| Campo         | Regras                                                          |
-| ------------- | --------------------------------------------------------------- |
-| `title`       | Obrigatório, texto, 1 a 255 caracteres (sem espaços nas pontas) |
-| `description` | Opcional, texto, até 5000 caracteres                            |
-| `completed`   | Só no `PATCH`: `true` ou `false`                                |
+| Campo         | Regras                                                                             |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `title`       | Obrigatório, texto, 1 a 255 caracteres (sem espaços nas pontas)                    |
+| `description` | Opcional, texto, até 5000 caracteres; vazia é salva como `null`                    |
+| `dueDate`     | Opcional, dia `AAAA-MM-DD` que exista (sem hora nem fuso) ou `null`; padrão `null` |
+| `priority`    | Opcional, `low`, `medium` ou `high`; padrão `medium`                               |
+| `completed`   | Só no `PATCH`: `true` ou `false`                                                   |
 
 ### Detalhes e histórico (MongoDB)
 

@@ -64,7 +64,7 @@ describe('GET /api/tasks', () => {
 });
 
 describe('POST /api/tasks', () => {
-  it('creates a pending task and returns it', async () => {
+  it('creates a pending task with no due date and medium priority by default', async () => {
     const res = await owner
       .post('/api/tasks')
       .send({ title: '  Buy coffee  ', description: 'At the bakery' })
@@ -75,6 +75,8 @@ describe('POST /api/tasks', () => {
       title: 'Buy coffee',
       description: 'At the bakery',
       completed: false,
+      dueDate: null,
+      priority: 'medium',
       createdAt: expect.any(String),
       updatedAt: expect.any(String),
     });
@@ -164,7 +166,7 @@ describe('PATCH /api/tasks/:id', () => {
     const task = await createTask();
     const res = await owner.patch(`/api/tasks/${task.id}`).send({}).expect(400);
     expect(res.body.details._errors).toEqual([
-      'Send at least one of: title, description, completed',
+      'Send at least one of: title, description, completed, dueDate, priority',
     ]);
   });
 

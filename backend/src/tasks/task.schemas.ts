@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PRIORITIES } from './task.types';
 
 const title = z
   .string({
@@ -18,18 +19,46 @@ const description = z
 
 const completed = z.boolean({ error: 'Completed must be true or false' });
 
+// A calendar day such as 2026-10-25 (also checks that the day exists); null clears it.
+const dueDate = z.iso
+  .date({ error: 'Due date must be a date in the YYYY-MM-DD format' })
+  .nullable();
+
+const priority = z.enum(PRIORITIES, { error: 'Priority must be low, medium or high' });
+
 export const createTaskSchema = z.object({
   title,
   description: description.optional().transform((value) => value ?? null),
+  dueDate: dueDate.optional().transform((value) => value ?? null),
+  priority: priority.default('medium'),
 });
 
 // Every field is optional, but fields left out stay undefined (not null) so they are not touched.
 export const updateTaskSchema = z
-  .object({ title, description, completed })
+  .object({ title, description, completed, dueDate, priority })
   .partial()
   .refine((input) => Object.values(input).some((value) => value !== undefined), {
-    error: 'Send at least one of: title, description, completed',
+    error: 'Send at least one of: title, description, completed, dueDate, priority',
   });
+
+/** Query string of GET /tasks. Unknown values are rejected (400) instead of silently ignored. */
+export const listTasksQuerySchema = z.object({
+  status: z
+    .enum(['all', 'pending', 'completed'], {
+      error: 'Status must be all, pending or completed',
+    })
+    .default('all'),
+  priority: priority.optional(),
+  search: z.string().trim().max(100, 'Search must be at most 100 characters').optional(),
+  sort: z
+    .enum(['created_at', 'due_date', 'priority'], {
+      error: 'Sort must be created_at, due_date or priority',
+    })
+    .default('created_at'),
+  order: z.enum(['asc', 'desc'], { error: 'Order must be asc or desc' }).optional(),
+});
+
+export type ListTasksQuery = z.infer<typeof listTasksQuerySchema>;
 
 // PUT replaces the whole details document, so both fields are required (empty is fine).
 export const taskDetailsSchema = z.object({

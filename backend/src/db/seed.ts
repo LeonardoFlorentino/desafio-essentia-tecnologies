@@ -6,17 +6,31 @@ import { pool } from './mysql';
 /** Demo account documented in the README, so a fresh clone has something to sign in with. */
 export const DEMO_USER = { email: 'demo@techx.com', password: 'demo12345' };
 
+/** `YYYY-MM-DD` of today plus `days` — relative, so a fresh install always shows past and future dates. */
+const dayFromToday = (days: number) =>
+  new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 const SAMPLE_TASKS = [
   {
     title: 'Revisar o relatório trimestral',
     description: 'Conferir os números antes da reunião',
     completed: false,
+    dueDate: dayFromToday(-1),
+    priority: 'high',
   },
-  { title: 'Responder os e-mails do cliente', description: null, completed: true },
+  {
+    title: 'Responder os e-mails do cliente',
+    description: null,
+    completed: true,
+    dueDate: dayFromToday(0),
+    priority: 'medium',
+  },
   {
     title: 'Preparar a apresentação de sexta',
     description: 'Slides com os resultados do mês',
     completed: false,
+    dueDate: dayFromToday(3),
+    priority: 'low',
   },
 ];
 
@@ -43,8 +57,9 @@ export async function seed(log: (message: string) => void = console.log): Promis
   if (total === 0) {
     for (const task of SAMPLE_TASKS) {
       await pool.query(
-        'INSERT INTO tasks (user_id, title, description, completed) VALUES (?, ?, ?, ?)',
-        [demo.id, task.title, task.description, task.completed],
+        `INSERT INTO tasks (user_id, title, description, completed, due_date, priority)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [demo.id, task.title, task.description, task.completed, task.dueDate, task.priority],
       );
     }
     log(`${SAMPLE_TASKS.length} sample tasks created`);

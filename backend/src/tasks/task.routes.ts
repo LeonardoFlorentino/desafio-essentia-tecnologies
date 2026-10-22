@@ -4,7 +4,12 @@ import { HttpError } from '../http/errors';
 import { getDetails, removeDetails, saveDetails } from './task-details';
 import { listEvents, recordEvent, type TaskChanges } from './task-history';
 import * as taskRepository from './task.repository';
-import { createTaskSchema, taskDetailsSchema, updateTaskSchema } from './task.schemas';
+import {
+  createTaskSchema,
+  listTasksQuerySchema,
+  taskDetailsSchema,
+  updateTaskSchema,
+} from './task.schemas';
 import type { Task } from './task.types';
 
 // Thrown errors (validation, HttpError, database) are turned into responses by the
@@ -35,14 +40,15 @@ async function ownTask(req: Request): Promise<Task> {
 /** Which fields really changed, from → to (fields sent with the same value are not changes). */
 function diff(before: Task, after: Task): TaskChanges {
   const changes: TaskChanges = {};
-  for (const field of ['title', 'description', 'completed'] as const) {
+  for (const field of ['title', 'description', 'completed', 'dueDate', 'priority'] as const) {
     if (before[field] !== after[field]) changes[field] = { from: before[field], to: after[field] };
   }
   return changes;
 }
 
 taskRouter.get('/', async (req, res) => {
-  res.json(await taskRepository.findAll(userId(req)));
+  const query = listTasksQuerySchema.parse(req.query);
+  res.json(await taskRepository.findAll(userId(req), query));
 });
 
 taskRouter.post('/', async (req, res) => {

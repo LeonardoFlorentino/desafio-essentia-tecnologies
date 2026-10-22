@@ -114,8 +114,28 @@ paths:
   /tasks:
     get:
       tags: [Tarefas]
-      summary: Lista as tarefas da pessoa conectada, das mais recentes para as antigas
+      summary: Lista as tarefas da pessoa conectada, com filtros, busca e ordenação
+      description: Sem parâmetros, devolve todas, das mais recentes para as antigas. Valores desconhecidos respondem 400.
       security: [{ sessionCookie: [] }]
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [all, pending, completed], default: all }
+        - name: priority
+          in: query
+          schema: { $ref: '#/components/schemas/Priority' }
+        - name: search
+          in: query
+          description: Trecho do título ou da descrição, sem diferenciar maiúsculas (`%` e `_` são literais)
+          schema: { type: string, maxLength: 100 }
+        - name: sort
+          in: query
+          description: '`due_date` deixa as tarefas sem prazo por último'
+          schema: { type: string, enum: [created_at, due_date, priority], default: created_at }
+        - name: order
+          in: query
+          description: 'Padrão de cada ordenação: `created_at` desc, `due_date` asc, `priority` desc (alta primeiro)'
+          schema: { type: string, enum: [asc, desc] }
       responses:
         '200':
           description: Lista de tarefas (vazia se não houver nenhuma)
@@ -124,6 +144,7 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Task' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
         '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [Tarefas]
@@ -134,7 +155,13 @@ paths:
         content:
           application/json:
             schema: { $ref: '#/components/schemas/NewTask' }
-            example: { title: Revisar o relatório, description: Conferir os números do trimestre }
+            example:
+              {
+                title: Revisar o relatório,
+                description: Conferir os números do trimestre,
+                dueDate: '2026-10-30',
+                priority: high,
+              }
       responses:
         '201':
           description: Tarefa criada (pendente)
@@ -172,6 +199,7 @@ paths:
             examples:
               concluir: { value: { completed: true } }
               editar: { value: { title: Revisar o relatório anual, description: null } }
+              adiar: { value: { dueDate: '2026-11-15', priority: low } }
       responses:
         '200':
           description: Tarefa atualizada
@@ -336,14 +364,28 @@ components:
 
     Task:
       type: object
-      required: [id, title, description, completed, createdAt, updatedAt]
+      required: [id, title, description, completed, dueDate, priority, createdAt, updatedAt]
       properties:
         id: { type: integer, example: 1 }
         title: { type: string, example: Revisar o relatório }
         description: { type: string, nullable: true, example: Conferir os números do trimestre }
         completed: { type: boolean, example: false }
+        dueDate: { $ref: '#/components/schemas/DueDate' }
+        priority: { $ref: '#/components/schemas/Priority' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+
+    DueDate:
+      type: string
+      format: date
+      nullable: true
+      description: Prazo como dia do calendário (YYYY-MM-DD), sem hora nem fuso; `null` = sem prazo
+      example: '2026-10-30'
+
+    Priority:
+      type: string
+      enum: [low, medium, high]
+      example: medium
 
     NewTask:
       type: object
@@ -359,6 +401,10 @@ components:
           nullable: true
           maxLength: 5000
           description: Opcional; vazia é salva como `null`
+        dueDate: { $ref: '#/components/schemas/DueDate' }
+        priority:
+          allOf: [{ $ref: '#/components/schemas/Priority' }]
+          default: medium
 
     TaskUpdate:
       type: object
@@ -368,6 +414,8 @@ components:
         title: { type: string, minLength: 1, maxLength: 255 }
         description: { type: string, nullable: true, maxLength: 5000 }
         completed: { type: boolean }
+        dueDate: { $ref: '#/components/schemas/DueDate' }
+        priority: { $ref: '#/components/schemas/Priority' }
 
     TaskDetails:
       type: object
