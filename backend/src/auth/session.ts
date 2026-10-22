@@ -1,8 +1,9 @@
-import type { CookieOptions, RequestHandler, Response } from 'express';
+import type { CookieOptions, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { HttpError } from '../http/errors';
 import { issueToken, verifyToken } from './auth.service';
+import * as revokedTokens from './revoked-tokens';
 import type { User } from './user.repository';
 
 declare module 'express-serve-static-core' {
@@ -30,15 +31,28 @@ export function startSession(res: Response, user: User) {
   res.cookie(SESSION_COOKIE, token, { ...cookieOptions, maxAge: exp! * 1000 - Date.now() });
 }
 
-export function endSession(res: Response) {
+/** The session token's claims, if the request carries a validly signed, unexpired one. */
+function sessionClaims(req: Request) {
+  const token: unknown = req.cookies?.[SESSION_COOKIE];
+  return typeof token === 'string' ? verifyToken(token) : null;
+}
+
+/**
+ * Logs out on the server too: the token is revoked, so a copy of it (stolen, or kept by a
+ * script) stops working right away instead of living until it expires. Then the cookie goes.
+ */
+export async function endSession(req: Request, res: Response) {
+  const claims = sessionClaims(req);
+  if (claims) await revokedTokens.revoke(claims.jti, claims.expiresAt);
   res.clearCookie(SESSION_COOKIE, cookieOptions);
 }
 
-/** Lets the request through only with a valid session cookie; the user goes to `req.user`. */
-export const requireAuth: RequestHandler = (req, _res, next) => {
-  const token: unknown = req.cookies?.[SESSION_COOKIE];
-  const user = typeof token === 'string' ? verifyToken(token) : null;
-  if (!user) throw new HttpError(401, 'Authentication required');
-  req.user = user;
+/** Lets the request through only with a valid, not revoked session; the user goes to `req.user`. */
+export const requireAuth: RequestHandler = async (req, _res, next) => {
+  const claims = sessionClaims(req);
+  if (!claims || (await revokedTokens.isRevoked(claims.jti))) {
+    throw new HttpError(401, 'Authentication required');
+  }
+  req.user = claims.user;
   next();
 };

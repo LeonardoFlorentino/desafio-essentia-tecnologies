@@ -109,7 +109,10 @@ paths:
   /auth/logout:
     post:
       tags: [Autenticação]
-      summary: Encerra a sessão (apaga o cookie)
+      summary: Encerra a sessão (revoga o token no servidor e apaga o cookie)
+      description: |
+        O token da sessão é revogado: mesmo uma cópia dele passa a receber `401`. As outras sessões da
+        mesma pessoa (outros navegadores) continuam valendo. Sem sessão, também responde `204`.
       responses:
         '204': { description: Sessão encerrada }
 

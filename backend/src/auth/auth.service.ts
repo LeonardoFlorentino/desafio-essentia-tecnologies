@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
@@ -23,21 +24,38 @@ export async function authenticate({ email, password }: Credentials): Promise<Us
   return user && passwordMatches ? { id: user.id, email: user.email } : null;
 }
 
+/** What a valid token says: who it belongs to, its unique id and when it expires. */
+export interface TokenClaims {
+  user: User;
+  jti: string;
+  expiresAt: Date;
+}
+
 export function issueToken(user: User): string {
   return jwt.sign({ email: user.email }, config.jwt.secret, {
     algorithm: 'HS256',
     subject: String(user.id),
+    // Unique id: lets this one token be revoked on logout without touching the user's others.
+    jwtid: randomUUID(),
     expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'],
   });
 }
 
-/** Returns null for a missing, expired, tampered or otherwise invalid token. */
-export function verifyToken(token: string): User | null {
+/**
+ * Returns null for a missing, expired, tampered or otherwise invalid token — including one
+ * without an id (issued before revocation existed), since it could never be revoked.
+ * Does not check revocation: that needs the database (see session.ts).
+ */
+export function verifyToken(token: string): TokenClaims | null {
   try {
     // Pinning the algorithm rejects tokens signed with anything else (including "none").
     const payload = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] });
-    if (typeof payload === 'string' || !payload.sub) return null;
-    return { id: Number(payload.sub), email: String(payload['email']) };
+    if (typeof payload === 'string' || !payload.sub || !payload.jti || !payload.exp) return null;
+    return {
+      user: { id: Number(payload.sub), email: String(payload['email']) },
+      jti: payload.jti,
+      expiresAt: new Date(payload.exp * 1000),
+    };
   } catch {
     return null;
   }

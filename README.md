@@ -178,7 +178,7 @@ demonstração é recriado na próxima subida).
 
 ```
 ├── backend/
-│   ├── migrations/          Esquema do MySQL em SQL numerado (001 a 004)
+│   ├── migrations/          Esquema do MySQL em SQL numerado (001 a 005)
 │   ├── src/
 │   │   ├── auth/            Cadastro, login, sessão (JWT em cookie) e usuários
 │   │   ├── db/              Conexões (MySQL, MongoDB), migrations e seed
@@ -262,7 +262,7 @@ e só enxergam as tarefas da pessoa conectada — a tarefa de outra pessoa respo
 | POST   | `/auth/register`     | Cria a conta e já inicia a sessão                                         | 201     |
 | POST   | `/auth/login`        | Inicia a sessão                                                           | 200     |
 | GET    | `/auth/me`           | Usuário da sessão atual                                                   | 200     |
-| POST   | `/auth/logout`       | Encerra a sessão (resposta sem corpo)                                     | 204     |
+| POST   | `/auth/logout`       | Encerra a sessão e revoga o token no servidor (resposta sem corpo)        | 204     |
 | GET    | `/tasks`             | Lista as tarefas, com filtros, busca e ordenação opcionais                | 200     |
 | POST   | `/tasks`             | Cria uma tarefa                                                           | 201     |
 | GET    | `/tasks/:id`         | Busca uma tarefa pelo id                                                  | 200     |
@@ -428,6 +428,12 @@ seria preciso um armazenamento compartilhado, como Redis).
 aviso), guardadas com bcrypt (custo 12). O login responde a mesma mensagem, "e-mail ou senha inválidos", para e-mail
 inexistente e para senha errada, e leva o mesmo tempo nos dois casos (compara com um hash fictício quando o e-mail não
 existe): nem a resposta nem a demora revelam quais e-mails têm conta.
+
+**Logout de verdade.** Um JWT costuma valer até expirar, mesmo depois do "Sair" — apagar o cookie só limpa o navegador.
+Aqui cada token tem um id único (`jti`), e o logout grava esse id na tabela `revoked_tokens` do MySQL (migration
+`005`); toda rota protegida confere a tabela, então **uma cópia do token** (roubada ou guardada por um script) passa a
+receber `401` na hora. Só aquela sessão acaba: a mesma conta aberta em outro navegador continua conectada. Cada linha
+guarda quando o token expiraria; depois disso ela não serve para mais nada e é apagada sempre que a API inicia.
 
 ## Testes e qualidade
 

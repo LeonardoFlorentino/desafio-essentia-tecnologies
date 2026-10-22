@@ -28,7 +28,8 @@ authRouter.get('/me', requireAuth, (req, res) => {
   res.json({ user: req.user });
 });
 
-authRouter.post('/logout', (_req, res) => {
-  endSession(res);
+// No session needed: logging out with an expired or missing session still clears the cookie.
+authRouter.post('/logout', async (req, res) => {
+  await endSession(req, res);
   res.status(204).end();
 });
