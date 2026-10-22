@@ -20,6 +20,7 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - [API](#api)
 - [Frontend](#frontend)
 - [Testes e qualidade](#testes-e-qualidade)
+- [Contribuindo](#contribuindo)
 - [Problemas comuns](#problemas-comuns)
 
 ## Funcionalidades
@@ -333,6 +334,18 @@ npm test
 
 **Qualidade:** TypeScript em modo `strict` nos dois projetos, ESLint (com as regras de acessibilidade dos templates
 Angular) e Prettier com uma configuração única para o repositório.
+
+## Contribuindo
+
+O `npm install` na raiz (o `npm start` faz isso sozinho) ativa dois hooks do Git, com [husky](https://typicode.github.io/husky/):
+
+- **Antes do commit** ([lint-staged](https://github.com/lint-staged/lint-staged)): os arquivos alterados passam pelo
+  Prettier e, se forem TypeScript ou templates, pelo ESLint do projeto a que pertencem. Formatação é corrigida
+  sozinha; um erro de lint que não tem correção automática bloqueia o commit e mostra a linha.
+- **Na mensagem do commit** ([commitlint](https://commitlint.js.org/)): ela precisa seguir o padrão
+  [Conventional Commits](https://www.conventionalcommits.org/) em **uma linha só** — `tipo(escopo): descrição`, com
+  tipo em minúsculas (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `style`...) e descrição sem ponto
+  final. Exemplo: `feat(frontend): add dark mode`. Mensagens fora do padrão, com corpo ou com rodapé são recusadas.
 
 ## Problemas comuns
 

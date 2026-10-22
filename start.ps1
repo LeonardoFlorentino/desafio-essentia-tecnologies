@@ -97,6 +97,7 @@ function Restore-Focus {
 Step 'Preparando o ambiente'
 Copy-EnvExample $root
 Copy-EnvExample (Join-Path $root 'backend')
+Install-Dependencies $root
 Install-Dependencies (Join-Path $root 'backend')
 Install-Dependencies (Join-Path $root 'frontend')
 
