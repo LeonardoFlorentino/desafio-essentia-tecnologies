@@ -134,18 +134,41 @@ MongoDB, e se reconecta sozinha quando ele volta.
 Todas as rotas ficam sob o prefixo `/api`. As rotas de **tarefas exigem sessão** (sem ela: `401`) e só enxergam as
 tarefas da pessoa conectada — a tarefa de outra pessoa responde `404`, como se não existisse.
 
-| Método | Rota             | Descrição                                                                 | Sucesso |
-| ------ | ---------------- | ------------------------------------------------------------------------- | ------- |
-| GET    | `/health`        | Situação da API e dos dois bancos                                         | 200     |
-| GET    | `/tasks`         | Lista todas as tarefas, das mais recentes para as antigas                 | 200     |
-| POST   | `/tasks`         | Cria uma tarefa                                                           | 201     |
-| GET    | `/tasks/:id`     | Busca uma tarefa pelo id                                                  | 200     |
-| PATCH  | `/tasks/:id`     | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
-| DELETE | `/tasks/:id`     | Exclui uma tarefa (resposta sem corpo)                                    | 204     |
-| POST   | `/auth/register` | Cria a conta e já inicia a sessão                                         | 201     |
-| POST   | `/auth/login`    | Inicia a sessão                                                           | 200     |
-| GET    | `/auth/me`       | Usuário da sessão atual                                                   | 200     |
-| POST   | `/auth/logout`   | Encerra a sessão (resposta sem corpo)                                     | 204     |
+| Método | Rota                 | Descrição                                                                 | Sucesso |
+| ------ | -------------------- | ------------------------------------------------------------------------- | ------- |
+| GET    | `/health`            | Situação da API e dos dois bancos                                         | 200     |
+| GET    | `/tasks`             | Lista todas as tarefas, das mais recentes para as antigas                 | 200     |
+| POST   | `/tasks`             | Cria uma tarefa                                                           | 201     |
+| GET    | `/tasks/:id`         | Busca uma tarefa pelo id                                                  | 200     |
+| PATCH  | `/tasks/:id`         | Atualiza parcialmente uma tarefa (inclui marcar/desmarcar como concluída) | 200     |
+| DELETE | `/tasks/:id`         | Exclui uma tarefa (resposta sem corpo)                                    | 204     |
+| GET    | `/tasks/:id/details` | Notas e tags da tarefa (MongoDB)                                          | 200     |
+| PUT    | `/tasks/:id/details` | Grava as notas e as tags (substitui as anteriores)                        | 200     |
+| GET    | `/tasks/:id/history` | Histórico de ações da tarefa, das mais recentes para as antigas (MongoDB) | 200     |
+| POST   | `/auth/register`     | Cria a conta e já inicia a sessão                                         | 201     |
+| POST   | `/auth/login`        | Inicia a sessão                                                           | 200     |
+| GET    | `/auth/me`           | Usuário da sessão atual                                                   | 200     |
+| POST   | `/auth/logout`       | Encerra a sessão (resposta sem corpo)                                     | 204     |
+
+#### Detalhes e histórico (MongoDB)
+
+A tarefa em si (título, descrição, situação, dono) fica no **MySQL**; o **MongoDB** guarda as informações adicionais:
+
+- **Detalhes** (`task_details`, um documento por tarefa): notas longas e tags — dados de formato livre, que não pedem
+  colunas fixas. Exemplo de `PUT /api/tasks/:id/details`:
+
+  ```json
+  { "notes": "Levar o notebook para a reunião", "tags": ["reunião", "urgente"] }
+  ```
+
+  Notas até 10000 caracteres; até 10 tags de 1 a 30 caracteres (repetidas, ignorando maiúsculas, são descartadas).
+
+- **Histórico** (`task_events`): cada ação vira um registro — `created`, `updated` (com os valores antes e depois de
+  cada campo alterado), `completed`, `reopened`, `details_updated` e `deleted`. Um registro que só cresce e cujas
+  entradas variam de formato combina com documentos. Se o MongoDB falhar ao registrar, a ação principal (no MySQL)
+  não é desfeita: o erro vai para o log e só aquela entrada do histórico se perde.
+
+Os dois são sempre filtrados pelo dono da tarefa, como no MySQL; ao excluir a tarefa, os detalhes também são excluídos.
 
 #### Autenticação
 
