@@ -1,5 +1,7 @@
 # TechX Tasks
 
+[![CI](https://github.com/LeonardoFlorentino/desafio-essentia-tecnologies/actions/workflows/ci.yml/badge.svg?branch=leonardo-florentino-fernandes)](https://github.com/LeonardoFlorentino/desafio-essentia-tecnologies/actions/workflows/ci.yml)
+
 Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o desafio Full Stack da Essentia Group:
 cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 
@@ -25,6 +27,7 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - [Segurança](#segurança)
 - [Operação](#operação)
 - [Testes e qualidade](#testes-e-qualidade)
+- [Integração contínua](#integração-contínua)
 - [Contribuindo](#contribuindo)
 - [Problemas comuns](#problemas-comuns)
 
@@ -617,6 +620,22 @@ intermitentes. Se um teste falhar, a captura de tela e o rastreamento (trace) fi
 
 **Qualidade:** TypeScript em modo `strict` nos dois projetos, ESLint (com as regras de acessibilidade dos templates
 Angular) e Prettier com uma configuração única para o repositório.
+
+## Integração contínua
+
+A cada push e pull request, o [GitHub Actions](.github/workflows/ci.yml) roda, em paralelo:
+
+| Job                  | O que verifica                                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Commits e formatação | Mensagens no padrão Conventional Commits (commitlint) e o repositório todo no estilo do Prettier                               |
+| Backend              | ESLint + validação do OpenAPI, compilação, `npm audit` (altas/críticas), testes unitários e de integração com cobertura mínima |
+| Frontend             | ESLint (inclui acessibilidade), build de produção, `npm audit`, testes com cobertura mínima                                    |
+| E2E                  | A suíte do Playwright num Chromium, com a API e o Angular de verdade                                                           |
+| Imagens Docker       | Build das imagens `api` e `web` do `docker-compose.yml`                                                                        |
+
+O MySQL 8.4 e o MongoDB 8.0 sobem como containers de serviço do próprio GitHub Actions, com as mesmas versões do
+Docker Compose. Os relatórios de cobertura ficam disponíveis por 7 dias em cada execução; se o E2E falhar, também ficam
+o relatório do Playwright, as capturas de tela e os traces. Um push novo na mesma branch cancela a execução anterior.
 
 ## Contribuindo
 

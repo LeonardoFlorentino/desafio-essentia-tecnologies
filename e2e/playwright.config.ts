@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 // Own ports and the test database: the E2E run never touches the dev servers (3000/4200) or the
@@ -13,7 +14,14 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 1,
   retries: process.env.CI ? 1 : 0,
   forbidOnly: !!process.env.CI,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // Both at the repository root, where .gitignore and the CI artifact upload expect them.
+  outputDir: path.join(__dirname, '..', 'test-results'),
+  reporter: process.env.CI
+    ? [
+        ['list'],
+        ['html', { open: 'never', outputFolder: path.join(__dirname, '..', 'playwright-report') }],
+      ]
+    : 'list',
   use: {
     baseURL: `http://localhost:${WEB_PORT}`,
     trace: 'retain-on-failure',
