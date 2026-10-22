@@ -47,6 +47,8 @@ export const config = {
     // Any format accepted by jsonwebtoken: "8h", "30m", "7d" or a number of seconds.
     expiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
   },
-  // HTTPS-only session cookie outside local development.
-  secureCookies: process.env.NODE_ENV === 'production',
+  // HTTPS-only session cookie: on by default in production, but COOKIE_SECURE=false allows a
+  // production build served over plain HTTP on localhost (docker compose).
+  secureCookies:
+    (process.env.COOKIE_SECURE ?? String(process.env.NODE_ENV === 'production')) === 'true',
 };

@@ -8,12 +8,12 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-todo}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - '${MYSQL_PORT:-3306}:3306'
     volumes:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -23,20 +23,56 @@ services:
     image: mongo:8.0
     restart: unless-stopped
     # Caps the storage cache (default: half of the container's RAM) — plenty for task details.
-    command: ["--wiredTigerCacheSizeGB", "0.25"]
+    command: ['--wiredTigerCacheSizeGB', '0.25']
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-todo}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-todo}
     ports:
-      - "${MONGO_PORT:-27017}:27017"
+      - '${MONGO_PORT:-27017}:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 20s
+
+  # `docker compose up --build` runs the whole app (http://localhost:8080). For development,
+  # `npm start` starts only the databases (`docker compose up -d mysql mongo`).
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DB_HOST: mysql
+      DB_USER: ${MYSQL_USER:-todo}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-todo}
+      DB_NAME: ${MYSQL_DATABASE:-todo}
+      MONGO_URL: mongodb://${MONGO_USER:-todo}:${MONGO_PASSWORD:-todo}@mongo:27017/?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-local-compose-secret-change-me-0123456789}
+      # Served over plain HTTP on localhost: the session cookie cannot be HTTPS-only here.
+      COOKIE_SECURE: 'false'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/api/health']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT:-8080}:8080'
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   mysql-data:

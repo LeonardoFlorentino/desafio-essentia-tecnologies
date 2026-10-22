@@ -104,7 +104,8 @@ Install-Dependencies (Join-Path $root 'frontend')
 Step 'Subindo o MySQL (Docker)'
 docker info *> $null
 if ($LASTEXITCODE) { Fail 'O Docker não está respondendo. Abra o Docker Desktop e rode npm start de novo.' }
-Invoke-Compose up -d --wait
+# Only the databases: in development the API and the frontend run from source, with hot reload.
+Invoke-Compose up -d --wait mysql mongo
 if ($LASTEXITCODE) { Fail 'O MySQL não ficou saudável. Veja os logs com: docker compose logs mysql' }
 
 Step 'Aplicando as migrations do banco'

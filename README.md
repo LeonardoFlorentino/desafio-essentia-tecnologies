@@ -60,29 +60,51 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 
 ## Tecnologias e decisões
 
-| Tema                   | Escolha                                                         | Motivo                                                                                                             |
-| ---------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| API                    | Express 5 + TypeScript (`strict`)                               | Pouca estrutura imposta; erros de rotas assíncronas chegam sozinhos ao tratador central                            |
-| Acesso ao MySQL        | `mysql2` com SQL escrito à mão, sempre parametrizado            | Mostra o SQL de fato; filtro por dono em todas as consultas; sem risco de SQL injection                            |
-| Esquema do MySQL       | Migrations SQL numeradas + runner próprio                       | Esquema versionado junto com o código e aplicado igual em qualquer máquina                                         |
-| Validação              | zod                                                             | Uma definição por campo valida a entrada e gera o tipo TypeScript                                                  |
-| MySQL e MongoDB juntos | Tarefas e usuários no MySQL; notas, tags e histórico no MongoDB | Dados com relacionamento e regras fixas no relacional; dados de formato livre e um log que só cresce em documentos |
-| Sessão                 | JWT (HS256) em cookie `HttpOnly` + `SameSite=Strict`            | O token nunca fica acessível a scripts da página (XSS não rouba a sessão) e não vai em requisições de outros sites |
-| Senhas                 | bcrypt (custo 12, via `bcryptjs`)                               | Hash lento contra força bruta; versão em JavaScript puro, sem compilação nativa                                    |
-| Acesso entre contas    | Tarefa de outra pessoa responde `404`                           | Não revela nem que a tarefa existe                                                                                 |
-| Frontend               | Angular 22 standalone, signals, sem zone.js                     | Estado explícito e menos código de infraestrutura                                                                  |
-| Front e API            | Mesma origem: o Angular encaminha `/api` para a API             | Sem CORS no navegador e cookie `SameSite=Strict` funcionando                                                       |
-| Ambiente               | Docker Compose para os bancos; `npm start` sobe tudo            | Quem avalia roda o projeto sem instalar banco nenhum                                                               |
-| Testes                 | Jest + Supertest (API), Vitest (Angular)                        | Testes da API fazem requisições HTTP reais contra bancos de teste separados                                        |
+| Tema                   | Escolha                                                             | Motivo                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| API                    | Express 5 + TypeScript (`strict`)                                   | Pouca estrutura imposta; erros de rotas assíncronas chegam sozinhos ao tratador central                            |
+| Acesso ao MySQL        | `mysql2` com SQL escrito à mão, sempre parametrizado                | Mostra o SQL de fato; filtro por dono em todas as consultas; sem risco de SQL injection                            |
+| Esquema do MySQL       | Migrations SQL numeradas + runner próprio                           | Esquema versionado junto com o código e aplicado igual em qualquer máquina                                         |
+| Validação              | zod                                                                 | Uma definição por campo valida a entrada e gera o tipo TypeScript                                                  |
+| MySQL e MongoDB juntos | Tarefas e usuários no MySQL; notas, tags e histórico no MongoDB     | Dados com relacionamento e regras fixas no relacional; dados de formato livre e um log que só cresce em documentos |
+| Sessão                 | JWT (HS256) em cookie `HttpOnly` + `SameSite=Strict`                | O token nunca fica acessível a scripts da página (XSS não rouba a sessão) e não vai em requisições de outros sites |
+| Senhas                 | bcrypt (custo 12, via `bcryptjs`)                                   | Hash lento contra força bruta; versão em JavaScript puro, sem compilação nativa                                    |
+| Acesso entre contas    | Tarefa de outra pessoa responde `404`                               | Não revela nem que a tarefa existe                                                                                 |
+| Frontend               | Angular 22 standalone, signals, sem zone.js                         | Estado explícito e menos código de infraestrutura                                                                  |
+| Front e API            | Mesma origem: o Angular encaminha `/api` para a API                 | Sem CORS no navegador e cookie `SameSite=Strict` funcionando                                                       |
+| Ambiente               | `docker compose up --build` sobe tudo; `npm start` para desenvolver | Quem avalia roda o projeto com um comando, sem instalar Node nem banco nenhum                                      |
+| Servir o site          | nginx com o build do Angular, encaminhando `/api` para a API        | Mesma origem em produção (como o proxy do `ng serve` em desenvolvimento); cache longo só para arquivos com hash    |
+| Testes                 | Jest + Supertest (API), Vitest (Angular)                            | Testes da API fazem requisições HTTP reais contra bancos de teste separados                                        |
 
 ## Como rodar
 
-### Pré-requisitos
+Há duas formas: **com Docker apenas** (o jeito mais rápido de avaliar, em qualquer sistema) ou **em modo de
+desenvolvimento** (código-fonte com recarga automática).
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) aberto (com Docker Compose v2)
-- [Node.js](https://nodejs.org/) 22 ou superior (com npm)
+### Opção 1 — Aplicação completa com Docker (qualquer sistema)
 
-### Início rápido (Windows)
+Pré-requisito: [Docker Desktop](https://www.docker.com/products/docker-desktop/) aberto (com Docker Compose v2). Não é
+preciso ter Node.js instalado. Na raiz do projeto:
+
+```bash
+docker compose up --build
+```
+
+Na primeira vez, as imagens são construídas (alguns minutos). Os containers sobem em ordem — bancos saudáveis → API
+(aplica as migrations e cria o usuário de demonstração) → site — e a aplicação fica em **http://localhost:8080**.
+Entre com `demo@techx.com` / `demo12345`.
+
+- O site é servido por um **nginx**, que também encaminha `/api` para a API: página e API na mesma origem. A API não
+  fica exposta fora do Docker.
+- As imagens são construídas em duas fases (compilação → só o resultado) e rodam sem usuário root.
+- Para mudar a porta ou o segredo da sessão, copie o `.env.example` da raiz para `.env` (`WEB_PORT`, `JWT_SECRET`).
+
+### Opção 2 — Desenvolvimento
+
+Pré-requisitos: Docker Desktop aberto e [Node.js](https://nodejs.org/) 22 ou superior (com npm). Neste modo, só os
+bancos rodam no Docker; a API e o Angular rodam a partir do código, recarregando a cada alteração.
+
+#### Início rápido (Windows)
 
 Na raiz do projeto:
 
@@ -102,11 +124,11 @@ O comando prepara e sobe tudo, nesta ordem, e para com uma explicação se algum
 
 Depois, abra **http://localhost:4200** e entre com `demo@techx.com` / `demo12345`.
 
-### Passo a passo (qualquer sistema)
+#### Passo a passo (qualquer sistema)
 
 ```bash
 # 1. Bancos de dados (MySQL e MongoDB)
-docker compose up -d
+docker compose up -d mysql mongo
 
 # 2. Backend — num terminal
 cd backend
@@ -127,17 +149,18 @@ configuração (MySQL e MongoDB com usuário e senha `todo`); para alterá-los, 
 
 ### Endereços
 
-| O quê           | Endereço                             |
-| --------------- | ------------------------------------ |
-| Aplicação       | http://localhost:4200                |
-| API             | http://localhost:3000/api            |
-| Situação da API | http://localhost:3000/api/health     |
-| MySQL / MongoDB | `localhost:3306` / `localhost:27017` |
+| O quê           | Opção 1 (Docker)                     | Opção 2 (desenvolvimento)            |
+| --------------- | ------------------------------------ | ------------------------------------ |
+| Aplicação       | http://localhost:8080                | http://localhost:4200                |
+| API             | http://localhost:8080/api            | http://localhost:3000/api            |
+| Situação da API | http://localhost:8080/api/health     | http://localhost:3000/api/health     |
+| MySQL / MongoDB | `localhost:3306` / `localhost:27017` | `localhost:3306` / `localhost:27017` |
 
 ### Para parar
 
-Feche as abas do backend e do frontend e rode `docker compose down`. Os dados ficam nos volumes `mysql-data` e
-`mongo-data`; `docker compose down -v` apaga tudo (o próximo `npm start` recria o usuário de demonstração).
+`docker compose down` (na opção 2, feche também as abas do backend e do frontend). Os dados ficam nos volumes
+`mysql-data` e `mongo-data`, compartilhados pelas duas opções; `docker compose down -v` apaga tudo (o usuário de
+demonstração é recriado na próxima subida).
 
 ## Estrutura do projeto
 
@@ -157,7 +180,7 @@ Feche as abas do backend e do frontend e rode `docker compose down`. Os dados fi
 │   ├── tasks/               Página de tarefas, cartão, painel de detalhes, serviço da API
 │   └── shared/              Utilitários compartilhados
 ├── docker/mysql-init/       Cria o banco de testes do MySQL
-├── docker-compose.yml       MySQL e MongoDB
+├── docker-compose.yml       MySQL, MongoDB, API e site (nginx)
 └── start.ps1                Inicialização com um comando (npm start)
 ```
 
@@ -165,19 +188,20 @@ Feche as abas do backend e do frontend e rode `docker compose down`. Os dados fi
 
 Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa quais variáveis precisam ser definidas.
 
-| Variável         | Obrigatória | Padrão                  | Descrição                                                     |
-| ---------------- | ----------- | ----------------------- | ------------------------------------------------------------- |
-| `PORT`           | não         | `3000`                  | Porta HTTP da API                                             |
-| `CORS_ORIGIN`    | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente     |
-| `DB_HOST`        | sim         | —                       | Host do MySQL                                                 |
-| `DB_PORT`        | não         | `3306`                  | Porta do MySQL                                                |
-| `DB_USER`        | sim         | —                       | Usuário do MySQL                                              |
-| `DB_PASSWORD`    | sim         | —                       | Senha do MySQL                                                |
-| `DB_NAME`        | sim         | —                       | Nome do banco no MySQL                                        |
-| `MONGO_URL`      | sim         | —                       | Endereço do MongoDB, com usuário e senha                      |
-| `MONGO_DB_NAME`  | não         | `todo`                  | Nome do banco no MongoDB                                      |
-| `JWT_SECRET`     | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres) |
-| `JWT_EXPIRES_IN` | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                      |
+| Variável         | Obrigatória | Padrão                  | Descrição                                                                 |
+| ---------------- | ----------- | ----------------------- | ------------------------------------------------------------------------- |
+| `PORT`           | não         | `3000`                  | Porta HTTP da API                                                         |
+| `CORS_ORIGIN`    | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                 |
+| `DB_HOST`        | sim         | —                       | Host do MySQL                                                             |
+| `DB_PORT`        | não         | `3306`                  | Porta do MySQL                                                            |
+| `DB_USER`        | sim         | —                       | Usuário do MySQL                                                          |
+| `DB_PASSWORD`    | sim         | —                       | Senha do MySQL                                                            |
+| `DB_NAME`        | sim         | —                       | Nome do banco no MySQL                                                    |
+| `MONGO_URL`      | sim         | —                       | Endereço do MongoDB, com usuário e senha                                  |
+| `MONGO_DB_NAME`  | não         | `todo`                  | Nome do banco no MongoDB                                                  |
+| `JWT_SECRET`     | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)             |
+| `JWT_EXPIRES_IN` | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                  |
+| `COOKIE_SECURE`  | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP) |
 
 O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
 
@@ -320,7 +344,7 @@ dados de desenvolvimento nunca são tocados. Cobrem o CRUD, validações, autent
 expirados e sem assinatura), isolamento entre contas, detalhes e histórico.
 
 ```bash
-docker compose up -d   # os dois bancos precisam estar no ar
+docker compose up -d mysql mongo   # os dois bancos precisam estar no ar
 cd backend
 npm test
 ```
@@ -349,12 +373,13 @@ O `npm install` na raiz (o `npm start` faz isso sozinho) ativa dois hooks do Git
 
 ## Problemas comuns
 
-| Sintoma                                                             | O que fazer                                                                                                         |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `npm start` diz que o Docker não está respondendo                   | Abra o Docker Desktop, espere ele terminar de iniciar e rode de novo                                                |
-| Erro de porta ocupada (3306, 27017, 3000 ou 4200)                   | Outro programa usa a porta: feche-o, ou mude `MYSQL_PORT`/`MONGO_PORT` no `.env` da raiz e `PORT` no `backend/.env` |
-| A API não sobe: "Missing required environment variables"            | Crie o `backend/.env` a partir do `backend/.env.example`                                                            |
-| A API não sobe: "API failed to start: MongooseServerSelectionError" | O MongoDB não está no ar: `docker compose up -d` e confira `docker compose ps`                                      |
-| A tela mostra "Sem conexão com o servidor"                          | A API está parada: suba o backend (`npm run dev` em `backend/`)                                                     |
-| Testes do backend: "Could not prepare the test database"            | O volume do MySQL é anterior ao script do banco de testes: `docker compose down -v` e `docker compose up -d`        |
-| Não consigo entrar com o usuário demo                               | Rode `npm run seed` em `backend/` (é seguro rodar mais de uma vez)                                                  |
+| Sintoma                                                             | O que fazer                                                                                                                    |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `npm start` diz que o Docker não está respondendo                   | Abra o Docker Desktop, espere ele terminar de iniciar e rode de novo                                                           |
+| Erro de porta ocupada (3306, 27017, 3000, 4200 ou 8080)             | Outro programa usa a porta: feche-o, ou mude `MYSQL_PORT`/`MONGO_PORT`/`WEB_PORT` no `.env` da raiz e `PORT` no `backend/.env` |
+| Opção 1 e opção 2 ao mesmo tempo                                    | Use uma de cada vez: as duas usam os mesmos bancos e as portas 3306 e 27017                                                    |
+| A API não sobe: "Missing required environment variables"            | Crie o `backend/.env` a partir do `backend/.env.example`                                                                       |
+| A API não sobe: "API failed to start: MongooseServerSelectionError" | O MongoDB não está no ar: `docker compose up -d mysql mongo` e confira `docker compose ps`                                     |
+| A tela mostra "Sem conexão com o servidor"                          | A API está parada: suba o backend (`npm run dev` em `backend/`)                                                                |
+| Testes do backend: "Could not prepare the test database"            | O volume do MySQL é anterior ao script do banco de testes: `docker compose down -v` e `docker compose up -d mysql mongo`       |
+| Não consigo entrar com o usuário demo                               | Rode `npm run seed` em `backend/` (é seguro rodar mais de uma vez)                                                             |

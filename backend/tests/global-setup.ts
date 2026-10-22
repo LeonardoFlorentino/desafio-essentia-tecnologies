@@ -9,7 +9,7 @@ export default async function globalSetup() {
   } catch (error) {
     throw new Error(
       `Could not prepare the test database "${process.env.DB_NAME}". Is MySQL running ` +
-        '(docker compose up -d)? If the volume predates the test database, recreate it with ' +
+        '(docker compose up -d mysql mongo)? If the volume predates the test database, recreate it with ' +
         '"docker compose down -v".',
       { cause: error },
     );
