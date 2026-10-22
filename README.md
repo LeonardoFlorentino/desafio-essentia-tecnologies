@@ -6,6 +6,11 @@ Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o des
 - **Backend:** API RESTful em Node.js + TypeScript
 - **Banco de dados:** MySQL
 
+## Funcionalidades
+
+- **Página inicial com todas as tarefas cadastradas**, das mais recentes para as mais antigas, com título, descrição e
+  situação (pendente ou concluída).
+
 ## Início rápido (Windows)
 
 Com o Docker Desktop aberto, na raiz do projeto:

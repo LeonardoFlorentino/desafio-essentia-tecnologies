@@ -1,0 +1,15 @@
+<section aria-labelledby="tasks-heading">
+  <h2 id="tasks-heading">Tarefas</h2>
+
+  <ul class="task-list">
+    @for (task of tasks(); track task.id) {
+      <li class="task" [class.task--completed]="task.completed">
+        <h3 class="task__title">{{ task.title }}</h3>
+        @if (task.description) {
+          <p class="task__description">{{ task.description }}</p>
+        }
+        <span class="task__status">{{ task.completed ? 'Concluída' : 'Pendente' }}</span>
+      </li>
+    }
+  </ul>
+</section>
