@@ -108,7 +108,11 @@ Entre com `demo@techx.com` / `demo12345`.
 - O site é servido por um **nginx**, que também encaminha `/api` para a API: página e API na mesma origem. A API não
   fica exposta fora do Docker.
 - As imagens são construídas em duas fases (compilação → só o resultado) e rodam sem usuário root.
-- Para mudar a porta ou o segredo da sessão, copie o `.env.example` da raiz para `.env` (`WEB_PORT`, `JWT_SECRET`).
+- Site e bancos ficam acessíveis **só neste computador** (`127.0.0.1`), já que as senhas padrão estão neste README.
+- Sem `JWT_SECRET` definido, a API sorteia um segredo a cada início (as sessões caem ao reiniciar o container). O
+  usuário de demonstração existe porque o compose liga `SEED_DEMO_USER=true`; a imagem, sozinha, não o cria.
+- Para mudar a porta ou fixar o segredo da sessão, copie o `.env.example` da raiz para `.env` (`WEB_PORT`,
+  `JWT_SECRET`).
 
 ### Opção 2 — Desenvolvimento
 
@@ -434,6 +438,19 @@ Aqui cada token tem um id único (`jti`), e o logout grava esse id na tabela `re
 `005`); toda rota protegida confere a tabela, então **uma cópia do token** (roubada ou guardada por um script) passa a
 receber `401` na hora. Só aquela sessão acaba: a mesma conta aberta em outro navegador continua conectada. Cada linha
 guarda quando o token expiraria; depois disso ela não serve para mais nada e é apagada sempre que a API inicia.
+
+**Auditoria (OWASP Top 10).** O projeto foi revisado categoria por categoria. O que foi conferido:
+
+- **Acesso:** toda consulta, no MySQL e no MongoDB, filtra pelo dono da tarefa.
+- **Injeção:** o SQL é sempre parametrizado; colunas e ordenação vêm de listas fixas. O MongoDB só recebe valores já
+  validados, e o Angular escapa tudo o que exibe.
+- **Erros:** um erro inesperado responde só `Internal server error`, sem stack nem SQL.
+- **Segredos:** a API recusa subir em produção com os segredos de exemplo deste repositório.
+- **Containers:** rodam sem usuário root, e os bancos ficam acessíveis só localmente.
+- **Usuário de demonstração:** só é criado quando pedido.
+
+`npm audit` sai sem vulnerabilidades no backend, no frontend e na raiz, inclusive nas dependências de
+desenvolvimento.
 
 ## Testes e qualidade
 

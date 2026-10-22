@@ -16,7 +16,8 @@ COPY --from=build /app/dist ./dist
 COPY package.json ./
 COPY migrations ./migrations
 COPY docs ./docs
+COPY docker-start.sh ./
 USER node
 EXPOSE 3000
-# Brings the schema up to date and makes sure the demo user exists (both idempotent), then serves.
-CMD ["sh", "-c", "node dist/db/migrate.js && node dist/db/seed.js && node dist/server.js"]
+# Migrations, optional demo user (SEED_DEMO_USER=true) and the API; see docker-start.sh.
+CMD ["sh", "docker-start.sh"]

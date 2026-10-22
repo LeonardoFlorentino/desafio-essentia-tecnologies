@@ -26,6 +26,11 @@ if (process.env.JWT_SECRET!.length < 32) {
   throw new Error('JWT_SECRET must be at least 32 characters long.');
 }
 
+// The example secrets are public (they are in the repository): anyone could sign tokens with them.
+if (process.env.NODE_ENV === 'production' && /change-me/i.test(process.env.JWT_SECRET!)) {
+  throw new Error('JWT_SECRET is an example value from the repository: set a random secret.');
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   // Browser origin allowed to call the API directly (the Angular dev server by default).

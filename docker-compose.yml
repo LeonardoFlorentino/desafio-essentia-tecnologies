@@ -8,7 +8,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-todo}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     ports:
-      - '${MYSQL_PORT:-3306}:3306'
+      # Only this computer can reach the database (the default passwords are public).
+      - '127.0.0.1:${MYSQL_PORT:-3306}:3306'
     volumes:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
@@ -28,7 +29,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-todo}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-todo}
     ports:
-      - '${MONGO_PORT:-27017}:27017'
+      # Only this computer can reach the database (the default passwords are public).
+      - '127.0.0.1:${MONGO_PORT:-27017}:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -50,12 +52,15 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD:-todo}
       DB_NAME: ${MYSQL_DATABASE:-todo}
       MONGO_URL: mongodb://${MONGO_USER:-todo}:${MONGO_PASSWORD:-todo}@mongo:27017/?authSource=admin
-      JWT_SECRET: ${JWT_SECRET:-local-compose-secret-change-me-0123456789}
+      # Empty: the API picks a random secret on each start (see backend/docker-start.sh).
+      JWT_SECRET: ${JWT_SECRET:-}
       # Served over plain HTTP on localhost: the session cookie cannot be HTTPS-only here.
       COOKIE_SECURE: 'false'
       # Requests arrive through nginx (web): the client IP comes from X-Forwarded-For. The API
       # has no published port, so nobody can reach it directly with a forged header.
       TRUST_PROXY: 1
+      # Local evaluation: create demo@techx.com / demo12345 (off by default in the image).
+      SEED_DEMO_USER: 'true'
     depends_on:
       mysql:
         condition: service_healthy
@@ -72,7 +77,8 @@ services:
     build: ./frontend
     restart: unless-stopped
     ports:
-      - '${WEB_PORT:-8080}:8080'
+      # Opened on this computer only; the demo account has a public password.
+      - '127.0.0.1:${WEB_PORT:-8080}:8080'
     depends_on:
       api:
         condition: service_healthy
