@@ -51,6 +51,10 @@ export default defineConfig({
       command: `npx ng serve --port ${WEB_PORT} --proxy-config ../e2e/proxy.conf.json`,
       cwd: '../frontend',
       url: `http://localhost:${WEB_PORT}`,
+      // No persistent build cache for this server (Angular turns it off under CI): the cache in
+      // frontend/.angular is shared with a dev server running alongside (ng serve on 4200), and
+      // with both up this one stopped mid-run, silently, at a different test each time.
+      env: { CI: 'true' },
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
     },
