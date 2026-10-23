@@ -37,6 +37,55 @@ p.field__hint {
   font: var(--font-small);
 }
 
+// The password and its "Mostrar senha" toggle share one frame (as the due-date field does): the
+// border, the focus ring and the error colour belong to the frame, not to the bare input.
+.password-field {
+  display: flex;
+  align-items: center;
+  min-height: var(--size-control);
+  border: var(--border-width) solid var(--color-control);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+
+  &:focus-within {
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-offset);
+  }
+
+  &:has([aria-invalid='true']) {
+    border-color: var(--color-overdue);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+  }
+}
+
+.password-field__toggle {
+  display: grid;
+  place-items: center;
+  min-width: var(--size-control);
+  min-height: var(--size-control);
+  padding: 0 var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+
+  svg {
+    width: var(--size-icon);
+    height: var(--size-icon);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
 .auth-error {
   margin: 0 0 var(--space-4);
   padding: var(--space-3) var(--space-4);

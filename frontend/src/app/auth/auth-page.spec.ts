@@ -52,6 +52,26 @@ describe('AuthPage', () => {
       expect(page.querySelector('a')?.getAttribute('href')).toBe('/register');
     });
 
+    it('shows and hides the password with the toggle, and hides it again on sending', async () => {
+      const password = () => page.querySelector<HTMLInputElement>('#auth-password')!;
+      const toggle = page.querySelector<HTMLButtonElement>('button[aria-label="Mostrar senha"]')!;
+      expect(password().type).toBe('password');
+      expect(toggle.getAttribute('aria-pressed')).toBe('false');
+      expect(toggle.getAttribute('aria-controls')).toBe('auth-password');
+
+      toggle.click();
+      await fixture.whenStable();
+      expect(password().type).toBe('text');
+      expect(toggle.getAttribute('aria-pressed')).toBe('true');
+
+      type('#auth-email', 'ana@techx.com');
+      type('#auth-password', 'correct-horse');
+      await submit();
+      http.expectOne('/api/auth/login').flush({ user: { id: 1, email: 'ana@techx.com' } });
+      expect(password().type).toBe('password');
+      expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    });
+
     it('explains that the session expired when sent here by ?expired=true', async () => {
       fixture.componentRef.setInput('expired', 'true');
       await fixture.whenStable();

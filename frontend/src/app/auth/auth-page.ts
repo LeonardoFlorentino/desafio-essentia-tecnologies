@@ -51,6 +51,8 @@ export class AuthPage {
 
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** "Mostrar senha": the password field shows its text while this is on. */
+  protected readonly passwordVisible = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     // Validators.email accepts "ana@exemplo"; the API does not, so the domain must have a dot.
@@ -85,6 +87,8 @@ export class AuthPage {
   }
 
   protected submit() {
+    // Sending hides the password again: it should not stay readable on the screen afterwards.
+    this.passwordVisible.set(false);
     if (this.form.invalid || this.passwordTooShort()) {
       this.form.markAllAsTouched();
       this.form.markAllAsDirty();

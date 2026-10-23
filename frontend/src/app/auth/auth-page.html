@@ -36,15 +36,35 @@
 
       <div class="field">
         <label for="auth-password">Senha</label>
-        <input
-          id="auth-password"
-          name="password"
-          type="password"
-          formControlName="password"
-          [attr.autocomplete]="texts().passwordAutocomplete"
-          [attr.aria-invalid]="showError('password') || showPasswordTooShort()"
-          [attr.aria-describedby]="passwordDescription()"
-        />
+        <!-- One frame around the field and its toggle, like the due-date field. The toggle keeps one
+             name ("Mostrar senha") and says on/off with aria-pressed; the icon shows the state. -->
+        <div class="password-field">
+          <input
+            id="auth-password"
+            name="password"
+            [type]="passwordVisible() ? 'text' : 'password'"
+            formControlName="password"
+            [attr.autocomplete]="texts().passwordAutocomplete"
+            [attr.aria-invalid]="showError('password') || showPasswordTooShort()"
+            [attr.aria-describedby]="passwordDescription()"
+          />
+          <button
+            type="button"
+            class="password-field__toggle"
+            aria-label="Mostrar senha"
+            aria-controls="auth-password"
+            [attr.aria-pressed]="passwordVisible()"
+            (click)="passwordVisible.set(!passwordVisible())"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+              @if (passwordVisible()) {
+                <path d="M4 4l16 16" />
+              }
+            </svg>
+          </button>
+        </div>
         <!-- The error takes the hint's place, so the field never says the same thing twice. -->
         @if (showError('password')) {
           <p id="auth-password-error" class="field__error">Informe a senha.</p>

@@ -62,7 +62,8 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
   criação, edições com o valor antes e depois, conclusões e alterações de notas e tags, com data e hora.
 - **Contas e sessão:** cadastro (`/register`) e login (`/login`); cada pessoa vê e altera só as próprias tarefas. O
   botão "Sair" encerra a sessão; se ela expirar com a página aberta, a próxima ação leva ao login com o aviso "Sua
-  sessão expirou".
+  sessão expirou". No campo de senha, o botão com o ícone de olho mostra ou esconde o que foi digitado (ao enviar, a
+  senha volta a ficar oculta).
 - **Estados e erros:** mensagens de carregamento, de lista vazia e de falha (com "Tentar novamente"); quando uma ação
   falha, um aviso explica o motivo — inclusive "sem conexão com o servidor" — e nada do que foi digitado se perde.
 - **Layout responsivo (celular, tablet e desktop):** do celular (360 px) ao desktop, sem rolagem horizontal. Em tela de

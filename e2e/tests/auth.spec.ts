@@ -5,7 +5,7 @@ const account = (page: Page) => page.getByRole('navigation', { name: 'Conta' });
 
 async function fillCredentials(page: Page, { email, password }: Account) {
   await page.getByLabel('E-mail').fill(email);
-  await page.getByLabel('Senha').fill(password);
+  await page.getByLabel('Senha', { exact: true }).fill(password);
 }
 
 /** Registers through the API in a throwaway context, so the page under test stays signed out. */
@@ -29,6 +29,30 @@ test.describe('sign up', () => {
     await expect(page).toHaveURL(/\/$/);
     await expect(account(page)).toContainText(newOne.email);
     await expect(account(page).getByRole('button', { name: 'Sair' })).toBeVisible();
+  });
+
+  test('shows the password with the eye toggle, by keyboard (hiding on send: unit test)', async ({
+    page,
+    account: newOne,
+  }) => {
+    await page.goto('/register');
+    const password = page.getByLabel('Senha', { exact: true });
+    const toggle = page.getByRole('button', { name: 'Mostrar senha' });
+    await page.getByLabel('E-mail').fill(newOne.email);
+    await password.fill(newOne.password);
+    await expect(password).toHaveAttribute('type', 'password');
+
+    // The toggle comes right after the field in the Tab order, and Space switches it.
+    await password.focus();
+    await page.keyboard.press('Tab');
+    await expect(toggle).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(password).toHaveAttribute('type', 'text');
+    await expect(password).toHaveValue(newOne.password);
+
+    await page.getByRole('button', { name: 'Criar conta' }).click();
+    await expect(page).toHaveURL(/\/$/);
   });
 
   test('explains a short password before sending anything', async ({ page, account: newOne }) => {
