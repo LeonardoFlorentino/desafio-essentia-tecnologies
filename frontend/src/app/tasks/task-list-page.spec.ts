@@ -141,7 +141,7 @@ describe('TaskListPage', () => {
     expect(items[0].textContent).toContain('Send the proposal');
     expect(page.querySelector<HTMLInputElement>('#new-task-title')!.value).toBe('');
     expect(page.querySelector<HTMLTextAreaElement>('#new-task-description')!.value).toBe('');
-    expect(announced()).toBe('Tarefa "Send the proposal" adicionada.');
+    expect(announced()).toBe('Tarefa “Send the proposal” adicionada.');
   });
 
   /** The screen-reader-only status line (always in the page, so each change is read). */
@@ -274,7 +274,7 @@ describe('TaskListPage', () => {
     it('asks for confirmation naming the task', () => {
       const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
       deleteButtonOf(1).click();
-      expect(confirmSpy).toHaveBeenCalledWith('Excluir a tarefa "Write the report"?');
+      expect(confirmSpy).toHaveBeenCalledWith('Excluir a tarefa “Write the report”?');
     });
 
     it('deletes the task with DELETE and removes it from the list when confirmed', async () => {
@@ -290,7 +290,7 @@ describe('TaskListPage', () => {
       expect(items).toHaveLength(1);
       expect(items[0].textContent).toContain('Call the client');
       expect(document.activeElement?.id).toBe('tasks-heading');
-      expect(announced()).toBe('Tarefa "Write the report" excluída.');
+      expect(announced()).toBe('Tarefa “Write the report” excluída.');
     });
 
     it('does nothing when the user gives up', async () => {

@@ -46,7 +46,7 @@ test('creates, completes, edits and deletes a task with the keyboard only', asyn
     .filter({ has: page.getByRole('checkbox', { name: /^Concluída: Ligar para/ }) });
   await expect(task).toContainText('Vence hoje');
   await expect(page.getByRole('status').filter({ hasText: 'adicionada' })).toHaveText(
-    'Tarefa "Ligar para o contador" adicionada.',
+    'Tarefa “Ligar para o contador” adicionada.',
   );
 
   // Complete with Space.
@@ -80,7 +80,7 @@ test('creates, completes, edits and deletes a task with the keyboard only', asyn
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { level: 1, name: 'Tarefas' })).toBeFocused();
   await expect(page.getByRole('status').filter({ hasText: 'excluída' })).toHaveText(
-    'Tarefa "Ligar para a contadora" excluída.',
+    'Tarefa “Ligar para a contadora” excluída.',
   );
 });
 

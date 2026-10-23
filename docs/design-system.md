@@ -115,7 +115,7 @@ Medido para cada par que carrega informação. Texto precisa de **4,5:1**; borda
 somem para quem enxerga pouco, e a WCAG pede 3:1 para o contorno de um controle. Aqui os campos têm borda
 `#80868f`; os **cartões**, que não são controles, mantêm a borda clara.
 
-**O placeholder também conta.** O texto `__/__/____` do campo de data e "Título ou descrição" na busca usam o
+**O placeholder também conta.** O texto `__/__/____` do campo de data e "Título ou descrição…" na busca usam o
 secundário (`#5f6368`, 6,05:1), nunca um cinza mais claro.
 
 ### 2.3 Tema escuro (planejado)

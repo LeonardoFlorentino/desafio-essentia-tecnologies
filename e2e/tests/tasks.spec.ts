@@ -152,7 +152,7 @@ test('deletes a task only after confirming', async ({ page }) => {
   const remove = page.getByRole('button', { name: 'Excluir: Tarefa descartável' });
 
   page.once('dialog', (dialog) => {
-    expect(dialog.message()).toBe('Excluir a tarefa "Tarefa descartável"?');
+    expect(dialog.message()).toBe('Excluir a tarefa “Tarefa descartável”?');
     void dialog.dismiss();
   });
   await remove.click();
@@ -262,7 +262,7 @@ test.describe('search, filters and sorting', () => {
 
     // The visible notice (the page also keeps a screen-reader-only status line).
     await expect(page.getByRole('status').filter({ hasText: 'filtros atuais' })).toHaveText(
-      'Tarefa "Tarefa de prioridade média" adicionada, mas ela não aparece com os filtros atuais.',
+      'Tarefa “Tarefa de prioridade média” adicionada, mas ela não aparece com os filtros atuais.',
     );
     await expect(titles(page)).toHaveText(['Revisar relatório']);
   });

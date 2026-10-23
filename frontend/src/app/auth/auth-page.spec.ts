@@ -46,6 +46,9 @@ describe('AuthPage', () => {
       expect(page.querySelector('#auth-password')!.getAttribute('autocomplete')).toBe(
         'current-password',
       );
+      // name + autocomplete is what password managers use to fill and save the account.
+      expect(page.querySelector('#auth-email')!.getAttribute('name')).toBe('email');
+      expect(page.querySelector('#auth-password')!.getAttribute('name')).toBe('password');
       expect(page.querySelector('a')?.getAttribute('href')).toBe('/register');
     });
 

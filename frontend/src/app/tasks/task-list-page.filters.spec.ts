@@ -151,7 +151,7 @@ describe('TaskListPage — due date, priority, search and filters', () => {
       await answer(listRequest(), []);
 
       expect(page.querySelector('.notice[role=status]')?.textContent).toContain(
-        'Tarefa "Hidden one" adicionada, mas ela não aparece com os filtros atuais.',
+        'Tarefa “Hidden one” adicionada, mas ela não aparece com os filtros atuais.',
       );
     });
   });

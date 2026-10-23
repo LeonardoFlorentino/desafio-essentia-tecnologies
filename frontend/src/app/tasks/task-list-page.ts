@@ -199,14 +199,14 @@ export class TaskListPage implements OnInit {
           if (!this.filtered()) {
             // Newest first, matching the order the API returns.
             this.tasks.update((tasks) => [task, ...tasks]);
-            this.announcement.set(`Tarefa "${task.title}" adicionada.`);
+            this.announcement.set(`Tarefa “${task.title}” adicionada.`);
             return;
           }
           // Filtered or sorted: only the API knows if and where the new task fits.
           this.loadTasks(true, (tasks) => {
             if (!tasks.some((t) => t.id === task.id)) {
               this.notice.set(
-                `Tarefa "${task.title}" adicionada, mas ela não aparece com os filtros atuais.`,
+                `Tarefa “${task.title}” adicionada, mas ela não aparece com os filtros atuais.`,
               );
             }
           });
@@ -229,7 +229,7 @@ export class TaskListPage implements OnInit {
   }
 
   protected deleteTask(task: Task) {
-    if (!confirm(`Excluir a tarefa "${task.title}"?`)) return;
+    if (!confirm(`Excluir a tarefa “${task.title}”?`)) return;
 
     this.actionError.set(null);
     this.setBusy(task.id, true);
@@ -239,7 +239,7 @@ export class TaskListPage implements OnInit {
       .subscribe({
         next: () => {
           this.dropTask(task);
-          this.announcement.set(`Tarefa "${task.title}" excluída.`);
+          this.announcement.set(`Tarefa “${task.title}” excluída.`);
         },
         error: (error) => this.fail(error, 'Não foi possível excluir a tarefa.', task),
       });

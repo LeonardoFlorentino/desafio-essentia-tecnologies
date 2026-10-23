@@ -96,6 +96,18 @@ h2,
 h3,
 h4 {
   font-weight: var(--weight-semibold);
+  // A long task title breaks into even lines, never leaving one word alone at the end.
+  text-wrap: balance;
+}
+
+// A quick second tap (the calendar's month arrows, Editar → Salvar) acts, instead of zooming in.
+button,
+a,
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
 }
 
 // Visible focus for keyboard users only (not on mouse clicks).
