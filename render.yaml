@@ -24,11 +24,12 @@ services:
       # HTTPS on Render: the session cookie only travels over HTTPS (Secure).
       - key: COOKIE_SECURE
         value: 'true'
-      # Two private hops in front of the API through the site (rewrite + load balancer), one when it is
-      # called directly: trust Render's private network rather than a count, so the client IP is the
-      # first public address in X-Forwarded-For either way and a forged one is never reached.
+      # Hops in front of the API: the site's rewrite (private 10.x) and a proxy inside the service's own
+      # container (::1), one fewer when it is called directly. Trust the loopback and Render's private
+      # network rather than a count: the client IP is the first public address in X-Forwarded-For
+      # either way, and a forged one is never reached.
       - key: TRUST_PROXY
-        value: 'uniquelocal'
+        value: 'loopback, uniquelocal'
       # Public demo with the evaluation account (demo@techx.com / demo12345, as in the README).
       - key: SEED_DEMO_USER
         value: 'true'

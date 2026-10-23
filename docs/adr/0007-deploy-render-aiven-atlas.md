@@ -31,7 +31,9 @@ Docker da API e com os dois bancos gerenciados.
   para o limite de tentativas continuar por pessoa. Medido em produção: com `TRUST_PROXY=1`, a API registrava
   `10.29.166.92` (o salto interno do _rewrite_) em vez do IP de quem entrou — todos dividiam um limite. `2` acertaria
   pelo site, mas deixaria quem chama a API direto (um salto só) escolher o próprio IP forjando `X-Forwarded-For`. A
-  decisão foi confiar **na rede privada** (`uniquelocal`), não numa contagem.
+  decisão foi confiar **na rede privada** (`uniquelocal`), não numa contagem. O log seguinte mostrou `::1`: há também
+  um proxy no próprio contêiner do serviço, que conecta por `localhost` — por isso o valor final é
+  `loopback, uniquelocal`.
 - **−** No CI, o MongoDB 8.x não inicia nos kernels Linux 6.19–7.0.13 dos runners do GitHub (SERVER-125742): o CI usa
   MongoDB 7.0 até o GitHub atualizar o kernel (o Atlas segue em 8.0).
 
