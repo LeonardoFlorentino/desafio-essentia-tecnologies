@@ -2,6 +2,9 @@
 // choice is written there); components use these tokens only, never a colour or a measure of their own.
 
 :root {
+  // Native parts (scrollbars, the select menu, the checkbox) follow the theme.
+  color-scheme: light;
+
   // Colour: an ink interface. Only "today" (blue) and "overdue" (red) carry colour.
   --color-ground: #f2f4f7;
   --color-surface: #ffffff;
@@ -25,9 +28,8 @@
   --color-chip-ink: #3d3d3d;
   --color-notice-soft: #fffbeb;
   --color-notice-ink: #92400e;
-  --color-scrim: rgb(
-    16 24 40 / 0.4
-  ); // behind a modal dialog: the page stays visible, clearly set aside
+  // Behind a modal dialog: the page stays visible, clearly set aside.
+  --color-scrim: rgb(16 24 40 / 0.4);
 
   // Type: one family (Geist, served by this site), five sizes, 600 at most.
   --font-family: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -77,6 +79,49 @@
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+// Dark theme: the same roles with other values (design system, 2.3), each pair measured for AA.
+// The neutral ground steps up in lightness; blue and red get lighter versions, since the light
+// theme's ones fall under 4.5:1 on a dark surface. The primary button turns light with dark text.
+@mixin dark-theme {
+  color-scheme: dark;
+  --color-ground: #0a0a0a;
+  --color-surface: #111111;
+  --color-raised: #1f1f1f;
+  --color-raised-hover: #2a2a2a;
+  --color-border: #262626;
+  --color-rule: #1a1a1a;
+  --color-control: #707070;
+  --color-text: #f5f5f5;
+  --color-muted: #b4b4b4;
+  --color-on-strong: #0a0a0a;
+  --color-primary: #f5f5f5;
+  --color-primary-hover: #d4d4d4;
+  --color-today: #6ea8ff;
+  --color-today-hover: #9cc3ff;
+  --color-today-soft: #14243d;
+  --color-overdue: #f07178;
+  --color-overdue-soft: #2e1416;
+  --color-overdue-ink: #ffb4b8;
+  --color-positive: #6fcf75;
+  --color-chip-ink: #d4d4d4;
+  --color-notice-soft: #2a2010;
+  --color-notice-ink: #f5c46a;
+  --color-scrim: rgb(0 0 0 / 0.6);
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.4);
+}
+
+// The system's choice, unless this browser picked light; or this browser picked dark
+// (data-theme, set by public/theme.js before the first paint and by the toggle in the header).
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark-theme;
+  }
+}
+
+:root[data-theme='dark'] {
+  @include dark-theme;
 }
 
 // Touch screens (phone or tablet, at any width): every control (fields, buttons, calendar days)
@@ -258,7 +303,8 @@ button {
 .dialog {
   width: min(var(--size-form), calc(100% - 2 * var(--space-4)));
   padding: var(--space-6);
-  border: 0;
+  // Like the calendar: on the dark theme a shadow barely shows, so the edge comes from the border.
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-card);
   background: var(--color-surface);
   color: var(--color-text);
@@ -270,6 +316,7 @@ button {
 
   h2 {
     margin: 0 0 var(--space-2);
+    font: var(--font-section);
   }
 
   p {

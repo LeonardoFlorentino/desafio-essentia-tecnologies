@@ -121,27 +121,64 @@ somem para quem enxerga pouco, e a WCAG pede 3:1 para o contorno de um controle.
 **O placeholder também conta.** O texto `__/__/____` do campo de data e "Título ou descrição…" na busca usam o
 secundário (`#5f6368`, 6,05:1), nunca um cinza mais claro.
 
-### 2.3 Tema escuro (planejado)
+### 2.3 Tema escuro
 
-O modo escuro vem numa etapa posterior; os papéis são os mesmos e só os valores mudam. Fundo **neutro**, sem azul-marinho
-nem ardósia, e hierarquia por degraus de claridade.
+Os papéis são os mesmos e só os valores mudam. Fundo **neutro**, sem azul-marinho nem ardósia, e hierarquia por
+degraus de claridade. **Quando vale:** segue o sistema (`prefers-color-scheme`); o botão de tema no cabeçalho grava a
+escolha neste navegador. Escolher o mesmo tema do sistema apaga a escolha, e a página volta a seguir o sistema (se o
+celular escurece à noite, ela acompanha). A escolha é aplicada antes da primeira pintura (`public/theme.js`), sem
+piscar o tema claro.
 
-| Token             | Claro     | Escuro    | Contraste no escuro                  |
-| ----------------- | --------- | --------- | ------------------------------------ |
-| `--color-ground`  | `#f2f4f7` | `#0a0a0a` | —                                    |
-| `--color-surface` | `#ffffff` | `#111111` | —                                    |
-| `--color-raised`  | `#eeeeee` | `#1f1f1f` | —                                    |
-| `--color-border`  | `#e6e6e6` | `#262626` | —                                    |
-| `--color-rule`    | `#f0f0f0` | `#1a1a1a` | —                                    |
-| `--color-control` | `#80868f` | `#707070` | 3,81 na superfície                   |
-| `--color-text`    | `#0a0a0a` | `#f5f5f5` | 17,3                                 |
-| `--color-muted`   | `#5f6368` | `#b4b4b4` | 9,11                                 |
-| `--color-primary` | `#141414` | `#f5f5f5` | invertido: fundo claro, texto escuro |
-| `--color-today`   | `#1d5fbf` | `#6ea8ff` | 7,83 (o azul do claro daria só 3,09) |
-| `--color-overdue` | `#c4242a` | `#f07178` | 6,60                                 |
+| Token                   | Claro           | Escuro    | Nota                                                  |
+| ----------------------- | --------------- | --------- | ----------------------------------------------------- |
+| `--color-ground`        | `#f2f4f7`       | `#0a0a0a` |                                                       |
+| `--color-surface`       | `#ffffff`       | `#111111` |                                                       |
+| `--color-raised`        | `#eeeeee`       | `#1f1f1f` |                                                       |
+| `--color-raised-hover`  | `#e4e4e4`       | `#2a2a2a` | no escuro, o hover **clareia** um degrau              |
+| `--color-border`        | `#e6e6e6`       | `#262626` |                                                       |
+| `--color-rule`          | `#f0f0f0`       | `#1a1a1a` |                                                       |
+| `--color-control`       | `#80868f`       | `#707070` |                                                       |
+| `--color-text`          | `#0a0a0a`       | `#f5f5f5` |                                                       |
+| `--color-muted`         | `#5f6368`       | `#b4b4b4` |                                                       |
+| `--color-primary`       | `#141414`       | `#f5f5f5` | invertido: botão claro, texto escuro                  |
+| `--color-primary-hover` | `#2e2e2e`       | `#d4d4d4` |                                                       |
+| `--color-on-strong`     | `#ffffff`       | `#0a0a0a` | texto no principal, no dia escolhido e no destrutivo  |
+| `--color-today`         | `#1d5fbf`       | `#6ea8ff` | o azul do claro daria só 3,09 no escuro               |
+| `--color-today-hover`   | `#174ea0`       | `#9cc3ff` |                                                       |
+| `--color-today-soft`    | `#e8f0fc`       | `#14243d` | fundo do selo "Vence hoje"                            |
+| `--color-overdue`       | `#c4242a`       | `#f07178` | o vermelho do claro ficaria abaixo de 4,5:1 no escuro |
+| `--color-overdue-soft`  | `#ffedea`       | `#2e1416` | fundo do selo "Atrasada" e das caixas de erro         |
+| `--color-overdue-ink`   | `#831c1e`       | `#ffb4b8` | texto no fundo pálido **e** hover do botão destrutivo |
+| `--color-positive`      | `#2e7d32`       | `#6fcf75` |                                                       |
+| `--color-chip-ink`      | `#3d3d3d`       | `#d4d4d4` |                                                       |
+| `--color-notice-soft`   | `#fffbeb`       | `#2a2010` |                                                       |
+| `--color-notice-ink`    | `#92400e`       | `#f5c46a` |                                                       |
+| `--color-scrim`         | 40% azul-escuro | 60% preto | o véu precisa ser mais denso sobre um fundo já escuro |
 
-O azul e o vermelho do tema claro **não servem** no escuro: ficam abaixo de 4,5:1 sobre `#111111`. Por isso cada um
-tem a sua versão mais clara.
+**Contraste no escuro** (os mesmos pares da seção 2.2, medidos com a fórmula da WCAG; e conferidos na página
+renderizada com o axe-core, sem violações, nos dois temas):
+
+| Par                                      | Contraste   |
+| ---------------------------------------- | ----------- |
+| Texto no surface / no ground             | 17,3 / 18,2 |
+| Secundário no surface / no ground        | 9,11 / 9,55 |
+| Hoje no surface / no ground              | 7,83 / 8,21 |
+| Atrasada no surface                      | 6,60        |
+| Positivo no surface                      | 9,76        |
+| Selo atrasada (`#ffb4b8` em `#2e1416`)   | 10,2        |
+| Selo neutro (`#d4d4d4` em `#1f1f1f`)     | 11,1        |
+| Selo hoje (`#6ea8ff` em `#14243d`)       | 6,45        |
+| Aviso (`#f5c46a` em `#2a2010`)           | 9,89        |
+| Texto no botão principal / no seu hover  | 18,2 / 13,4 |
+| Texto no dia escolhido / no seu hover    | 8,21 / 11,0 |
+| Texto no botão destrutivo / no seu hover | 6,92 / 11,8 |
+| Texto no botão secundário                | 15,1        |
+| "Excluir" no secundário / no seu hover   | 5,76 / 5,02 |
+| Secundário no hover do secundário        | 6,92        |
+| Borda de controle no surface / no ground | 3,81 / 4,00 |
+
+**Sombra no escuro.** Uma sombra quase não aparece sobre preto; por isso o que flutua (calendário, diálogo) tem
+também a borda de 1 px — é ela que desenha a borda do cartão no tema escuro.
 
 ## 3. Tipografia
 

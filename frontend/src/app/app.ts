@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './auth/auth.service';
+import { ThemeService } from './shared/theme';
 
 @Component({
   imports: [RouterLink, RouterOutlet],
@@ -10,6 +11,7 @@ import { AuthService } from './auth/auth.service';
 })
 export class App {
   protected readonly auth = inject(AuthService);
+  protected readonly themes = inject(ThemeService);
   private readonly router = inject(Router);
 
   protected logout() {

@@ -43,6 +43,33 @@
   stroke-linejoin: round;
 }
 
+.app-header__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+// A quiet icon button: no fill at rest, the icon in the secondary ink.
+.app-header__theme {
+  display: grid;
+  place-items: center;
+  min-width: var(--size-control);
+  padding: 0;
+  background: transparent;
+  color: var(--color-muted);
+
+  svg {
+    width: calc(var(--size-icon) + var(--space-1));
+    height: calc(var(--size-icon) + var(--space-1));
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
 .app-header__account {
   display: flex;
   flex-wrap: wrap;

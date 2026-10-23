@@ -69,6 +69,9 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
   toque — celular ou tablet, qualquer largura — todo botão, campo, caixa de seleção e dia do calendário tem pelo menos
   44 px; no celular o calendário abre como uma folha na parte de baixo da tela, com os dias do tamanho do dedo. Com
   mouse, o desktop mantém controles de 40 px, mais compactos.
+- **Modo escuro:** segue o tema do sistema; o botão de tema no cabeçalho (em todas as telas, inclusive no login)
+  troca entre claro e escuro, e a escolha fica gravada neste navegador. Escolher de novo o tema do sistema volta a
+  seguir o sistema. A escolha é aplicada antes de a página aparecer, sem piscar o tema claro.
 - **Acessível:** rótulos em todos os campos, foco visível e movido de forma previsível ao editar e excluir (detalhes em
   [Acessibilidade](#acessibilidade)).
 
@@ -434,7 +437,8 @@ garantido por testes:
   dizem a tarefa ("Editar: Relatório"); a faixa de prazos e os dias do calendário informam se estão selecionados;
   adicionar e excluir uma tarefa são anunciados; falhas são lidas na hora (`role="alert"`). Cada página tem o seu
   título ("Entrar · TechX Tasks") e uma hierarquia de títulos (h1 da tela, h2 de cada seção, h3 de cada tarefa).
-- **Visão.** Contraste AA em todos os pares de cores, calculado no [design system](docs/design-system.md);
+- **Visão.** Contraste AA em todos os pares de cores, nos temas claro e escuro, calculado no
+  [design system](docs/design-system.md) e conferido na página com o axe-core;
   "atrasada" e "vence hoje" nunca dependem só da cor (sempre há o texto); o layout se ajusta até 320 px de largura
   sem rolagem horizontal, e o zoom do navegador não é bloqueado.
 - **Movimento.** Com "reduzir movimento" ligado no sistema, as transições são desligadas.
@@ -645,6 +649,8 @@ classe CSS):
 | Falhas da API           | Lista que não carrega mostra "Tentar novamente"; servidor fora do ar não apaga o que foi digitado |
 | Campo de data           | Calendário em português (Dom a Sáb); escolher um dia do mês seguinte; Esc fecha só o calendário   |
 | Só teclado              | Criar (com o calendário), concluir, editar, Esc, excluir, filtrar, sair e entrar sem mouse        |
+| Toque e telas           | Em 360 e 768 px com toque, nenhum alvo abaixo de 44 px; calendário na tela; desktop com 40 px     |
+| Tema                    | Segue o sistema; a escolha sobrevive a recarregar; aplicada antes do app carregar (sem piscar)    |
 
 E de autenticação:
 

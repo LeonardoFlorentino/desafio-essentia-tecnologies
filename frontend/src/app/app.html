@@ -9,13 +9,36 @@
       TechX Tasks
     </a>
 
-    <!-- Signed out, the sign-in and sign-up cards link to each other; the bar carries only the brand. -->
-    @if (auth.currentUser(); as user) {
-      <nav class="app-header__account" aria-label="Conta">
-        <span class="app-header__user">{{ user.email }}</span>
-        <button type="button" (click)="logout()">Sair</button>
-      </nav>
-    }
+    <div class="app-header__end">
+      <!-- A toggle (aria-pressed) with a fixed name: "Tema escuro", on or off. The icon shows
+           where a press leads: the moon to dark, the sun back to light. -->
+      <button
+        type="button"
+        class="app-header__theme"
+        aria-label="Tema escuro"
+        [attr.aria-pressed]="themes.theme() === 'dark'"
+        (click)="themes.toggle()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          @if (themes.theme() === 'dark') {
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+            />
+          } @else {
+            <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" />
+          }
+        </svg>
+      </button>
+
+      <!-- Signed out, the sign-in and sign-up cards link to each other: no account links here. -->
+      @if (auth.currentUser(); as user) {
+        <nav class="app-header__account" aria-label="Conta">
+          <span class="app-header__user">{{ user.email }}</span>
+          <button type="button" (click)="logout()">Sair</button>
+        </nav>
+      }
+    </div>
   </div>
 </header>
 
