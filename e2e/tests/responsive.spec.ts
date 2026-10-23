@@ -6,9 +6,13 @@ import { expect, test } from '../fixtures';
 
 test.beforeEach(async ({ signedIn: _signedIn }) => {});
 
-/** Visible controls smaller than `min` px; a checkbox counts with the label around it. */
+/**
+ * Visible controls smaller than `min` px; a checkbox counts with the label around it. Measured once
+ * the motion settles: an opening calendar is still scaled down for its first 200 ms.
+ */
 function smallTargets(page: Page, min: number) {
-  return page.evaluate((min) => {
+  return page.evaluate(async (min) => {
+    await Promise.all(document.getAnimations().map((animation) => animation.finished));
     return [...document.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea')]
       .filter((element) => element.offsetParent !== null)
       .map((element) => {

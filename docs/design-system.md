@@ -341,6 +341,15 @@ O movimento aqui é **resposta**, não espetáculo: confirma que algo aconteceu 
   depois a lista se reorganiza; as que mudaram de lugar **deslizam** do lugar antigo para o novo (`--duration-base`,
   `--ease-in-out`), e a que entra aparece com opacidade e 4 px de deslocamento (`--ease-out`). Nada pula: criar,
   excluir, concluir com filtro e reordenar movem as vizinhas em vez de teletransportá-las. Nunca `scale(0)`.
+- **Micro-interações** (só CSS): o botão **cede** ao ser pressionado (`scale(0.97)`, `--duration-fast`) — menos as
+  células da faixa do dia, que são parte de um cartão; o título de uma tarefa concluída **esmaece** para o cinza e o
+  risco aparece aos poucos (cor, `ease`); o **calendário** abre a partir do canto do campo (opacidade + `scale(0.95)`;
+  no celular, a folha sobe 24 px); o **diálogo** entra e sai com o véu (opacidade + `scale(0.96)`) e, enquanto sai,
+  já deixa os cliques passarem para a página; **mensagens** (erro, aviso, "Notas e tags salvas.") chegam com
+  opacidade e 4 px.
+- **O que não anima, de propósito:** o **foco** (vem do teclado, de Tab em Tab — o anel aparece na hora); a
+  abertura da tela; e não há **toasts**: cada ação já responde onde aconteceu (a linha entra ou sai, a mensagem
+  aparece junto ao que falhou, e o leitor de tela anuncia) — um toast repetiria a informação em outro lugar.
 - Com `prefers-reduced-motion: reduce`, os deslocamentos somem e ficam só os esmaecimentos, curtos — menos
   movimento, não nenhuma resposta.
 

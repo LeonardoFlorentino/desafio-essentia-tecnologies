@@ -67,6 +67,16 @@
   background: var(--color-surface);
   box-shadow: var(--shadow-float);
   font-weight: var(--weight-regular);
+  // Opens out of the field it belongs to (its top-left corner), not out of thin air.
+  transform-origin: top left;
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 }
 
 .date-field__header {
@@ -159,5 +169,10 @@
     left: var(--space-4);
     width: auto;
     max-width: none;
+
+    // A sheet rises from the bottom edge it sits on.
+    @starting-style {
+      transform: translateY(var(--space-6));
+    }
   }
 }

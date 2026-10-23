@@ -53,11 +53,17 @@
   font: var(--font-item);
   // Long words (URLs, codes) wrap instead of widening the row on small screens.
   overflow-wrap: anywhere;
+  // The strike line is always there, transparent: completing fades it in with the grey (a colour
+  // change, so a plain `ease`), instead of the line popping on.
+  text-decoration: line-through transparent;
+  transition:
+    color var(--duration-base) ease,
+    text-decoration-color var(--duration-base) ease;
 }
 
 .task--completed .task__title {
-  text-decoration: line-through;
   color: var(--color-muted);
+  text-decoration-color: currentColor;
 }
 
 .task__description {

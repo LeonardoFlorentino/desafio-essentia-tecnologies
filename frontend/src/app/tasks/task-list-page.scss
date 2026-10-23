@@ -67,6 +67,11 @@ h2 {
   text-align: left;
   font: inherit;
 
+  // A cell of the card: pressing it must not shrink a slice of the card (the pressed fill answers).
+  &:active {
+    transform: none;
+  }
+
   & + & {
     border-left: var(--border-width) solid var(--color-rule);
   }

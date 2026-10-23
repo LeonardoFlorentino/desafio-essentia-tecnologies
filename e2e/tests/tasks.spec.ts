@@ -159,8 +159,23 @@ test('deletes a task only after confirming', async ({ page }) => {
   );
   await expect(confirmDialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
 
-  // Cancelar and Esc both keep the task, and the focus goes back to its "Excluir" button.
-  await confirmDialog.getByRole('button', { name: 'Cancelar' }).click();
+  // Cancelar and Esc both keep the task, and the focus goes back to its "Excluir" button. The dialog
+  // fades out after closing, but it never holds the page up: in the very next frame it is still on
+  // screen, and a click where it is already lands on the page.
+  const duringExit = await page.evaluate(async () => {
+    const dialog = document.querySelector('dialog')!;
+    const box = dialog.getBoundingClientRect();
+    [...dialog.querySelectorAll('button')]
+      .find((b) => b.textContent?.trim() === 'Cancelar')!
+      .click();
+    await new Promise(requestAnimationFrame);
+    const target = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+    return {
+      stillFading: getComputedStyle(dialog).display !== 'none',
+      clickBlocked: !!target?.closest('dialog'),
+    };
+  });
+  expect(duringExit).toEqual({ stillFading: true, clickBlocked: false });
   await expect(confirmDialog).toBeHidden();
   await expect(remove).toBeFocused();
   await remove.click();

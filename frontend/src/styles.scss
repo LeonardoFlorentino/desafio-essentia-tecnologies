@@ -189,6 +189,20 @@ label {
   border: 0;
 }
 
+// Feedback messages (an error, a notice, "Notas e tags salvas.") arrive instead of popping in: a
+// short fade and 4 px. The screen-reader-only status line is left alone.
+[role='alert'],
+[role='status']:not(.visually-hidden) {
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--space-1)));
+  }
+}
+
 // Form styles shared by the "new task" form and the inline edit form of each task.
 
 .task-form {
@@ -258,7 +272,16 @@ button {
   background: var(--color-raised);
   color: var(--color-text);
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-out);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+
+  // A press gives a little: the interface heard it (never from or to 0, and not where motion is reduced).
+  @media (prefers-reduced-motion: no-preference) {
+    &:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+  }
 
   // Only where a pointer can hover: on a touch screen the hover would stick where the finger was.
   @media (hover: hover) {
@@ -311,9 +334,45 @@ button {
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: var(--shadow-float);
+  // Opens and closes as one surface with its backdrop: a fade and a slight scale, centred (a modal
+  // is not anchored to its button). `allow-discrete` keeps it in the top layer while it closes.
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out),
+    overlay var(--duration-base) allow-discrete,
+    display var(--duration-base) allow-discrete;
+
+  // While it fades out it is already closed: clicks go through to the page, nothing waits for it.
+  &:not([open]) {
+    opacity: 0;
+    transform: scale(0.96);
+    pointer-events: none;
+  }
+
+  @starting-style {
+    &[open] {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
 
   &::backdrop {
     background: var(--color-scrim);
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      overlay var(--duration-base) allow-discrete,
+      display var(--duration-base) allow-discrete;
+  }
+
+  &:not([open])::backdrop {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @starting-style {
+    &[open]::backdrop {
+      opacity: 0;
+    }
   }
 
   h2 {
