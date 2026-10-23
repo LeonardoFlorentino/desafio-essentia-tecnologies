@@ -133,7 +133,7 @@ test.describe('a session that ends while the page is open', () => {
   }) => {
     await page.goto('/');
     // Wait until the app has confirmed the session at startup; only then does it "expire".
-    await expect(page.getByRole('heading', { name: 'Tarefas' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Tarefas' })).toBeVisible();
     await context.clearCookies();
     await tryToAddTask(page);
 
@@ -156,7 +156,7 @@ test.describe('a session that ends while the page is open', () => {
     await other.addCookies(await context.cookies());
     const otherPage = await other.newPage();
     await otherPage.goto('/');
-    await expect(otherPage.getByRole('heading', { name: 'Tarefas' })).toBeVisible();
+    await expect(otherPage.getByRole('heading', { level: 1, name: 'Tarefas' })).toBeVisible();
 
     await account(page).getByRole('button', { name: 'Sair' }).click();
     await expect(page).toHaveURL(/\/login$/);

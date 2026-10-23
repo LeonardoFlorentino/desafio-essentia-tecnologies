@@ -141,6 +141,20 @@ describe('TaskListPage', () => {
     expect(items[0].textContent).toContain('Send the proposal');
     expect(page.querySelector<HTMLInputElement>('#new-task-title')!.value).toBe('');
     expect(page.querySelector<HTMLTextAreaElement>('#new-task-description')!.value).toBe('');
+    expect(announced()).toBe('Tarefa "Send the proposal" adicionada.');
+  });
+
+  /** The screen-reader-only status line (always in the page, so each change is read). */
+  const announced = () => page.querySelector('p.visually-hidden[role=status]')!.textContent!.trim();
+
+  it('sends the focus to the title when the form is sent without one', async () => {
+    submit();
+    await fixture.whenStable();
+
+    http.expectNone('/api/tasks');
+    // A screen reader reads the field, "invalid", and its error (aria-describedby).
+    expect(document.activeElement?.id).toBe('new-task-title');
+    expect(document.activeElement?.getAttribute('aria-describedby')).toBe('new-task-title-error');
   });
 
   it('sends a blank description as null', () => {
@@ -276,6 +290,7 @@ describe('TaskListPage', () => {
       expect(items).toHaveLength(1);
       expect(items[0].textContent).toContain('Call the client');
       expect(document.activeElement?.id).toBe('tasks-heading');
+      expect(announced()).toBe('Tarefa "Write the report" excluída.');
     });
 
     it('does nothing when the user gives up', async () => {

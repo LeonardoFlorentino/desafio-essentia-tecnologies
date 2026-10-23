@@ -3,6 +3,7 @@ import { Component, OnInit, effect, inject, input, signal, untracked } from '@an
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { formatDay } from '../shared/dates';
+import { FocusFirstError } from '../shared/focus-first-error';
 import { UNREACHABLE_MESSAGE, isUnreachable } from '../shared/http-errors';
 import { PRIORITY_LABELS, Priority, Task, TaskDetails, TaskEvent } from './task.model';
 import { TaskService } from './task.service';
@@ -51,7 +52,7 @@ function show(field: Field, value: unknown): string {
  */
 @Component({
   selector: 'app-task-details-panel',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, FocusFirstError],
   templateUrl: './task-details-panel.html',
   styleUrl: './task-details-panel.scss',
 })

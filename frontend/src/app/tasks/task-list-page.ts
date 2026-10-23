@@ -13,6 +13,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, debounceTime, finalize, map, merge } from 'rxjs';
 import { DateField } from '../shared/date-field';
+import { FocusFirstError } from '../shared/focus-first-error';
 import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
 import { today } from '../shared/dates';
 import {
@@ -46,7 +47,7 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 @Component({
   selector: 'app-task-list-page',
-  imports: [ReactiveFormsModule, TaskItem, DateField],
+  imports: [ReactiveFormsModule, TaskItem, DateField, FocusFirstError],
   templateUrl: './task-list-page.html',
   styleUrl: './task-list-page.scss',
 })
@@ -68,6 +69,8 @@ export class TaskListPage implements OnInit {
   protected readonly priorityOptions = PRIORITY_OPTIONS;
   /** Polite message, e.g. a new task that the current filters hide. */
   protected readonly notice = signal<string | null>(null);
+  /** Said to screen readers only: what an action did when the screen alone shows it. */
+  protected readonly announcement = signal('');
 
   /** The tasks the API returned for the current filters. */
   protected readonly tasks = signal<Task[]>([]);
@@ -196,6 +199,7 @@ export class TaskListPage implements OnInit {
           if (!this.filtered()) {
             // Newest first, matching the order the API returns.
             this.tasks.update((tasks) => [task, ...tasks]);
+            this.announcement.set(`Tarefa "${task.title}" adicionada.`);
             return;
           }
           // Filtered or sorted: only the API knows if and where the new task fits.
@@ -233,7 +237,10 @@ export class TaskListPage implements OnInit {
       .remove(task.id)
       .pipe(finalize(() => this.setBusy(task.id, false)))
       .subscribe({
-        next: () => this.dropTask(task),
+        next: () => {
+          this.dropTask(task);
+          this.announcement.set(`Tarefa "${task.title}" excluída.`);
+        },
         error: (error) => this.fail(error, 'Não foi possível excluir a tarefa.', task),
       });
   }

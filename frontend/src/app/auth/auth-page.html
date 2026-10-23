@@ -9,7 +9,7 @@
       <p class="auth-notice" role="status">Sua sessão expirou. Entre novamente para continuar.</p>
     }
 
-    <form class="task-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form class="task-form" [formGroup]="form" (ngSubmit)="submit()" novalidate appFocusFirstError>
       <div class="field">
         <label for="auth-email">E-mail</label>
         <input

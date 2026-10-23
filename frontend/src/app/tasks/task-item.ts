@@ -20,6 +20,7 @@ import {
 } from './task-form';
 import { DateField } from '../shared/date-field';
 import { formatDay } from '../shared/dates';
+import { FocusFirstError } from '../shared/focus-first-error';
 import { PRIORITY_LABELS, PRIORITY_OPTIONS, Task, TaskChanges, dueState } from './task.model';
 
 /**
@@ -28,7 +29,7 @@ import { PRIORITY_LABELS, PRIORITY_OPTIONS, Task, TaskChanges, dueState } from '
  */
 @Component({
   selector: 'app-task-item',
-  imports: [ReactiveFormsModule, TaskDetailsPanel, DateField],
+  imports: [ReactiveFormsModule, TaskDetailsPanel, DateField, FocusFirstError],
   templateUrl: './task-item.html',
   styleUrl: './task-item.scss',
 })

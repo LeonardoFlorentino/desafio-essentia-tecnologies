@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { Title } from '@angular/platform-browser';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './app.routes';
@@ -31,6 +32,8 @@ describe('app routes', () => {
   }
 
   const url = () => TestBed.inject(Router).url;
+  /** Each page has its own tab title (WCAG 2.4.2), read by screen readers on arrival. */
+  const title = () => TestBed.inject(Title).getTitle();
   const heading = () => harness.routeNativeElement?.querySelector('h1')?.textContent?.trim();
 
   describe('without a session', () => {
@@ -40,6 +43,7 @@ describe('app routes', () => {
         await harness.navigateByUrl(path);
         expect(url()).toBe('/login');
         expect(heading()).toBe('Entrar');
+        expect(title()).toBe('Entrar · TechX Tasks');
       },
     );
 
@@ -47,6 +51,7 @@ describe('app routes', () => {
       await harness.navigateByUrl('/register');
       expect(url()).toBe('/register');
       expect(heading()).toBe('Criar conta');
+      expect(title()).toBe('Criar conta · TechX Tasks');
     });
   });
 
@@ -58,6 +63,7 @@ describe('app routes', () => {
       http.expectOne('/api/tasks').flush([]);
       expect(url()).toBe('/');
       expect(harness.routeNativeElement?.textContent).toContain('Nova tarefa');
+      expect(title()).toBe('Tarefas · TechX Tasks');
     });
 
     it.each(['/login', '/register'])('sends %s back to the task list', async (path) => {

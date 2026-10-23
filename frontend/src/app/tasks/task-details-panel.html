@@ -6,7 +6,13 @@
     <button type="button" (click)="loadDetails()">Tentar novamente</button>
   </div>
 } @else {
-  <form class="task-form details__form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <form
+    class="task-form details__form"
+    [formGroup]="form"
+    (ngSubmit)="save()"
+    novalidate
+    appFocusFirstError
+  >
     <div class="field">
       <label [for]="'notes-' + task().id">Notas</label>
       <textarea

@@ -26,6 +26,7 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - [Backend](#backend)
 - [API](#api)
 - [Frontend](#frontend)
+- [Acessibilidade](#acessibilidade)
 - [Segurança](#segurança)
 - [Operação](#operação)
 - [Testes e qualidade](#testes-e-qualidade)
@@ -224,24 +225,24 @@ demonstração é recriado na próxima subida).
 
 Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa quais variáveis precisam ser definidas.
 
-| Variável                   | Obrigatória | Padrão                  | Descrição                                                                                           |
-| -------------------------- | ----------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
-| `PORT`                     | não         | `3000`                  | Porta HTTP da API                                                                                   |
-| `CORS_ORIGIN`              | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                                           |
-| `DB_HOST`                  | sim         | —                       | Host do MySQL                                                                                       |
-| `DB_PORT`                  | não         | `3306`                  | Porta do MySQL                                                                                      |
-| `DB_USER`                  | sim         | —                       | Usuário do MySQL                                                                                    |
-| `DB_PASSWORD`              | sim         | —                       | Senha do MySQL                                                                                      |
-| `DB_NAME`                  | sim         | —                       | Nome do banco no MySQL                                                                              |
-| `DB_SSL_CA`                | não         | —                       | Certificado (PEM) da autoridade do MySQL gerenciado; com ele a conexão usa TLS e confere o servidor |
-| `MONGO_URL`                | sim         | —                       | Endereço do MongoDB, com usuário e senha                                                            |
-| `MONGO_DB_NAME`            | não         | `todo`                  | Nome do banco no MongoDB                                                                            |
-| `JWT_SECRET`               | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)                                       |
-| `JWT_EXPIRES_IN`           | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                                            |
-| `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP)                           |
-| `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)                            |
-| `TRUST_PROXY`              | não         | `0`                     | Proxies na frente da API: quantos (`1` no Docker, o nginx) ou quais redes (`uniquelocal` no Render) |
-| `LOG_LEVEL`                | não         | `info`                  | Detalhe dos logs: `debug`, `info`, `warn`, `error` ou `silent`                                      |
+| Variável                   | Obrigatória | Padrão                  | Descrição                                                                                                     |
+| -------------------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `PORT`                     | não         | `3000`                  | Porta HTTP da API                                                                                             |
+| `CORS_ORIGIN`              | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                                                     |
+| `DB_HOST`                  | sim         | —                       | Host do MySQL                                                                                                 |
+| `DB_PORT`                  | não         | `3306`                  | Porta do MySQL                                                                                                |
+| `DB_USER`                  | sim         | —                       | Usuário do MySQL                                                                                              |
+| `DB_PASSWORD`              | sim         | —                       | Senha do MySQL                                                                                                |
+| `DB_NAME`                  | sim         | —                       | Nome do banco no MySQL                                                                                        |
+| `DB_SSL_CA`                | não         | —                       | Certificado (PEM) da autoridade do MySQL gerenciado; com ele a conexão usa TLS e confere o servidor           |
+| `MONGO_URL`                | sim         | —                       | Endereço do MongoDB, com usuário e senha                                                                      |
+| `MONGO_DB_NAME`            | não         | `todo`                  | Nome do banco no MongoDB                                                                                      |
+| `JWT_SECRET`               | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)                                                 |
+| `JWT_EXPIRES_IN`           | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                                                      |
+| `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP)                                     |
+| `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)                                      |
+| `TRUST_PROXY`              | não         | `0`                     | Proxies na frente da API: quantos (`1` no Docker, o nginx) ou quais redes (`loopback, uniquelocal` no Render) |
+| `LOG_LEVEL`                | não         | `info`                  | Detalhe dos logs: `debug`, `info`, `warn`, `error` ou `silent`                                                |
 
 O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
 
@@ -414,6 +415,26 @@ claro e escuro), tipografia, escala de espaços, raios, sombras, densidade e mov
 | `npm run lint`          | Analisa o código e os templates com ESLint (inclui acessibilidade)    |
 | `npm run format`        | Formata o código com Prettier                                         |
 
+## Acessibilidade
+
+O alvo é a **WCAG 2.2 nível AA**. O Lighthouse (categoria Acessibilidade) dá 100 no login, no cadastro e na lista
+de tarefas, no desktop e no celular — mas ele só cobre o que dá para checar automaticamente, então o resto é
+garantido por testes:
+
+- **Teclado.** Tudo funciona sem mouse: Tab percorre a tela na ordem visual, Enter envia, Espaço marca a tarefa,
+  Esc cancela a edição e fecha o calendário. O foco nunca se perde: vai para o título ao editar, volta para
+  "Editar" ao salvar ou cancelar, vai para o título da tela quando a tarefa com o foco é excluída e, num envio com
+  erro, cai no primeiro campo inválido. O anel de foco (azul, 2 px) aparece só na navegação por teclado. O teste
+  [`e2e/tests/keyboard.spec.ts`](e2e/tests/keyboard.spec.ts) faz o fluxo inteiro só com o teclado.
+- **Leitores de tela.** Todo campo tem rótulo; cada erro fica ligado ao seu campo (`aria-describedby`); os botões
+  dizem a tarefa ("Editar: Relatório"); a faixa de prazos e os dias do calendário informam se estão selecionados;
+  adicionar e excluir uma tarefa são anunciados; falhas são lidas na hora (`role="alert"`). Cada página tem o seu
+  título ("Entrar · TechX Tasks") e uma hierarquia de títulos (h1 da tela, h2 de cada seção, h3 de cada tarefa).
+- **Visão.** Contraste AA em todos os pares de cores, calculado no [design system](docs/design-system.md);
+  "atrasada" e "vence hoje" nunca dependem só da cor (sempre há o texto); o layout se ajusta até 320 px de largura
+  sem rolagem horizontal, e o zoom do navegador não é bloqueado.
+- **Movimento.** Com "reduzir movimento" ligado no sistema, as transições são desligadas.
+
 ## Segurança
 
 **Headers HTTP.** A API usa o [helmet](https://helmetjs.github.io/) e não se identifica (sem `X-Powered-By`). Como ela
@@ -451,9 +472,10 @@ permissão. No uso normal nem é preciso: página e API ficam na mesma origem.
 
 No Docker, a API só recebe requisições pelo nginx e usa o IP do navegador que ele informa (`TRUST_PROXY=1`); sem isso,
 todos os usuários dividiriam o mesmo limite. Um `X-Forwarded-For` forjado pelo cliente não adianta: vale só o endereço
-acrescentado pelo nginx. No Render, o caminho pelo site tem um salto interno a mais (o _rewrite_ de `/api`) do que
-uma chamada direta à API; por isso lá `TRUST_PROXY=uniquelocal`: a API pula todo endereço da rede privada e fica com o
-primeiro público — o do visitante — com qualquer número de saltos. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de uma instância da API,
+acrescentado pelo nginx. No Render, há um proxy dentro do próprio contêiner da API (endereço `::1`) e, pelo site, um
+salto interno a mais (o _rewrite_ de `/api`) do que numa chamada direta; por isso lá
+`TRUST_PROXY=loopback, uniquelocal`: a API pula todo endereço local ou da rede privada e fica com o primeiro público —
+o do visitante — com qualquer número de saltos. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de uma instância da API,
 seria preciso um armazenamento compartilhado, como Redis).
 
 **Senhas.** No mínimo 8 caracteres e no máximo 72 bytes (o limite do bcrypt — acima disso, o resto seria ignorado sem
@@ -616,6 +638,7 @@ classe CSS):
 | Notas, tags e histórico | Salva no MongoDB (tags repetidas descartadas); edição aparece com o valor antes e depois          |
 | Falhas da API           | Lista que não carrega mostra "Tentar novamente"; servidor fora do ar não apaga o que foi digitado |
 | Campo de data           | Calendário em português (Dom a Sáb); escolher um dia do mês seguinte; Esc fecha só o calendário   |
+| Só teclado              | Criar (com o calendário), concluir, editar, Esc, excluir, filtrar, sair e entrar sem mouse        |
 
 E de autenticação:
 

@@ -20,6 +20,7 @@
       (keydown.escape)="cancelEdit()"
       [attr.aria-label]="'Editar tarefa: ' + task().title"
       novalidate
+      appFocusFirstError
     >
       <div class="field">
         <label [for]="'edit-title-' + task().id">Título</label>

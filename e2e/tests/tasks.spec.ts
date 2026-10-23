@@ -260,7 +260,8 @@ test.describe('search, filters and sorting', () => {
     await newTaskForm(page).getByLabel('Título').fill('Tarefa de prioridade média');
     await newTaskForm(page).getByRole('button', { name: 'Adicionar tarefa' }).click();
 
-    await expect(page.getByRole('status')).toContainText(
+    // The visible notice (the page also keeps a screen-reader-only status line).
+    await expect(page.getByRole('status').filter({ hasText: 'filtros atuais' })).toHaveText(
       'Tarefa "Tarefa de prioridade média" adicionada, mas ela não aparece com os filtros atuais.',
     );
     await expect(titles(page)).toHaveText(['Revisar relatório']);

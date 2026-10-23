@@ -2,6 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { FocusFirstError } from '../shared/focus-first-error';
 import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
 import { AuthService } from './auth.service';
 
@@ -33,7 +34,7 @@ const TEXTS = {
 /** Sign-in and sign-up share one form; the route says which one this is (`data: { mode }`). */
 @Component({
   selector: 'app-auth-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, FocusFirstError],
   templateUrl: './auth-page.html',
   styleUrl: './auth-page.scss',
 })

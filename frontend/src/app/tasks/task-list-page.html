@@ -33,7 +33,7 @@
 <section class="new-task" aria-labelledby="new-task-heading">
   <h2 id="new-task-heading">Nova tarefa</h2>
 
-  <form class="task-form" [formGroup]="form" (ngSubmit)="addTask()" novalidate>
+  <form class="task-form" [formGroup]="form" (ngSubmit)="addTask()" novalidate appFocusFirstError>
     <div class="field">
       <label for="new-task-title">Título</label>
       <input
@@ -82,7 +82,12 @@
   </form>
 </section>
 
-<section class="tasks" aria-label="Lista de tarefas" [attr.aria-busy]="loading()">
+<section class="tasks" aria-labelledby="list-heading" [attr.aria-busy]="loading()">
+  <!-- Seen only by screen readers: the tasks (h3) belong to the list, not to "Nova tarefa". -->
+  <h2 id="list-heading" class="visually-hidden">Lista de tarefas</h2>
+  <!-- Always in the page, so a change is announced: "Tarefa … adicionada", "… excluída". -->
+  <p class="visually-hidden" role="status">{{ announcement() }}</p>
+
   <form
     class="filters"
     role="search"

@@ -35,7 +35,7 @@ describe('TaskListPage list states', () => {
 
   afterEach(() => http.verify());
 
-  const tasksSection = () => page.querySelector('section[aria-label="Lista de tarefas"]')!;
+  const tasksSection = () => page.querySelector('section[aria-labelledby="list-heading"]')!;
 
   it('shows a loading message while the tasks are on their way', async () => {
     await fixture.whenStable();

@@ -167,6 +167,8 @@ describe('AuthPage', () => {
       expect(page.querySelector('#auth-password')!.getAttribute('aria-describedby')).toBe(
         'auth-password-error',
       );
+      // Only the password is wrong, so it is the field that gets the focus.
+      expect(document.activeElement?.id).toBe('auth-password');
     });
 
     it('explains an email that is already registered', async () => {
