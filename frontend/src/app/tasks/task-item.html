@@ -76,27 +76,29 @@
       </div>
     </form>
   } @else {
-    <h3 class="task__title">{{ task().title }}</h3>
-    @if (task().description) {
-      <p class="task__description">{{ task().description }}</p>
-    }
-    <div class="task__meta">
-      <span class="task__status">{{ task().completed ? 'Concluída' : 'Pendente' }}</span>
-      <span class="badge" [class]="'badge--' + task().priority"
-        >Prioridade {{ priorityLabels[task().priority].toLowerCase() }}</span
-      >
-      @if (task().dueDate; as dueDate) {
-        <span class="task__due">
-          Prazo: <time [attr.datetime]="dueDate">{{ formatDay(dueDate) }}</time>
-          @if (due() === 'overdue') {
-            <strong class="badge badge--overdue">Atrasada</strong>
-          } @else if (due() === 'today') {
-            <strong class="badge badge--today">Vence hoje</strong>
-          }
-        </span>
+    <div class="task__body">
+      <h3 class="task__title">{{ task().title }}</h3>
+      @if (task().description) {
+        <p class="task__description">{{ task().description }}</p>
       }
+      <div class="task__meta">
+        <span class="task__status">{{ task().completed ? 'Concluída' : 'Pendente' }}</span>
+        <span class="badge" [class]="'badge--' + task().priority"
+          >Prioridade {{ priorityLabels[task().priority].toLowerCase() }}</span
+        >
+        @if (task().dueDate; as dueDate) {
+          <span class="task__due">
+            Prazo: <time [attr.datetime]="dueDate">{{ formatDay(dueDate) }}</time>
+            @if (due() === 'overdue') {
+              <strong class="badge badge--overdue">Atrasada</strong>
+            } @else if (due() === 'today') {
+              <strong class="badge badge--today">Vence hoje</strong>
+            }
+          </span>
+        }
+      </div>
     </div>
-    <div class="task__actions">
+    <div class="task__actions task__actions--quiet">
       <button
         type="button"
         [attr.aria-expanded]="expanded()"

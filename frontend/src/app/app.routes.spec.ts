@@ -31,7 +31,7 @@ describe('app routes', () => {
   }
 
   const url = () => TestBed.inject(Router).url;
-  const heading = () => harness.routeNativeElement?.querySelector('h2')?.textContent?.trim();
+  const heading = () => harness.routeNativeElement?.querySelector('h1')?.textContent?.trim();
 
   describe('without a session', () => {
     it.each(['/', '/?status=pending', '/no-such-page'])(

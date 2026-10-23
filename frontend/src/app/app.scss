@@ -5,22 +5,10 @@
   padding: 0 var(--space-4);
 }
 
+// A slim bar: the product on the left, the account on the right. No tagline, no page title here.
 .app-header {
-  margin-bottom: var(--space-6);
-  padding: var(--space-5) 0;
   border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-surface);
-
-  h1 {
-    margin: 0;
-    font: var(--font-title);
-    letter-spacing: var(--tracking-title);
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-  }
 }
 
 .app-header__inner {
@@ -28,15 +16,39 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3) var(--space-6);
+  gap: var(--space-2) var(--space-4);
+  min-height: calc(var(--size-control) + 2 * var(--space-2));
+  padding-block: var(--space-2);
+}
+
+.app-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  font: var(--font-item);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+// The mark: a check in a square, in the "today" blue (the product's one hue).
+.app-header__mark {
+  width: calc(var(--size-icon) + var(--space-1) + var(--space-0-5));
+  height: calc(var(--size-icon) + var(--space-1) + var(--space-0-5));
+  fill: none;
+  stroke: var(--color-today);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .app-header__account {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-4);
+  gap: var(--space-2) var(--space-3);
   color: var(--color-muted);
+  font: var(--font-small);
 
   a {
     color: var(--color-text);
@@ -48,11 +60,7 @@
   overflow-wrap: anywhere;
 }
 
-.app-header__subtitle {
-  margin: var(--space-1) 0 0;
-  color: var(--color-muted);
-}
-
-main {
+// main.container: `.container` zeroes the vertical padding, and a bare `main` loses to the class.
+main.container {
   padding-bottom: var(--space-12);
 }

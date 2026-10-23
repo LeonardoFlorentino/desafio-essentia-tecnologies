@@ -1,14 +1,22 @@
+:host {
+  display: block;
+  padding-top: var(--space-8);
+}
+
+h1 {
+  margin: 0 0 var(--space-4);
+  font: var(--font-title);
+  letter-spacing: var(--tracking-title);
+}
+
 h2 {
   margin: 0 0 var(--space-4);
   font: var(--font-section);
 }
 
-.new-task {
-  margin-bottom: var(--space-8);
-  padding: var(--space-5);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
+// Focus target after a deletion (tabindex="-1"): no outline for a programmatic focus on a heading.
+#tasks-heading:focus {
+  outline: none;
 }
 
 // Stays visible at the top while scrolling, so a failure on a task far down the list is not missed.
@@ -32,53 +40,106 @@ h2 {
   }
 }
 
-.tasks-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-4);
-  margin-bottom: var(--space-4);
+// The day strip: one card split into four cells, the figure set large. Colour only on a group
+// that needs attention (overdue or due today, and only when there is something in it).
+.overview {
+  margin-bottom: var(--space-6);
+}
 
-  h2 {
-    margin: 0;
+.strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.strip__cell {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+
+  & + & {
+    border-left: var(--border-width) solid var(--color-rule);
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-raised);
+  }
+
+  // The chosen group: the neutral active fill, with an ink edge under it.
+  &[aria-pressed='true'] {
+    background: var(--color-raised);
+    box-shadow: inset 0 calc(-1 * var(--space-0-5)) 0 var(--color-text);
+  }
+
+  &:focus-visible {
+    outline-offset: calc(-1 * var(--focus-offset) - var(--space-0-5));
   }
 }
 
-.summary {
-  display: flex;
-  gap: var(--space-5);
-  margin: 0;
-
-  div {
-    display: flex;
-    gap: var(--space-2);
-    align-items: baseline;
-  }
-
-  dt {
-    color: var(--color-muted);
-    font: var(--font-small);
-  }
-
-  dd {
-    margin: 0;
-    font-weight: var(--weight-semibold);
-    // Same width for every digit, so the numbers do not shift as they change.
-    font-variant-numeric: tabular-nums;
-  }
+.strip__label {
+  color: var(--color-muted);
+  font: var(--font-small);
 }
 
-// Search takes the free width; the selects keep a readable minimum and wrap on small screens.
+.strip__value {
+  font: var(--font-figure);
+  font-variant-numeric: tabular-nums;
+}
+
+.strip__value--overdue {
+  color: var(--color-overdue);
+}
+
+.strip__value--today {
+  color: var(--color-today);
+}
+
+.strip__value--zero {
+  color: var(--color-muted);
+}
+
+.new-task {
+  margin-bottom: var(--space-8);
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+// Due date, priority and the button share one row on wide screens.
+.new-task__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+  gap: var(--space-4);
+}
+
+// Search takes the free width; the selects keep their natural width.
 .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--size-field-min), 1fr));
+  grid-template-columns: minmax(var(--size-field-min), 1fr) repeat(3, auto);
   align-items: end;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+
+  label {
+    color: var(--color-muted);
+    font: var(--font-small);
+    font-weight: var(--weight-medium);
+  }
 }
 
-.filters__search {
+.filters__clear {
   grid-column: 1 / -1;
 }
 
@@ -111,15 +172,67 @@ h2 {
   color: var(--color-overdue-ink);
 }
 
-// Focus target after a deletion (tabindex="-1"): no outline for a programmatic focus on a heading.
-#tasks-heading:focus {
-  outline: none;
-}
-
+// The list is one card; tasks are its rows, divided by a rule. No overflow clipping: the calendar
+// of a task being edited floats out of its row. The first and last rows take the card's corners
+// instead, so the overdue bar follows the curve.
 .task-list {
-  list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: var(--space-3);
+  list-style: none;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+
+  &:empty {
+    display: none;
+  }
+
+  > li + li {
+    border-top: var(--border-width) solid var(--color-rule);
+  }
+
+  > li:first-child {
+    border-top-left-radius: var(--radius-card);
+    border-top-right-radius: var(--radius-card);
+  }
+
+  > li:last-child {
+    border-bottom-left-radius: var(--radius-card);
+    border-bottom-right-radius: var(--radius-card);
+  }
+}
+
+@media (max-width: 640px) {
+  :host {
+    padding-top: var(--space-6);
+  }
+
+  .strip {
+    grid-template-columns: 1fr 1fr;
+
+    .strip__cell:nth-child(3) {
+      border-left: 0;
+    }
+
+    .strip__cell:nth-child(n + 3) {
+      border-top: var(--border-width) solid var(--color-rule);
+    }
+  }
+
+  .new-task__row {
+    grid-template-columns: 1fr 1fr;
+
+    .button--primary {
+      grid-column: 1 / -1;
+      justify-self: stretch;
+    }
+  }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filters__search {
+    grid-column: 1 / -1;
+  }
 }

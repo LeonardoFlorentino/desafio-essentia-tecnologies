@@ -30,9 +30,10 @@ const card = (page: Page, title: string) =>
     .getByRole('listitem')
     .filter({ has: page.getByRole('checkbox', { name: `Concluída: ${title}` }) });
 
-async function summary(page: Page) {
-  return (await page.getByRole('definition').allTextContents()).map((text) => text.trim());
-}
+/** The day strip: one button per group, in order Atrasadas, Hoje, Próximos 7 dias, Sem prazo. */
+const strip = (page: Page) =>
+  page.getByRole('group', { name: 'Tarefas pendentes por prazo' }).getByRole('button');
+const stripValues = (page: Page) => strip(page).locator('.strip__value');
 
 // Requesting the fixture is what signs the page in; the body has nothing left to do.
 test.beforeEach(async ({ signedIn: _signedIn }) => {});
@@ -59,7 +60,7 @@ test('creates a task with description, due date and priority', async ({ page }) 
   await expect(task).toContainText(`Prazo: ${brazilian(day(5))}`);
   await expect(task).toContainText('Pendente');
   await expect(form.getByLabel('Título')).toHaveValue('');
-  expect(await summary(page)).toEqual(['1', '1', '0']);
+  await expect(stripValues(page)).toHaveText(['0', '0', '1', '0']);
 });
 
 test('picks the due date from a calendar in Portuguese', async ({ page }) => {
@@ -135,7 +136,7 @@ test('completes a task and reopens it, and the change is saved', async ({ page }
   await checkbox.click();
   await expect(checkbox).toBeChecked();
   await expect(card(page, 'Ligar para o banco')).toContainText('Concluída');
-  expect(await summary(page)).toEqual(['1', '0', '1']);
+  await expect(stripValues(page)).toHaveText(['0', '0', '0', '0']);
 
   await page.reload();
   await expect(checkbox).toBeChecked();
@@ -175,6 +176,29 @@ test('flags overdue and due-today tasks, but not completed ones', async ({ page 
   await expect(card(page, 'Para hoje')).toContainText('Vence hoje');
   await expect(card(page, 'Já feita')).toContainText('Concluída');
   await expect(card(page, 'Já feita')).not.toContainText('Atrasada');
+  await expect(stripValues(page)).toHaveText(['1', '1', '0', '0']);
+});
+
+test('filters the list by a group of the day strip, kept in the URL', async ({ page }) => {
+  await createTask(page, { title: 'Atrasada', dueDate: day(-1) });
+  await createTask(page, { title: 'Para hoje', dueDate: day(0) });
+  await createTask(page, { title: 'Sem data' });
+  await page.goto('/');
+  await expect(titles(page)).toHaveCount(3);
+
+  const todayGroup = strip(page).filter({ hasText: 'Hoje' });
+  await todayGroup.click();
+  await expect(todayGroup).toHaveAttribute('aria-pressed', 'true');
+  await expect(page).toHaveURL(/due=today/);
+  await expect(titles(page)).toHaveText(['Para hoje']);
+
+  await page.reload();
+  await expect(titles(page)).toHaveText(['Para hoje']);
+
+  // A second click on the same group shows every task again.
+  await todayGroup.click();
+  await expect(page).not.toHaveURL(/due=/);
+  await expect(titles(page)).toHaveCount(3);
 });
 
 test.describe('search, filters and sorting', () => {

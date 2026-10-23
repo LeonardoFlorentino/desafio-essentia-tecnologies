@@ -42,7 +42,7 @@ describe('AuthPage', () => {
     beforeEach(() => open('login'));
 
     it('shows the sign-in form with a link to create an account', () => {
-      expect(page.querySelector('h2')?.textContent).toBe('Entrar');
+      expect(page.querySelector('h1')?.textContent).toBe('Entrar');
       expect(page.querySelector('#auth-password')!.getAttribute('autocomplete')).toBe(
         'current-password',
       );
@@ -125,7 +125,7 @@ describe('AuthPage', () => {
     beforeEach(() => open('register'));
 
     it('shows the sign-up form with the password rule and a link to sign in', () => {
-      expect(page.querySelector('h2')?.textContent).toBe('Criar conta');
+      expect(page.querySelector('h1')?.textContent).toBe('Criar conta');
       expect(page.querySelector('#auth-password')!.getAttribute('autocomplete')).toBe(
         'new-password',
       );

@@ -35,7 +35,7 @@ describe('TaskListPage list states', () => {
 
   afterEach(() => http.verify());
 
-  const tasksSection = () => page.querySelector('section[aria-labelledby=tasks-heading]')!;
+  const tasksSection = () => page.querySelector('section[aria-label="Lista de tarefas"]')!;
 
   it('shows a loading message while the tasks are on their way', async () => {
     await fixture.whenStable();
@@ -55,7 +55,9 @@ describe('TaskListPage list states', () => {
     await fixture.whenStable();
 
     expect(tasksSection().textContent).toContain('Nenhuma tarefa cadastrada.');
-    expect(page.querySelector('.summary')).toBeNull();
+    // The strip still answers: nothing is late or due, shown as zeros rather than hidden.
+    const values = [...page.querySelectorAll('.strip__value')].map((v) => v.textContent!.trim());
+    expect(values).toEqual(['0', '0', '0', '0']);
   });
 
   it('explains a failed load and retries on request', async () => {

@@ -19,8 +19,11 @@ describe('App', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  it('renders the application title', async () => {
-    expect((await render()).querySelector('h1')?.textContent).toContain('TechX Tasks');
+  it('shows the product mark and name, linking home (each screen has its own h1)', async () => {
+    const brand = (await render()).querySelector<HTMLAnchorElement>('.app-header__brand')!;
+    expect(brand.textContent).toContain('TechX Tasks');
+    expect(brand.getAttribute('href')).toBe('/');
+    expect((await render()).querySelector('header h1')).toBeNull();
   });
 
   it('offers to sign in when nobody is signed in', async () => {

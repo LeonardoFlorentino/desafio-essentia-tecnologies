@@ -1,9 +1,13 @@
 <header class="app-header">
   <div class="container app-header__inner">
-    <div>
-      <h1><a routerLink="/">TechX Tasks</a></h1>
-      <p class="app-header__subtitle">Organize as tarefas do dia</p>
-    </div>
+    <!-- The product's mark and name; each screen has its own h1 ("Tarefas", "Entrar"). -->
+    <a class="app-header__brand" routerLink="/">
+      <svg class="app-header__mark" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <path d="m8 12.5 2.8 2.8L16.5 9" />
+      </svg>
+      TechX Tasks
+    </a>
 
     <nav class="app-header__account" aria-label="Conta">
       @if (auth.currentUser(); as user) {

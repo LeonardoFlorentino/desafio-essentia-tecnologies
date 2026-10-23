@@ -14,16 +14,26 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, debounceTime, finalize, map, merge } from 'rxjs';
 import { DateField } from '../shared/date-field';
 import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
+import { today } from '../shared/dates';
 import {
   DEFAULT_FILTERS,
   TaskFilters,
+  apiParams,
   filtersFromParams,
   filtersToParams,
   hasActiveFilters,
 } from './task-filters';
 import { createTaskForm, revealErrors, showFieldError, taskFormValue } from './task-form';
 import { TaskItem } from './task-item';
-import { PRIORITY_LABELS, PRIORITY_OPTIONS, Task, TaskChanges } from './task.model';
+import {
+  DUE_BUCKETS,
+  DueBucket,
+  PRIORITY_LABELS,
+  PRIORITY_OPTIONS,
+  Task,
+  TaskChanges,
+  dueBucket,
+} from './task.model';
 import { TaskService } from './task.service';
 
 /** Time the search waits after the last keystroke before asking the API. */
@@ -47,6 +57,8 @@ export class TaskListPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private listRequest?: Subscription;
+  /** The API query of the last load, to tell a strip-only change from one the API must answer. */
+  private lastRequest?: string;
 
   /** The filters in effect: always the ones in the URL. */
   protected readonly filters = signal<TaskFilters>(DEFAULT_FILTERS);
@@ -57,11 +69,26 @@ export class TaskListPage implements OnInit {
   /** Polite message, e.g. a new task that the current filters hide. */
   protected readonly notice = signal<string | null>(null);
 
+  /** The tasks the API returned for the current filters. */
   protected readonly tasks = signal<Task[]>([]);
-  protected readonly completedCount = computed(
-    () => this.tasks().filter((t) => t.completed).length,
-  );
-  protected readonly pendingCount = computed(() => this.tasks().length - this.completedCount());
+  /** The day strip: how many pending tasks of the loaded list fall in each group. */
+  protected readonly dueBuckets = DUE_BUCKETS;
+  protected readonly stripCounts = computed(() => {
+    const day = today();
+    const counts: Record<DueBucket, number> = { overdue: 0, today: 0, week: 0, none: 0 };
+    for (const task of this.tasks()) {
+      const bucket = dueBucket(task, day);
+      if (bucket) counts[bucket]++;
+    }
+    return counts;
+  });
+  /** What the list shows: the loaded tasks, narrowed to the strip group chosen, if any. */
+  protected readonly visibleTasks = computed(() => {
+    const due = this.filters().due;
+    if (!due) return this.tasks();
+    const day = today();
+    return this.tasks().filter((task) => dueBucket(task, day) === due);
+  });
   protected readonly loading = signal(true);
   protected readonly loadFailed = signal(false);
   /** Message about the last action that failed (create, update, delete), shown in an alert. */
@@ -87,16 +114,20 @@ export class TaskListPage implements OnInit {
         if (JSON.stringify(shown) !== JSON.stringify(filtersToParams(filters))) {
           this.filterForm.setValue(filters, { emitEvent: false });
         }
-        this.loadTasks();
+        // Choosing a strip group narrows the loaded list in place: the API request would be the same.
+        const request = JSON.stringify(apiParams(filters));
+        if (request !== this.lastRequest) this.loadTasks();
+        this.lastRequest = request;
       });
 
-    // Fields → URL: the selects apply at once, the search after a pause in typing.
-    const { search, status, priority, sort } = this.filterForm.controls;
+    // Fields → URL: the selects and the strip apply at once, the search after a pause in typing.
+    const { search, status, priority, sort, due } = this.filterForm.controls;
     merge(
       search.valueChanges.pipe(debounceTime(SEARCH_DEBOUNCE_MS)),
       status.valueChanges,
       priority.valueChanges,
       sort.valueChanges,
+      due.valueChanges,
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyFilters());
@@ -108,6 +139,12 @@ export class TaskListPage implements OnInit {
       queryParams: filtersToParams(this.filterForm.getRawValue()),
       replaceUrl: true,
     });
+  }
+
+  /** A strip group shows only its tasks; choosing it again shows them all. */
+  protected toggleDue(bucket: DueBucket) {
+    const { due } = this.filterForm.controls;
+    due.setValue(due.value === bucket ? '' : bucket);
   }
 
   protected clearFilters() {

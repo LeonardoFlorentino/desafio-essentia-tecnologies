@@ -37,7 +37,9 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 ## Funcionalidades
 
 - **Página inicial com todas as tarefas cadastradas** da pessoa conectada, das mais recentes para as mais antigas, com
-  título, descrição, situação, prioridade e prazo, e um resumo com o total, as pendentes e as concluídas.
+  título, descrição, situação, prioridade e prazo.
+- **Faixa de prazos** no topo: quantas tarefas pendentes estão **Atrasadas**, vencem **Hoje**, nos **Próximos 7
+  dias** ou estão **Sem prazo**; clicar num grupo mostra só as tarefas dele (e fica na URL, como os filtros).
 - **Criar tarefa:** título (obrigatório), descrição, prazo (opcionais) e prioridade (baixa, média ou alta; média por
   padrão); a nova tarefa aparece no topo da lista.
 - **Editar tarefa:** "Editar" abre todos os campos dentro da própria lista; "Salvar" grava, "Cancelar" ou Esc
@@ -604,9 +606,9 @@ classe CSS):
 | Primeiro acesso         | Visitante cai no login; cria a conta pelo formulário; lista vazia; primeira tarefa                |
 | Criar                   | Título, descrição, prazo e prioridade aparecem no cartão; sem título, a mensagem explica          |
 | Editar                  | Edição no próprio cartão (foco no título); "Salvar" grava; Esc descarta                           |
-| Concluir                | Marca e desmarca; o resumo muda; continua marcada depois de recarregar a página                   |
+| Concluir                | Marca e desmarca; a faixa de prazos muda; continua marcada depois de recarregar a página          |
 | Excluir                 | Cancelar a confirmação mantém a tarefa; confirmar remove (também do servidor)                     |
-| Prazos                  | "Atrasada" e "Vence hoje"; uma tarefa concluída nunca aparece como atrasada                       |
+| Prazos                  | "Atrasada" e "Vence hoje"; concluída nunca é atrasada; a faixa filtra e fica na URL               |
 | Busca e filtros         | Situação, prioridade e busca; tudo na URL e mantido depois de recarregar; "Limpar filtros"        |
 | Ordenação               | Por prazo (sem prazo por último) e por prioridade                                                 |
 | Notas, tags e histórico | Salva no MongoDB (tags repetidas descartadas); edição aparece com o valor antes e depois          |

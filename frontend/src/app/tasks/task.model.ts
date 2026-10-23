@@ -57,3 +57,31 @@ export function dueState(task: Task, day = today()): 'overdue' | 'today' | null 
   if (task.dueDate < day) return 'overdue';
   return task.dueDate === day ? 'today' : null;
 }
+
+/** The day strip's groups of pending tasks: what is late, due today, due within a week, with no date. */
+export type DueBucket = 'overdue' | 'today' | 'week' | 'none';
+
+export const DUE_BUCKETS: readonly { id: DueBucket; label: string }[] = [
+  { id: 'overdue', label: 'Atrasadas' },
+  { id: 'today', label: 'Hoje' },
+  { id: 'week', label: 'Próximos 7 dias' },
+  { id: 'none', label: 'Sem prazo' },
+];
+
+/**
+ * Which group of the day strip a task belongs to; null for a completed task or one due later than a
+ * week from now. Decided against the user's own calendar day, which only the browser knows.
+ */
+export function dueBucket(task: Task, day = today()): DueBucket | null {
+  if (task.completed) return null;
+  if (!task.dueDate) return 'none';
+  if (task.dueDate < day) return 'overdue';
+  if (task.dueDate === day) return 'today';
+  return task.dueDate <= addDays(day, 7) ? 'week' : null;
+}
+
+/** YYYY-MM-DD plus `days`, on the calendar (no time zone involved). */
+function addDays(isoDay: string, days: number): string {
+  const [year, month, date] = isoDay.split('-').map(Number);
+  return today(new Date(year!, month! - 1, date! + days));
+}

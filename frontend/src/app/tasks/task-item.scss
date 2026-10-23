@@ -1,23 +1,30 @@
+// A row of the task list (the list card draws the border and the dividers). The corners come from
+// the row, so the overdue bar follows the card's curve on the first and last rows.
+:host {
+  display: block;
+  border-radius: inherit;
+}
+
+// Checkbox | title, description and meta | actions. The edit form and the details panel take the
+// width of the two right columns.
 .task {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   column-gap: var(--space-3);
   align-items: start;
   padding: var(--space-4) var(--space-5);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
+  border-radius: inherit;
 
-  > :not(.task__checkbox) {
-    grid-column: 2;
+  > .task__edit,
+  > app-task-details-panel {
+    grid-column: 2 / -1;
   }
 }
 
 .task__checkbox {
-  grid-row: span 4;
   width: var(--size-checkbox);
   height: var(--size-checkbox);
-  margin: var(--space-0-5) 0 0;
+  margin: var(--space-1) 0 0;
   accent-color: var(--color-primary);
   cursor: pointer;
 }
@@ -25,7 +32,7 @@
 .task__title {
   margin: 0;
   font: var(--font-item);
-  // Long words (URLs, codes) wrap instead of widening the card on small screens.
+  // Long words (URLs, codes) wrap instead of widening the row on small screens.
   overflow-wrap: anywhere;
 }
 
@@ -74,12 +81,14 @@
 // keeps colour for "today" and "overdue"): "Alta" stands out by ink and weight alone.
 .badge {
   display: inline-block;
+  flex: none;
   padding: var(--space-0-5) var(--space-2);
   border-radius: var(--radius-chip);
   background: var(--color-raised);
   color: var(--color-muted);
   font: var(--font-small);
   font-weight: var(--weight-medium);
+  white-space: nowrap;
 }
 
 .badge--high {
@@ -103,6 +112,44 @@
   margin-top: var(--space-3);
 }
 
+// Row actions are quiet: words, no fill at rest, the raised tone under the cursor. "Excluir" keeps
+// its red word. They sit at the right of the title on wide screens.
+.task__actions--quiet {
+  gap: var(--space-1);
+  margin-top: 0;
+  flex-wrap: nowrap;
+
+  button {
+    min-height: auto;
+    padding: var(--space-1) var(--space-2);
+    background: transparent;
+    color: var(--color-muted);
+  }
+
+  .button--danger {
+    color: var(--color-overdue);
+  }
+}
+
 .task__edit {
   max-width: none;
+}
+
+// On a phone the actions move under the text, with touch-sized targets.
+@media (max-width: 640px) {
+  .task {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: var(--space-4);
+  }
+
+  .task__actions--quiet {
+    grid-column: 2;
+    flex-wrap: wrap;
+    margin-top: var(--space-2);
+    margin-left: calc(-1 * var(--space-2));
+
+    button {
+      min-height: var(--size-touch);
+    }
+  }
 }

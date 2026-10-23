@@ -68,25 +68,56 @@ describe('TaskListPage', () => {
     expect(items[1].textContent).toContain('Pendente');
   });
 
-  function summary() {
+  /** The day strip as { label: count }. */
+  function strip() {
     return Object.fromEntries(
-      [...page.querySelectorAll('.summary div')].map((pair) => [
-        pair.querySelector('dt')!.textContent!.trim(),
-        pair.querySelector('dd')!.textContent!.trim(),
+      [...page.querySelectorAll('.strip__cell')].map((cell) => [
+        cell.querySelector('.strip__label')!.textContent!.trim(),
+        cell.querySelector('.strip__value')!.textContent!.trim(),
       ]),
     );
   }
 
-  it('counts all, pending and completed tasks', () => {
-    expect(summary()).toEqual({ Total: '2', Pendentes: '1', Concluídas: '1' });
+  it('opens with the screen title and the day strip, counting only pending tasks', () => {
+    expect(page.querySelector('h1')?.textContent).toBe('Tarefas');
+    // "Write the report" is pending with no due date; "Call the client" is completed.
+    expect(strip()).toEqual({
+      Atrasadas: '0',
+      Hoje: '0',
+      'Próximos 7 dias': '0',
+      'Sem prazo': '1',
+    });
   });
 
-  it('updates the counts when a task is completed', async () => {
+  it('updates the strip when a task is completed', async () => {
     checkboxOf(1).click();
     http.expectOne('/api/tasks/1').flush({ ...tasks[1], completed: true });
     await fixture.whenStable();
 
-    expect(summary()).toEqual({ Total: '2', Pendentes: '0', Concluídas: '2' });
+    expect(strip()['Sem prazo']).toBe('0');
+  });
+
+  it('colours a group only when something is in it, and a zero stays grey', () => {
+    const cells = page.querySelectorAll('.strip__value');
+    expect(cells[0].className).toContain('strip__value--zero');
+    expect(cells[0].className).not.toContain('strip__value--overdue');
+    expect(cells[3].className).not.toContain('strip__value--zero');
+  });
+
+  it('filters by a strip group in the browser, without asking the API again', async () => {
+    const noDate = page.querySelectorAll<HTMLButtonElement>('.strip__cell')[3];
+    noDate.click();
+    await fixture.whenStable();
+
+    // afterEach's http.verify() fails on any extra request.
+    expect(noDate.getAttribute('aria-pressed')).toBe('true');
+    const items = page.querySelectorAll('li');
+    expect(items).toHaveLength(1);
+    expect(items[0].textContent).toContain('Write the report');
+
+    noDate.click();
+    await fixture.whenStable();
+    expect(page.querySelectorAll('li')).toHaveLength(2);
   });
 
   it('creates a task, shows it first and clears the form', async () => {
@@ -357,7 +388,7 @@ describe('TaskListPage', () => {
       expect(page.querySelector<HTMLInputElement>('#new-task-title')!.value).toBe(
         'Send the proposal',
       );
-      expect(page.querySelector<HTMLButtonElement>('form > button')!.disabled).toBe(false);
+      expect(page.querySelector<HTMLButtonElement>('form .button--primary')!.disabled).toBe(false);
     });
 
     it('explains a failed edit and keeps the form open', async () => {

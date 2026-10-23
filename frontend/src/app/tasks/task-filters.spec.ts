@@ -1,6 +1,7 @@
 import { convertToParamMap } from '@angular/router';
 import {
   DEFAULT_FILTERS,
+  apiParams,
   filtersFromParams,
   filtersToParams,
   hasActiveFilters,
@@ -14,17 +15,24 @@ describe('task filters in the URL', () => {
       status: 'pending',
       priority: 'high',
       sort: 'due_date',
+      due: 'today',
     });
     expect(filtersFromParams(params)).toEqual({
       search: 'report',
       status: 'pending',
       priority: 'high',
       sort: 'due_date',
+      due: 'today',
     });
   });
 
   it('falls back to the defaults for missing or hand-edited unknown values', () => {
-    const params = convertToParamMap({ status: 'done', priority: 'urgent', sort: 'title' });
+    const params = convertToParamMap({
+      status: 'done',
+      priority: 'urgent',
+      sort: 'title',
+      due: 'tomorrow',
+    });
     expect(filtersFromParams(params)).toEqual(DEFAULT_FILTERS);
   });
 
@@ -33,6 +41,12 @@ describe('task filters in the URL', () => {
     expect(filtersToParams({ ...DEFAULT_FILTERS, search: '   ', status: 'completed' })).toEqual({
       status: 'completed',
     });
+  });
+
+  it('keeps the day-strip group in the URL but out of the API request', () => {
+    const filters = { ...DEFAULT_FILTERS, status: 'pending' as const, due: 'overdue' as const };
+    expect(filtersToParams(filters)).toEqual({ status: 'pending', due: 'overdue' });
+    expect(apiParams(filters)).toEqual({ status: 'pending' });
   });
 
   it('knows when the list is filtered or sorted', () => {

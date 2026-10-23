@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { DEFAULT_FILTERS, TaskFilters, filtersToParams } from './task-filters';
+import { DEFAULT_FILTERS, TaskFilters, apiParams } from './task-filters';
 import { NewTask, Task, TaskChanges, TaskDetails, TaskEvent } from './task.model';
 
 // Relative URL: the dev server proxies /api to the backend (proxy.conf.json), so the
@@ -12,7 +12,7 @@ export class TaskService {
   private readonly http = inject(HttpClient);
 
   list(filters: TaskFilters = DEFAULT_FILTERS) {
-    return this.http.get<Task[]>(TASKS_URL, { params: filtersToParams(filters) });
+    return this.http.get<Task[]>(TASKS_URL, { params: apiParams(filters) });
   }
 
   create(task: NewTask) {

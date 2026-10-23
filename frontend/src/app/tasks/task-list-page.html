@@ -5,6 +5,31 @@
   </div>
 }
 
+<section class="overview" aria-labelledby="tasks-heading">
+  <h1 id="tasks-heading" tabindex="-1">Tarefas</h1>
+
+  <!-- The day strip answers the screen's question first; each group also filters the list. -->
+  <div class="strip" role="group" aria-label="Tarefas pendentes por prazo">
+    @for (bucket of dueBuckets; track bucket.id) {
+      <button
+        type="button"
+        class="strip__cell"
+        [attr.aria-pressed]="filters().due === bucket.id"
+        (click)="toggleDue(bucket.id)"
+      >
+        <span class="strip__label">{{ bucket.label }}</span>
+        <span
+          class="strip__value"
+          [class.strip__value--overdue]="bucket.id === 'overdue' && stripCounts().overdue > 0"
+          [class.strip__value--today]="bucket.id === 'today' && stripCounts().today > 0"
+          [class.strip__value--zero]="stripCounts()[bucket.id] === 0"
+          >{{ stripCounts()[bucket.id] }}</span
+        >
+      </button>
+    }
+  </div>
+</section>
+
 <section class="new-task" aria-labelledby="new-task-heading">
   <h2 id="new-task-heading">Nova tarefa</h2>
 
@@ -37,7 +62,7 @@
       ></textarea>
     </div>
 
-    <div class="field-row">
+    <div class="new-task__row">
       <div class="field">
         <label for="new-task-due">Prazo <span class="field__hint">(opcional)</span></label>
         <app-date-field inputId="new-task-due" formControlName="dueDate" />
@@ -50,35 +75,14 @@
           }
         </select>
       </div>
+      <button type="submit" class="button--primary" [disabled]="saving()">
+        {{ saving() ? 'Adicionando…' : 'Adicionar tarefa' }}
+      </button>
     </div>
-
-    <button type="submit" class="button--primary" [disabled]="saving()">
-      {{ saving() ? 'Adicionando…' : 'Adicionar tarefa' }}
-    </button>
   </form>
 </section>
 
-<section aria-labelledby="tasks-heading" [attr.aria-busy]="loading()">
-  <div class="tasks-header">
-    <h2 id="tasks-heading" tabindex="-1">Tarefas</h2>
-    @if (tasks().length > 0) {
-      <dl class="summary" aria-label="Resumo das tarefas">
-        <div>
-          <dt>Total</dt>
-          <dd>{{ tasks().length }}</dd>
-        </div>
-        <div>
-          <dt>Pendentes</dt>
-          <dd>{{ pendingCount() }}</dd>
-        </div>
-        <div>
-          <dt>Concluídas</dt>
-          <dd>{{ completedCount() }}</dd>
-        </div>
-      </dl>
-    }
-  </div>
-
+<section class="tasks" aria-label="Lista de tarefas" [attr.aria-busy]="loading()">
   <form
     class="filters"
     role="search"
@@ -138,19 +142,19 @@
       <p>Não foi possível carregar as tarefas. Verifique se a API está no ar.</p>
       <button type="button" (click)="loadTasks()">Tentar novamente</button>
     </div>
-  } @else if (tasks().length === 0 && filtered()) {
+  } @else if (visibleTasks().length === 0 && filtered()) {
     <div class="list-state">
       <p>Nenhuma tarefa encontrada com estes filtros.</p>
       <button type="button" (click)="clearFilters()">Limpar filtros</button>
     </div>
-  } @else if (tasks().length === 0) {
+  } @else if (visibleTasks().length === 0) {
     <p class="list-state">
       Nenhuma tarefa cadastrada. Use o formulário acima para criar a primeira.
     </p>
   }
 
   <ul class="task-list">
-    @for (task of tasks(); track task.id) {
+    @for (task of visibleTasks(); track task.id) {
       <li>
         <app-task-item
           [task]="task"
