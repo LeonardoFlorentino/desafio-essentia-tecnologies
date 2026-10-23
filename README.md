@@ -158,7 +158,8 @@ Cada decisão de arquitetura tem um registro curto, com contexto, consequências
 
 ## Como funciona
 
-Diagramas UML em [Mermaid](https://mermaid.js.org/), desenhados pelo próprio GitHub a partir do texto deste README.
+Diagramas no estilo UML (componentes, sequência, dados e estados) em [Mermaid](https://mermaid.js.org/), desenhados
+pelo próprio GitHub a partir do texto deste README.
 
 ### Componentes
 
@@ -245,48 +246,20 @@ sequenceDiagram
 Três tabelas no MySQL e duas coleções no MongoDB, ligadas pelo id da tarefa e do usuário.
 
 ```mermaid
-classDiagram
-    direction LR
-    class User {
-        <<MySQL · users>>
-        +id: int
-        +email: varchar 255, único
-        +password_hash: bcrypt
-        +created_at: timestamp
-    }
-    class Task {
-        <<MySQL · tasks>>
-        +id: int
-        +user_id: int
-        +title: varchar 255
-        +description: text, opcional
-        +completed: boolean
-        +due_date: date, opcional
-        +priority: low, medium ou high
-        +created_at / updated_at
-    }
-    class RevokedToken {
-        <<MySQL · revoked_tokens>>
-        +jti: char 36
-        +expires_at: datetime
-    }
-    class TaskDetails {
-        <<MongoDB · task_details>>
-        +taskId: number, único
-        +userId: number
-        +notes: string
-        +tags: string[]
-    }
-    class TaskEvent {
-        <<MongoDB · task_events>>
-        +taskId / userId: number
-        +type: created, updated, completed, reopened, details_updated, deleted
-        +changes: campo → antes e depois
-        +at: date
-    }
-    User "1" --> "*" Task : possui (ON DELETE CASCADE)
-    Task "1" --> "0..1" TaskDetails : notas e tags
-    Task "1" --> "*" TaskEvent : histórico
+%%{init: {"flowchart": {"wrappingWidth": 400}}}%%
+flowchart LR
+    subgraph mysql["MySQL"]
+        users["<b>users</b><br/>id · PK<br/>email · único<br/>password_hash · bcrypt<br/>created_at"]
+        tasks["<b>tasks</b><br/>id · PK<br/>user_id · FK → users.id<br/>title<br/>description · opcional<br/>completed<br/>due_date · opcional<br/>priority · low, medium ou high<br/>created_at · updated_at"]
+        revoked["<b>revoked_tokens</b><br/>jti · PK<br/>expires_at"]
+    end
+    subgraph mongo["MongoDB"]
+        details["<b>task_details</b><br/>taskId · único<br/>userId<br/>notes<br/>tags[]"]
+        events["<b>task_events</b><br/>taskId · userId<br/>type · created, updated, completed,<br/>reopened, details_updated, deleted<br/>changes · campo: antes e depois<br/>at"]
+    end
+    users -- "1 : N · ON DELETE CASCADE" --> tasks
+    tasks -- "1 : 0..1 · notas e tags" --> details
+    tasks -- "1 : N · histórico" --> events
 ```
 
 ### Ciclo de vida de uma tarefa
@@ -294,27 +267,22 @@ classDiagram
 O prazo é comparado com a data do computador de quem usa; tarefa concluída nunca aparece como atrasada.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Pendente : criada
-    Pendente --> Concluida : marca a caixa
-    Concluida --> Pendente : desmarca
-    Pendente --> [*] : excluída
-    Concluida --> [*] : excluída
-    state "Concluída (nunca aparece atrasada)" as Concluida
-    state Pendente {
-        state "Sem prazo" as SemPrazo
-        state "Prazo daqui a mais de 7 dias" as Longe
-        state "Próximos 7 dias" as Semana
-        state "Vence hoje (azul)" as Hoje
-        state "Atrasada (vermelho)" as Atrasada
-        [*] --> SemPrazo
-        [*] --> Longe
-        [*] --> Semana
-        [*] --> Hoje
-        Longe --> Semana : os dias passam
-        Semana --> Hoje : chega o dia
-        Hoje --> Atrasada : o dia termina
-    }
+flowchart LR
+    inicio(( )) -- criada --> pendente
+    subgraph pendente["Pendente"]
+        sem["Sem prazo"]
+        longe["Prazo daqui a<br/>mais de 7 dias"]
+        semana["Próximos 7 dias"]
+        hoje["Vence hoje<br/>(azul)"]
+        atrasada["Atrasada<br/>(vermelho)"]
+        longe -- os dias passam --> semana
+        semana -- chega o dia --> hoje
+        hoje -- o dia termina --> atrasada
+    end
+    pendente -- marca a caixa --> concluida["Concluída<br/>(nunca aparece atrasada)"]
+    concluida -- desmarca --> pendente
+    pendente -- excluída --> fim((( )))
+    concluida -- excluída --> fim
 ```
 
 ## Como rodar
