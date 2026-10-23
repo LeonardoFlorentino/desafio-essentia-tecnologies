@@ -351,7 +351,11 @@ O movimento aqui é **resposta**, não espetáculo: confirma que algo aconteceu 
   abertura da tela; e não há **toasts**: cada ação já responde onde aconteceu (a linha entra ou sai, a mensagem
   aparece junto ao que falhou, e o leitor de tela anuncia) — um toast repetiria a informação em outro lugar.
 - Com `prefers-reduced-motion: reduce`, os deslocamentos somem e ficam só os esmaecimentos, curtos — menos
-  movimento, não nenhuma resposta.
+  movimento, não nenhuma resposta. **Como:** no CSS, uma regra global só deixa transicionar o que não move
+  (opacidade e cores, inclusive o véu do diálogo); sem transição de `transform`, o deslocamento ou a escala do
+  `@starting-style` de cada entrada simplesmente não aparece, e o diálogo fecha esmaecendo no tamanho em que está
+  (senão saltaria para a escala menor). O botão nem chega a ceder; a lista (JavaScript) consulta a mesma
+  preferência e só esmaece.
 
 ## 8. O que não fazer
 

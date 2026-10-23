@@ -441,7 +441,10 @@ garantido por testes:
   [design system](docs/design-system.md) e conferido na página com o axe-core;
   "atrasada" e "vence hoje" nunca dependem só da cor (sempre há o texto); o layout se ajusta até 320 px de largura
   sem rolagem horizontal, e o zoom do navegador não é bloqueado.
-- **Movimento.** Com "reduzir movimento" ligado no sistema, as transições são desligadas.
+- **Movimento.** As animações são curtas (até 200 ms) e respeitam a preferência "reduzir movimento" do sistema: com
+  ela ligada, **nada se desloca nem muda de tamanho** — a tarefa nova não desliza, as vizinhas não se reorganizam
+  animadas, o botão não cede, o calendário e o diálogo não crescem. Ficam só os esmaecimentos e as mudanças de cor,
+  que ajudam a acompanhar o que aconteceu. Um teste E2E confere isso no navegador.
 
 ## Segurança
 
@@ -651,6 +654,7 @@ classe CSS):
 | Só teclado              | Criar (com o calendário), concluir, editar, Esc, excluir, filtrar, sair e entrar sem mouse        |
 | Toque e telas           | Em 360 e 768 px com toque, nenhum alvo abaixo de 44 px; calendário na tela; desktop com 40 px     |
 | Tema                    | Segue o sistema; a escolha sobrevive a recarregar; aplicada antes do app carregar (sem piscar)    |
+| Movimento reduzido      | Com a preferência ligada, criar, concluir, calendário, diálogo e excluir sem nada se deslocar     |
 
 E de autenticação:
 

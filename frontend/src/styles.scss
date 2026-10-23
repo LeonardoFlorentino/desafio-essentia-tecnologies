@@ -394,10 +394,21 @@ button {
   gap: var(--space-2);
 }
 
+// Reduced motion: less motion, not none. Nothing moves or resizes — transforms stop transitioning,
+// so an entrance's starting offset or scale simply never shows — while fades and colour changes,
+// which help to follow what happened, keep their short time. (The task list does the same in
+// list-motion.ts; the press effect is not applied at all.)
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
-  *::after {
-    transition-duration: 0ms !important;
+  *::after,
+  ::backdrop {
+    transition-property:
+      opacity, color, background-color, border-color, text-decoration-color, overlay, display !important;
+  }
+
+  // Closing, the dialog would jump to its smaller scale while it fades: it fades at its size.
+  .dialog:not([open]) {
+    transform: none;
   }
 }
