@@ -3,14 +3,17 @@
   [class.task--completed]="task().completed"
   [class.task--overdue]="due() === 'overdue'"
 >
-  <input
-    class="task__checkbox"
-    type="checkbox"
-    [checked]="task().completed"
-    [disabled]="busy()"
-    [attr.aria-label]="'Concluída: ' + task().title"
-    (click)="requestToggle($event)"
-  />
+  <!-- The label is only the hit area around the box; the name comes from aria-label. -->
+  <label class="task__check">
+    <input
+      class="task__checkbox"
+      type="checkbox"
+      [checked]="task().completed"
+      [disabled]="busy()"
+      [attr.aria-label]="'Concluída: ' + task().title"
+      (click)="requestToggle($event)"
+    />
+  </label>
 
   @if (editing()) {
     <form

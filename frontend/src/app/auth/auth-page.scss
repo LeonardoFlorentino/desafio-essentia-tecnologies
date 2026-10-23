@@ -61,6 +61,11 @@ p.field__hint {
   text-align: center;
 
   a {
+    // The tap area grows past 44 px (line height + padding, whatever the font's metrics), and the
+    // negative margin gives the space back, so the footer keeps its size.
+    display: inline-block;
+    padding-block: var(--space-3);
+    margin-block: calc(-1 * var(--space-3));
     color: var(--color-text);
     font-weight: var(--weight-medium);
   }

@@ -79,6 +79,16 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+// Touch screens (phone or tablet, at any width): every control (fields, buttons, calendar days)
+// grows to the touch size. A narrow desktop window keeps the mouse density.
+@media (pointer: coarse) {
+  :root {
+    --size-control: var(--size-touch);
+    // Seven touch-sized days and the calendar's padding.
+    --size-popover: calc(7 * var(--size-touch) + 2 * var(--space-2));
+  }
+}
+
 // Base: page, typography and keyboard focus.
 
 *,
@@ -203,8 +213,11 @@ button {
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-out);
 
-  &:hover:not(:disabled) {
-    background: var(--color-raised-hover);
+  // Only where a pointer can hover: on a touch screen the hover would stick where the finger was.
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--color-raised-hover);
+    }
   }
 
   &:disabled {
@@ -217,8 +230,10 @@ button {
   background: var(--color-primary);
   color: var(--color-on-strong);
 
-  &:hover:not(:disabled) {
-    background: var(--color-primary-hover);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--color-primary-hover);
+    }
   }
 }
 
@@ -232,8 +247,10 @@ button {
   background: var(--color-overdue);
   color: var(--color-on-strong);
 
-  &:hover:not(:disabled) {
-    background: var(--color-overdue-ink);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--color-overdue-ink);
+    }
   }
 }
 

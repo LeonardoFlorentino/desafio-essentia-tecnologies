@@ -63,7 +63,8 @@ Pares para selos (fundo claro + texto escuro do mesmo tom, nunca texto branco em
 
 Os mesmos pares servem para as caixas de mensagem: erro de uma ação (atrasada), aviso de sessão expirada (aviso).
 
-**Estados de interação.** O hover escurece um degrau; nunca muda de cor.
+**Estados de interação.** O hover escurece um degrau; nunca muda de cor. Só existe onde há cursor
+(`@media (hover: hover)`): numa tela de toque ele ficaria "grudado" onde o dedo tocou.
 
 | Token                   | Valor     | Onde                                             |
 | ----------------------- | --------- | ------------------------------------------------ |
@@ -197,13 +198,20 @@ A lista é **esparsa**: uma pessoa tem poucas dezenas de tarefas, e cada uma é 
 | Token              | Valor  | O que é                                                                                                 |
 | ------------------ | ------ | ------------------------------------------------------------------------------------------------------- |
 | `--size-control`   | 40 px  | Altura de campos e botões (o padrão de telas de trabalho é 32–36; 40 dá alvo maior e cabe o calendário) |
-| `--size-touch`     | 44 px  | Altura mínima de qualquer alvo no celular                                                               |
+| `--size-touch`     | 44 px  | Alvo mínimo em tela de toque; lá o `--size-control` passa a valer isto (ver abaixo)                     |
 | `--size-content`   | 760 px | Largura máxima da coluna de conteúdo no desktop                                                         |
 | `--size-form`      | 416 px | Largura do cartão de login e cadastro (um formulário curto não estica)                                  |
-| `--size-popover`   | 288 px | Largura do calendário (sete colunas de dias com alvo de ~40 px)                                         |
+| `--size-popover`   | 288 px | Largura do calendário (sete colunas de dias com alvo de ~40 px); 324 px em tela de toque                |
 | `--size-field-min` | 160 px | Largura mínima de um campo lado a lado (prazo e prioridade, filtros); abaixo disso, empilham            |
 | `--size-icon`      | 16 px  | Ícones de interface                                                                                     |
-| `--size-checkbox`  | 18 px  | Caixa de concluir tarefa                                                                                |
+| `--size-checkbox`  | 18 px  | Caixa de concluir tarefa (a área de clique em volta: 24 px com mouse, 44 px ao toque)                   |
+
+**Toque decide o tamanho, não a largura.** O que muda o tamanho dos alvos é o tipo de ponteiro
+(`@media (pointer: coarse)`), não a largura da tela: um tablet de 768 px também é tocado com o dedo, e uma janela
+estreita no desktop continua com mouse. Em tela de toque, `--size-control` vira 44 px — campos, botões e dias do
+calendário crescem juntos — e as ações discretas do cartão também. A **largura** decide só o layout (a faixa em 2×2,
+as ações abaixo do texto, abaixo de 640 px). No celular, o calendário abre como **folha** na parte de baixo da tela,
+com a largura toda: ao lado do campo, sete dias de 44 px não caberiam em 360 px.
 
 **Por que uma coluna de 760 px**, e não a tela inteira. A lista tem uma coluna de informação (título, descrição,
 prazo); esticada a 1300 px, o título fica de um lado e o prazo a 1000 px dele. Numa coluna de 760 px tudo se lê numa

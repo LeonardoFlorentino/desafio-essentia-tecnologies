@@ -21,12 +21,31 @@
   }
 }
 
+// The label around the checkbox is its hit area: 24 px to a mouse, 44 px to a finger, centred on
+// the box. Negative margins give it back, so the box and the row do not move.
+.task__check {
+  --hit: var(--space-6);
+  display: grid;
+  place-items: center;
+  width: var(--hit);
+  height: var(--hit);
+  margin: calc((var(--size-checkbox) - var(--hit)) / 2);
+  margin-top: calc(var(--space-1) + (var(--size-checkbox) - var(--hit)) / 2);
+  cursor: pointer;
+}
+
 .task__checkbox {
   width: var(--size-checkbox);
   height: var(--size-checkbox);
-  margin: var(--space-1) 0 0;
+  margin: 0;
   accent-color: var(--color-primary);
   cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .task__check {
+    --hit: var(--size-touch);
+  }
 }
 
 .task__title {
@@ -147,9 +166,12 @@
     flex-wrap: wrap;
     margin-top: var(--space-2);
     margin-left: calc(-1 * var(--space-2));
+  }
+}
 
-    button {
-      min-height: var(--size-touch);
-    }
+// To a finger (phone or tablet), the quiet actions get the touch size too, wherever they sit.
+@media (pointer: coarse) {
+  .task__actions--quiet button {
+    min-height: var(--size-touch);
   }
 }

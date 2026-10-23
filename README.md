@@ -65,8 +65,12 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
   sessão expirou".
 - **Estados e erros:** mensagens de carregamento, de lista vazia e de falha (com "Tentar novamente"); quando uma ação
   falha, um aviso explica o motivo — inclusive "sem conexão com o servidor" — e nada do que foi digitado se perde.
-- **Responsivo e acessível:** do celular (360 px) ao desktop, sem rolagem horizontal; rótulos em todos os campos,
-  foco visível e movido de forma previsível ao editar e excluir.
+- **Layout responsivo (celular, tablet e desktop):** do celular (360 px) ao desktop, sem rolagem horizontal. Em tela de
+  toque — celular ou tablet, qualquer largura — todo botão, campo, caixa de seleção e dia do calendário tem pelo menos
+  44 px; no celular o calendário abre como uma folha na parte de baixo da tela, com os dias do tamanho do dedo. Com
+  mouse, o desktop mantém controles de 40 px, mais compactos.
+- **Acessível:** rótulos em todos os campos, foco visível e movido de forma previsível ao editar e excluir (detalhes em
+  [Acessibilidade](#acessibilidade)).
 
 ## Requisitos do desafio
 
