@@ -25,7 +25,13 @@ authRouter.post('/login', async (req, res) => {
     req.log.warn({ event: 'auth.login_failed' }, 'login failed');
     throw new HttpError(401, 'Invalid email or password');
   }
-  req.log.info({ event: 'auth.login', userId: user.id }, 'signed in');
+  // Temporary: the proxy headers as they arrive, to settle TRUST_PROXY on Render (removed after).
+  const proxyHeaders = {
+    forwardedFor: req.headers['x-forwarded-for'],
+    cfConnectingIp: req.headers['cf-connecting-ip'],
+    trueClientIp: req.headers['true-client-ip'],
+  };
+  req.log.info({ event: 'auth.login', userId: user.id, proxyHeaders }, 'signed in');
   startSession(res, user);
   res.json({ user });
 });
