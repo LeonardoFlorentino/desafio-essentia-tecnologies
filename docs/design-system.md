@@ -4,6 +4,15 @@ A direção visual da aplicação: o que cada cor, tamanho e espaço faz, e por 
 (`frontend/src/styles.scss`) e para as telas redesenhadas. Quando um valor daqui e um valor do código discordarem, um
 dos dois está errado — corrija o que estiver em desacordo com a decisão escrita aqui, ou mude a decisão aqui primeiro.
 
+**No Figma:** [TechX Tasks — Design system](https://www.figma.com/design/xRqLFstvQ5bBohItPkQP4C). Os 63 tokens do
+`styles.scss` estão lá como **variáveis** (com o nome CSS de cada uma como sintaxe de código, `var(--color-today)`),
+os seis papéis de texto como **estilos de texto** (Geist) e a sombra flutuante como **estilo de efeito**; a página
+_Telas_ tem o app capturado (login, cadastro, lista clara e escura, celular) e o quadro _Marca_, com o ícone do app
+nos tamanhos de uso. O plano gratuito do Figma permite um modo por
+coleção, então o tema escuro e os tamanhos para toque estão em coleções irmãs com os mesmos nomes de variável —
+_Cor_ / _Cor (Escuro)_ e _Tamanho_ / _Tamanho (Toque)_ — em vez de modos. Conferido em 23/10/2026: os valores lidos
+de volta do Figma batem com os do `styles.scss`, token a token.
+
 ## 1. A ideia
 
 TechX Tasks é uma **ferramenta de trabalho**, aberta várias vezes por dia para responder uma pergunta:
@@ -308,8 +317,17 @@ diálogo usa o mesmo tom da sombra: a página continua visível, mas claramente 
   `--color-today`. Se atrasou: a barra lateral de 4 px e o selo "Atrasada" em `--color-overdue`. Uma tarefa concluída
   nunca mostra atraso.
 - **Concluída.** Título riscado em `--color-muted`; o resto do cartão fica legível.
-- **Ícones.** Contorno de 1,5 px, 16 px, em `--color-muted` — só onde ajudam (o calendário no campo de data). Nunca
-  dentro de um quadrado ou círculo colorido.
+- **Ícones.** Contorno de 1,5 px, 16 px, em `--color-muted` — só onde ajudam (o calendário no campo de data, o olho
+  no campo de senha). Nunca dentro de um quadrado ou círculo colorido.
+- **Senha.** O campo e o botão "Mostrar senha" (olho; olho riscado quando a senha está à vista) dividem uma moldura,
+  como o campo de prazo: a borda, o anel de foco e a cor de erro são da moldura. É um botão de alternância
+  (`aria-pressed`), logo depois do campo na ordem do Tab; ao enviar o formulário, a senha volta a ficar oculta.
+- **Marca e ícone do app.** A marca é o "check" num quadrado arredondado, em `--color-today` — o azul do "hoje", a
+  cor do produto. No cabeçalho, em contorno (24 px, ao lado do nome). Na aba do navegador, **cheia** (quadrado azul,
+  check branco): em 16 px um contorno vira um fio ilegível. É a única figura num quadrado colorido do produto — é
+  identidade, não um ícone de interface. Arquivos em `frontend/public/`: `favicon.svg` (a fonte), `favicon.ico`
+  (16/32/48 px, para navegadores sem SVG) e `apple-touch-icon.png` (180 px, sem cantos: o iPhone arredonda sozinho),
+  os dois últimos gerados a partir do SVG.
 
 ### O elemento próprio do produto: a faixa do dia
 
@@ -342,8 +360,9 @@ O movimento aqui é **resposta**, não espetáculo: confirma que algo aconteceu 
   `--ease-in-out`), e a que entra aparece com opacidade e 4 px de deslocamento (`--ease-out`). Nada pula: criar,
   excluir, concluir com filtro e reordenar movem as vizinhas em vez de teletransportá-las. Nunca `scale(0)`.
 - **Micro-interações** (só CSS): o botão **cede** ao ser pressionado (`scale(0.97)`, `--duration-fast`) — menos as
-  células da faixa do dia, que são parte de um cartão; o título de uma tarefa concluída **esmaece** para o cinza e o
-  risco aparece aos poucos (cor, `ease`); o **calendário** abre a partir do canto do campo (opacidade + `scale(0.95)`;
+  células da faixa do dia, que são parte de um cartão; o título de uma tarefa concluída **esmaece** para o cinza (cor,
+  `ease`) e ganha o risco — só a concluída tem risco: um risco transparente nas pendentes, para fazê-lo aparecer aos
+  poucos, é pintado pelo alto contraste do Windows e riscaria todas elas; o **calendário** abre a partir do canto do campo (opacidade + `scale(0.95)`;
   no celular, a folha sobe 24 px); o **diálogo** entra e sai com o véu (opacidade + `scale(0.96)`) e, enquanto sai,
   já deixa os cliques passarem para a página; **mensagens** (erro, aviso, "Notas e tags salvas.") chegam com
   opacidade e 4 px.
