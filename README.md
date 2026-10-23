@@ -3,6 +3,11 @@
 Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o desafio Full Stack da Essentia Group:
 cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 
+<p align="center">
+  <img src="docs/screenshots/tarefas-claro.png" alt="Lista de tarefas no tema claro: faixa de prazos, formulário de nova tarefa e tarefas atrasada, do dia e concluída" width="49%">
+  <img src="docs/screenshots/tarefas-escuro.png" alt="A mesma lista de tarefas no tema escuro" width="49%">
+</p>
+
 - **Frontend:** Angular 22
 - **Backend:** API RESTful em Node.js + TypeScript (Express)
 - **Bancos de dados:** MySQL (usuários e tarefas) e MongoDB (notas, tags e histórico das tarefas)
@@ -16,11 +21,24 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 > **Documentação interativa da API (Swagger):** `/api/docs` — http://localhost:8080/api/docs com Docker ou
 > http://localhost:3000/api/docs em desenvolvimento.
 
+## Avaliar em 2 minutos
+
+1. **Na demo**, entre com `demo@techx.com` / `demo12345`: crie uma tarefa com prazo para hoje, marque outra como
+   concluída e abra **Detalhes** em qualquer tarefa para ver as notas, as tags e o histórico, que vêm do MongoDB.
+2. **No seu computador**, com o Docker Desktop aberto: `docker compose up --build` e http://localhost:8080, com a
+   mesma conta ([detalhes](#como-rodar)).
+3. **Para entender o desenho**, veja os diagramas UML em [Como funciona](#como-funciona) e as [Telas](#telas).
+4. **Para conferir cada requisito**, a tabela [Requisitos do desafio](#requisitos-do-desafio) aponta o arquivo de cada
+   um.
+
 ## Sumário
 
+- [Avaliar em 2 minutos](#avaliar-em-2-minutos)
 - [Funcionalidades](#funcionalidades)
+- [Telas](#telas)
 - [Requisitos do desafio](#requisitos-do-desafio)
 - [Tecnologias e decisões](#tecnologias-e-decisões)
+- [Como funciona](#como-funciona)
 - [Como rodar](#como-rodar)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Backend](#backend)
@@ -76,6 +94,30 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - **Acessível:** rótulos em todos os campos, foco visível e movido de forma previsível ao editar e excluir (detalhes em
   [Acessibilidade](#acessibilidade)).
 
+## Telas
+
+As telas foram desenhadas no Figma antes de virar código: [arquivo de design](https://www.figma.com/design/xRqLFstvQ5bBohItPkQP4C)
+(só visualização), com o login, o cadastro, a lista nos temas claro e escuro e no celular, e a marca.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/detalhes-mongodb.png" alt="Tarefa aberta em Detalhes: notas, as tags financeiro e urgente e o histórico com criação, edição da prioridade de Média para Alta e alteração de notas e tags"></td>
+    <td width="50%"><img src="docs/screenshots/excluir-dialogo.png" alt="Diálogo de confirmação Excluir a tarefa?, com o nome da tarefa, no tema escuro"></td>
+  </tr>
+  <tr>
+    <td>Detalhes de uma tarefa: notas, tags e o histórico de alterações (MongoDB)</td>
+    <td>A exclusão pede confirmação com o nome da tarefa</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/login.png" alt="Tela de login com a senha visível pelo botão do olho"></td>
+    <td align="center"><img src="docs/screenshots/tarefas-celular.png" alt="Lista de tarefas no celular, com 390 px de largura" width="60%"></td>
+  </tr>
+  <tr>
+    <td>Login, com o botão de olho para ver a senha</td>
+    <td>No celular: controles de pelo menos 44 px</td>
+  </tr>
+</table>
+
 ## Requisitos do desafio
 
 | Requisito                                              | Onde está                                                                                                |
@@ -113,6 +155,167 @@ Cada decisão de arquitetura tem um registro curto, com contexto, consequências
 | Servir o site          | nginx com o build do Angular, encaminhando `/api` para a API                                    | Mesma origem em produção (como o proxy do `ng serve` em desenvolvimento); cache longo só para arquivos com hash    | [0006](docs/adr/0006-docker-multi-stage-e-nginx.md)         |
 | Testes                 | Jest (unitários + integração com Supertest), Vitest (Angular), Playwright (E2E)                 | Integração contra bancos de teste reais; E2E num navegador com o app inteiro; cobertura mínima de 90%              | [0005](docs/adr/0005-estrategia-de-testes.md)               |
 | Deploy                 | Render (API Docker + site estático), MySQL no Aiven, MongoDB no Atlas                           | Gratuito, versionado em `render.yaml`, deploy a cada push, sem segredos no repositório                             | [0007](docs/adr/0007-deploy-render-aiven-atlas.md)          |
+
+## Como funciona
+
+Diagramas UML em [Mermaid](https://mermaid.js.org/), desenhados pelo próprio GitHub a partir do texto deste README.
+
+### Componentes
+
+O navegador só conversa com uma origem: o `/api` é encaminhado para a API, que guarda cada dado no banco que combina
+com ele.
+
+```mermaid
+flowchart LR
+    pessoa([Pessoa no navegador])
+    subgraph front["Frontend · Angular 22"]
+        spa["SPA com signals<br/>sem zone.js"]
+    end
+    subgraph origem["Mesma origem"]
+        proxy["nginx no Docker<br/>ou rewrite /api/* no Render"]
+    end
+    subgraph api["API · Express 5 + TypeScript"]
+        mw["helmet · CORS · limite de tentativas<br/>requireAuth: JWT + revogação · zod"]
+        rotas["/api/auth · /api/tasks<br/>/api/health · /api/docs"]
+    end
+    mysql[("MySQL<br/>users · tasks · revoked_tokens")]
+    mongo[("MongoDB<br/>task_details · task_events")]
+    pessoa --> spa
+    spa -- "/api com cookie de sessão" --> proxy
+    proxy --> mw --> rotas
+    rotas -- "SQL parametrizado (mysql2)" --> mysql
+    rotas -- "mongoose" --> mongo
+```
+
+### Sessão: login, requisição protegida e logout
+
+O token nunca chega ao JavaScript da página; sair revoga o token no servidor, e não só apaga o cookie.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor P as Pessoa
+    participant A as Angular
+    participant API as API (Express)
+    participant DB as MySQL
+    P->>A: e-mail e senha
+    A->>API: POST /api/auth/login
+    Note over API: limite: 5 falhas por minuto por IP
+    API->>DB: busca o usuário pelo e-mail
+    API->>API: bcrypt.compare (com hash falso se o e-mail não existe)
+    API-->>A: 200 + cookie "session" (JWT com jti · HttpOnly, SameSite=Strict, path /api)
+    A->>API: GET /api/tasks (o navegador envia o cookie)
+    API->>API: requireAuth: assinatura e validade do JWT
+    API->>DB: o jti está em revoked_tokens?
+    alt sessão válida
+        API-->>A: 200 + só as tarefas dessa pessoa
+    else expirada ou revogada
+        API-->>A: 401
+        A->>P: volta ao login com "Sua sessão expirou"
+    end
+    P->>A: Sair
+    A->>API: POST /api/auth/logout
+    API->>DB: guarda o jti em revoked_tokens até o token expirar
+    API-->>A: 204 + apaga o cookie
+```
+
+### Criar uma tarefa
+
+A tarefa vive no MySQL; o histórico no MongoDB é um complemento e nunca derruba a operação principal.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as Angular
+    participant API as API (Express)
+    participant SQL as MySQL
+    participant M as MongoDB
+    A->>API: POST /api/tasks {title, description, dueDate, priority}
+    API->>API: requireAuth + zod valida o corpo (400 se inválido)
+    API->>SQL: INSERT INTO tasks (..., user_id)
+    SQL-->>API: tarefa com id
+    API->>M: task_events: {type: "created"}
+    Note over API,M: se o MongoDB falhar, a tarefa continua criada<br/>e o evento vira um aviso no log
+    API-->>A: 201 + tarefa
+    A->>A: entra no topo da lista (as outras deslizam)<br/>e o leitor de tela anuncia "Tarefa … adicionada"
+```
+
+### Modelo de dados
+
+Três tabelas no MySQL e duas coleções no MongoDB, ligadas pelo id da tarefa e do usuário.
+
+```mermaid
+classDiagram
+    direction LR
+    class User {
+        <<MySQL · users>>
+        +id: int
+        +email: varchar 255, único
+        +password_hash: bcrypt
+        +created_at: timestamp
+    }
+    class Task {
+        <<MySQL · tasks>>
+        +id: int
+        +user_id: int
+        +title: varchar 255
+        +description: text, opcional
+        +completed: boolean
+        +due_date: date, opcional
+        +priority: low, medium ou high
+        +created_at / updated_at
+    }
+    class RevokedToken {
+        <<MySQL · revoked_tokens>>
+        +jti: char 36
+        +expires_at: datetime
+    }
+    class TaskDetails {
+        <<MongoDB · task_details>>
+        +taskId: number, único
+        +userId: number
+        +notes: string
+        +tags: string[]
+    }
+    class TaskEvent {
+        <<MongoDB · task_events>>
+        +taskId / userId: number
+        +type: created, updated, completed, reopened, details_updated, deleted
+        +changes: campo → antes e depois
+        +at: date
+    }
+    User "1" --> "*" Task : possui (ON DELETE CASCADE)
+    Task "1" --> "0..1" TaskDetails : notas e tags
+    Task "1" --> "*" TaskEvent : histórico
+```
+
+### Ciclo de vida de uma tarefa
+
+O prazo é comparado com a data do computador de quem usa; tarefa concluída nunca aparece como atrasada.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pendente : criada
+    Pendente --> Concluida : marca a caixa
+    Concluida --> Pendente : desmarca
+    Pendente --> [*] : excluída
+    Concluida --> [*] : excluída
+    state "Concluída (nunca aparece atrasada)" as Concluida
+    state Pendente {
+        state "Sem prazo" as SemPrazo
+        state "Prazo daqui a mais de 7 dias" as Longe
+        state "Próximos 7 dias" as Semana
+        state "Vence hoje (azul)" as Hoje
+        state "Atrasada (vermelho)" as Atrasada
+        [*] --> SemPrazo
+        [*] --> Longe
+        [*] --> Semana
+        [*] --> Hoje
+        Longe --> Semana : os dias passam
+        Semana --> Hoje : chega o dia
+        Hoje --> Atrasada : o dia termina
+    }
+```
 
 ## Como rodar
 
