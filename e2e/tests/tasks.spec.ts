@@ -224,6 +224,16 @@ test('filters the list by a group of the day strip, kept in the URL', async ({ p
   await todayGroup.click();
   await expect(page).not.toHaveURL(/due=/);
   await expect(titles(page)).toHaveCount(3);
+
+  // Twice in quick succession (the rows start to fade out, then stay): none is left invisible.
+  await todayGroup.evaluate((button: HTMLElement) => {
+    button.click();
+    setTimeout(() => button.click(), 40);
+  });
+  await expect(page).not.toHaveURL(/due=/);
+  for (const row of await page.getByRole('listitem').all()) {
+    await expect(row).toHaveCSS('opacity', '1');
+  }
 });
 
 test.describe('search, filters and sorting', () => {

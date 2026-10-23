@@ -7,6 +7,8 @@ describe('list motion', () => {
   let list: HTMLElement;
   let animations: { id: string; keyframes: Keyframe[]; options: KeyframeAnimationOptions }[];
   const top = new Map<string, number>();
+  /** Animations still attached to each row (what getAnimations returns). */
+  const attached = new Map<string, Animation[]>();
 
   function row(id: string, y: number) {
     const li = document.createElement('li');
@@ -21,6 +23,7 @@ describe('list motion', () => {
       });
       return { finished: Promise.resolve() } as unknown as Animation;
     };
+    li.getAnimations = () => attached.get(id) ?? [];
     list.append(li);
     return li;
   }
@@ -37,7 +40,32 @@ describe('list motion', () => {
     document.body.append(list);
   });
 
-  afterEach(() => list.remove());
+  afterEach(() => {
+    list.remove();
+    attached.clear();
+  });
+
+  /** An animation as the browser keeps it attached, with a spy on cancel. */
+  function attachedAnimation(id: string, fill: FillMode) {
+    const animation = {
+      effect: { getTiming: () => ({ fill }) },
+      cancel: vi.fn(),
+    } as unknown as Animation;
+    attached.set(id, [...(attached.get(id) ?? []), animation]);
+    return animation;
+  }
+
+  it('lets go of the exit fade of a row that stayed, so it does not remain invisible', () => {
+    // A strip group clicked twice quickly: the row started to fade out, then the newer list kept it.
+    row('1', 0);
+    const fade = attachedAnimation('1', 'forwards');
+    const slide = attachedAnimation('1', 'auto');
+
+    play(list, new Map(), false);
+
+    expect(fade.cancel).toHaveBeenCalled();
+    expect(slide.cancel).not.toHaveBeenCalled();
+  });
 
   it('slides a row that moved from its old place, and fades a new row in', () => {
     row('1', 0);

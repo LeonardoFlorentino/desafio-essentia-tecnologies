@@ -59,7 +59,15 @@ export function play(
   before: Map<string, DOMRect>,
   reduced: boolean,
 ) {
-  if (!canAnimate(list) || before.size === 0) return;
+  if (!canAnimate(list)) return;
+  // A row that started to leave but stayed (a newer change kept it, like a strip group clicked
+  // twice) is still held at opacity 0 by its fade: drop the fade, or the row stays invisible.
+  for (const row of rows(list)) {
+    for (const animation of row.getAnimations()) {
+      if (animation.effect?.getTiming().fill === 'forwards') animation.cancel();
+    }
+  }
+  if (before.size === 0) return;
   const duration = ms(token(list, '--duration-base'));
   for (const row of rows(list)) {
     const old = before.get(row.dataset['taskId']!);
