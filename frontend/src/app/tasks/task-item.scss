@@ -53,17 +53,15 @@
   font: var(--font-item);
   // Long words (URLs, codes) wrap instead of widening the row on small screens.
   overflow-wrap: anywhere;
-  // The strike line is always there, transparent: completing fades it in with the grey (a colour
-  // change, so a plain `ease`), instead of the line popping on.
-  text-decoration: line-through transparent;
-  transition:
-    color var(--duration-base) ease,
-    text-decoration-color var(--duration-base) ease;
+  // Completing fades the title to grey (a colour change, so a plain `ease`). The strike line exists
+  // only on a completed task: a transparent line kept on pending ones is painted by Windows high
+  // contrast (forced colours ignore the transparency), striking out every pending task.
+  transition: color var(--duration-base) ease;
 }
 
 .task--completed .task__title {
   color: var(--color-muted);
-  text-decoration-color: currentColor;
+  text-decoration: line-through;
 }
 
 .task__description {

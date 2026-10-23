@@ -190,6 +190,28 @@ test('deletes a task only after confirming', async ({ page }) => {
   await expect(page.getByRole('listitem')).toHaveCount(0);
 });
 
+test.describe('in Windows high contrast (forced colours)', () => {
+  test.use({ forcedColors: 'active' });
+
+  test('only a completed task is struck through', async ({ page }) => {
+    await createTask(page, { title: 'Ainda pendente' });
+    await createTask(page, { title: 'Já concluída' });
+    await page.goto('/');
+    await page.getByRole('checkbox', { name: 'Concluída: Já concluída' }).click();
+    await expect(card(page, 'Já concluída')).toContainText('Concluída');
+
+    // Forced colours repaint even a transparent line, so a pending title must have none at all.
+    await expect(card(page, 'Ainda pendente').getByRole('heading')).toHaveCSS(
+      'text-decoration-line',
+      'none',
+    );
+    await expect(card(page, 'Já concluída').getByRole('heading')).toHaveCSS(
+      'text-decoration-line',
+      'line-through',
+    );
+  });
+});
+
 test('flags overdue and due-today tasks, but not completed ones', async ({ page }) => {
   await createTask(page, { title: 'Atrasada de verdade', dueDate: day(-2) });
   await createTask(page, { title: 'Para hoje', dueDate: day(0) });
