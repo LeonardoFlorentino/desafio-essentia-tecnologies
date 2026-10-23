@@ -44,7 +44,10 @@ export default defineConfig({
         AUTH_ATTEMPTS_PER_MINUTE: '1000',
         LOG_LEVEL: 'warn',
       },
-      reuseExistingServer: !process.env.CI,
+      // Never reuse: these ports belong to the E2E run alone, so a server already on them is a
+      // leftover of an interrupted run, with old code (one served the tests for hours unnoticed).
+      // Playwright then stops with "port already used" instead of testing stale code.
+      reuseExistingServer: false,
       timeout: 60_000,
     },
     {
@@ -55,7 +58,7 @@ export default defineConfig({
       // frontend/.angular is shared with a dev server running alongside (ng serve on 4200), and
       // with both up this one stopped mid-run, silently, at a different test each time.
       env: { CI: 'true' },
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 180_000,
     },
   ],
