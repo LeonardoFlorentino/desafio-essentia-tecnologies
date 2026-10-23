@@ -31,9 +31,12 @@ Docker da API e com os dois bancos gerenciados.
   para o limite de tentativas continuar por pessoa. Medido em produção: com `TRUST_PROXY=1`, a API registrava
   `10.29.166.92` (o salto interno do _rewrite_) em vez do IP de quem entrou — todos dividiam um limite. `2` acertaria
   pelo site, mas deixaria quem chama a API direto (um salto só) escolher o próprio IP forjando `X-Forwarded-For`. A
-  decisão foi confiar **na rede privada** (`uniquelocal`), não numa contagem. O log seguinte mostrou `::1`: há também
-  um proxy no próprio contêiner do serviço, que conecta por `localhost` — por isso o valor final é
-  `loopback, uniquelocal`.
+  decisão foi confiar **nas redes dos proxies**, não numa contagem. Um log de diagnóstico com o `X-Forwarded-For`
+  completo mostrou cinco saltos pelo site: Cloudflare, o servidor de _rewrite_ do Render (`74.220.48.0/20`, do Render
+  segundo o registro ARIN), Cloudflare de novo, o balanceador (`10.x`) e um proxy no contêiner (`::1`). O
+  `CF-Connecting-IP` não serve: traz o servidor de _rewrite_, não o visitante. Valor final: loopback, rede privada,
+  faixas oficiais da Cloudflare e a do Render. Limite que fica: quem rodar código na própria Cloudflare ou num serviço
+  do Render pode forjar o IP; se uma faixa mudar, o limite fica compartilhado (mais rígido), nunca liberado.
 - **−** No CI, o MongoDB 8.x não inicia nos kernels Linux 6.19–7.0.13 dos runners do GitHub (SERVER-125742): o CI usa
   MongoDB 7.0 até o GitHub atualizar o kernel (o Atlas segue em 8.0).
 

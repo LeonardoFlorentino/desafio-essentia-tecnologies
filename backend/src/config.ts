@@ -64,9 +64,9 @@ export const config = {
   authAttemptsPerMinute: Number(process.env.AUTH_ATTEMPTS_PER_MINUTE ?? 5),
   // Which proxies in front of the API may report the client IP in X-Forwarded-For; without a proxy
   // that header is set by the client and could be faked. A count (nginx in Docker = 1) or, when the
-  // number of hops varies (Render: one more through the static site's rewrite), Express's list of
-  // trusted networks, e.g. "loopback, uniquelocal": every local or private hop is skipped and the
-  // first public address is the client's.
+  // number of hops varies (Render: more through the static site's rewrite), Express's list of
+  // trusted networks, e.g. "loopback, uniquelocal, 104.16.0.0/13": every hop in them is skipped and
+  // the first address outside is the client's (Render's list is in render.yaml).
   trustProxy: /^\d+$/.test(process.env.TRUST_PROXY ?? '0')
     ? Number(process.env.TRUST_PROXY ?? 0)
     : process.env.TRUST_PROXY!,

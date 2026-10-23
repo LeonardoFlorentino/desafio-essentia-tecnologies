@@ -24,12 +24,14 @@ services:
       # HTTPS on Render: the session cookie only travels over HTTPS (Secure).
       - key: COOKIE_SECURE
         value: 'true'
-      # Hops in front of the API: the site's rewrite (private 10.x) and a proxy inside the service's own
-      # container (::1), one fewer when it is called directly. Trust the loopback and Render's private
-      # network rather than a count: the client IP is the first public address in X-Forwarded-For
-      # either way, and a forged one is never reached.
+      # Measured in production, through the site: browser → Cloudflare (site) → Render's rewrite server
+      # (74.220.48.0/20, Render per ARIN) → Cloudflare (API) → load balancer (10.x) → a proxy in the
+      # container (::1) → API; called directly, fewer hops. Trust those networks rather than a count:
+      # the client IP is the first address outside them, and a forged one is never reached. Cloudflare
+      # ranges from cloudflare.com/ips (2026-10-23); if one changes, the limit is shared, never lifted.
+      # The test in backend/tests/integration/rate-limit.test.ts reads this value.
       - key: TRUST_PROXY
-        value: 'loopback, uniquelocal'
+        value: 'loopback, uniquelocal, 74.220.48.0/20, 173.245.48.0/20, 103.21.244.0/22, 103.22.200.0/22, 103.31.4.0/22, 141.101.64.0/18, 108.162.192.0/18, 190.93.240.0/20, 188.114.96.0/20, 197.234.240.0/22, 198.41.128.0/17, 162.158.0.0/15, 104.16.0.0/13, 104.24.0.0/14, 172.64.0.0/13, 131.0.72.0/22, 2400:cb00::/32, 2606:4700::/32, 2803:f800::/32, 2405:b500::/32, 2405:8100::/32, 2a06:98c0::/29, 2c0f:f248::/32'
       # Public demo with the evaluation account (demo@techx.com / demo12345, as in the README).
       - key: SEED_DEMO_USER
         value: 'true'

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import request from 'supertest';
 import { createApp } from '../../src/app';
@@ -70,6 +72,29 @@ describe('login rate limit', () => {
 
     expect((await from('198.51.100.99, 203.0.113.1, 10.29.166.92')).status).toBe(429);
     expect((await from('203.0.113.2, 10.29.166.92')).status).toBe(401);
+  });
+
+  // The value deployed on Render, against the chain logged there for a sign-in through the site
+  // (the visitor's address swapped for documentation ones): Cloudflare twice, Render's rewrite
+  // server, Cloudflare again, the load balancer; supertest's 127.0.0.1 stands for the proxy in the
+  // container (::1 in production).
+  it('with the TRUST_PROXY of render.yaml, finds the visitor behind the real Render chain', async () => {
+    const blueprint = readFileSync(join(__dirname, '../../../render.yaml'), 'utf8');
+    const trusted = /key: TRUST_PROXY\s+value: '([^']+)'/.exec(blueprint)![1];
+    const app = limitedApp(trusted);
+    const viaSite = (client: string) =>
+      request(app)
+        .post('/api/auth/login')
+        .set(
+          'X-Forwarded-For',
+          `${client}, 172.71.234.126, 172.71.234.126,74.220.48.6, 104.22.72.48, 10.27.74.163`,
+        )
+        .send(wrong);
+
+    // A visitor prepending forged addresses is still counted by the one the proxies saw.
+    for (let i = 0; i < 5; i++) await viaSite(`198.51.100.${i}, 203.0.113.1`);
+    expect((await viaSite('203.0.113.1')).status).toBe(429);
+    expect((await viaSite('203.0.113.2')).status).toBe(401);
   });
 
   it('ignores a forged X-Forwarded-For when there is no proxy', async () => {

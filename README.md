@@ -225,24 +225,24 @@ demonstração é recriado na próxima subida).
 
 Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa quais variáveis precisam ser definidas.
 
-| Variável                   | Obrigatória | Padrão                  | Descrição                                                                                                     |
-| -------------------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `PORT`                     | não         | `3000`                  | Porta HTTP da API                                                                                             |
-| `CORS_ORIGIN`              | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                                                     |
-| `DB_HOST`                  | sim         | —                       | Host do MySQL                                                                                                 |
-| `DB_PORT`                  | não         | `3306`                  | Porta do MySQL                                                                                                |
-| `DB_USER`                  | sim         | —                       | Usuário do MySQL                                                                                              |
-| `DB_PASSWORD`              | sim         | —                       | Senha do MySQL                                                                                                |
-| `DB_NAME`                  | sim         | —                       | Nome do banco no MySQL                                                                                        |
-| `DB_SSL_CA`                | não         | —                       | Certificado (PEM) da autoridade do MySQL gerenciado; com ele a conexão usa TLS e confere o servidor           |
-| `MONGO_URL`                | sim         | —                       | Endereço do MongoDB, com usuário e senha                                                                      |
-| `MONGO_DB_NAME`            | não         | `todo`                  | Nome do banco no MongoDB                                                                                      |
-| `JWT_SECRET`               | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)                                                 |
-| `JWT_EXPIRES_IN`           | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                                                      |
-| `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP)                                     |
-| `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)                                      |
-| `TRUST_PROXY`              | não         | `0`                     | Proxies na frente da API: quantos (`1` no Docker, o nginx) ou quais redes (`loopback, uniquelocal` no Render) |
-| `LOG_LEVEL`                | não         | `info`                  | Detalhe dos logs: `debug`, `info`, `warn`, `error` ou `silent`                                                |
+| Variável                   | Obrigatória | Padrão                  | Descrição                                                                                                           |
+| -------------------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                     | não         | `3000`                  | Porta HTTP da API                                                                                                   |
+| `CORS_ORIGIN`              | não         | `http://localhost:4200` | Origem do navegador autorizada a chamar a API diretamente                                                           |
+| `DB_HOST`                  | sim         | —                       | Host do MySQL                                                                                                       |
+| `DB_PORT`                  | não         | `3306`                  | Porta do MySQL                                                                                                      |
+| `DB_USER`                  | sim         | —                       | Usuário do MySQL                                                                                                    |
+| `DB_PASSWORD`              | sim         | —                       | Senha do MySQL                                                                                                      |
+| `DB_NAME`                  | sim         | —                       | Nome do banco no MySQL                                                                                              |
+| `DB_SSL_CA`                | não         | —                       | Certificado (PEM) da autoridade do MySQL gerenciado; com ele a conexão usa TLS e confere o servidor                 |
+| `MONGO_URL`                | sim         | —                       | Endereço do MongoDB, com usuário e senha                                                                            |
+| `MONGO_DB_NAME`            | não         | `todo`                  | Nome do banco no MongoDB                                                                                            |
+| `JWT_SECRET`               | sim         | —                       | Segredo que assina os tokens de sessão (mínimo 32 caracteres)                                                       |
+| `JWT_EXPIRES_IN`           | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                                                            |
+| `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP)                                           |
+| `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)                                            |
+| `TRUST_PROXY`              | não         | `0`                     | Proxies na frente da API: quantos (`1` no Docker, o nginx) ou em quais redes confiar (no Render, ver `render.yaml`) |
+| `LOG_LEVEL`                | não         | `info`                  | Detalhe dos logs: `debug`, `info`, `warn`, `error` ou `silent`                                                      |
 
 O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
 
@@ -472,10 +472,12 @@ permissão. No uso normal nem é preciso: página e API ficam na mesma origem.
 
 No Docker, a API só recebe requisições pelo nginx e usa o IP do navegador que ele informa (`TRUST_PROXY=1`); sem isso,
 todos os usuários dividiriam o mesmo limite. Um `X-Forwarded-For` forjado pelo cliente não adianta: vale só o endereço
-acrescentado pelo nginx. No Render, há um proxy dentro do próprio contêiner da API (endereço `::1`) e, pelo site, um
-salto interno a mais (o _rewrite_ de `/api`) do que numa chamada direta; por isso lá
-`TRUST_PROXY=loopback, uniquelocal`: a API pula todo endereço local ou da rede privada e fica com o primeiro público —
-o do visitante — com qualquer número de saltos. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de uma instância da API,
+acrescentado pelo nginx. No Render, pelo site, a requisição passa por cinco proxies antes da API (Cloudflare, o
+servidor do Render que faz o _rewrite_ de `/api`, Cloudflare de novo, o balanceador e um proxy no próprio contêiner) —
+menos numa chamada direta. Por isso, lá, o `TRUST_PROXY` lista as redes desses proxies (local, privada, as faixas
+oficiais da Cloudflare e a do Render) em vez de uma contagem: a API fica com o primeiro endereço fora delas, o do
+visitante, e um valor forjado à esquerda nunca é alcançado. Um teste de integração lê o valor do `render.yaml` e o
+confere contra a cadeia medida em produção. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de uma instância da API,
 seria preciso um armazenamento compartilhado, como Redis).
 
 **Senhas.** No mínimo 8 caracteres e no máximo 72 bytes (o limite do bcrypt — acima disso, o resto seria ignorado sem
