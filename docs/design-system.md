@@ -54,11 +54,25 @@ A comparação também confirmou o que telas de trabalho bem resolvidas têm em 
 
 Pares para selos (fundo claro + texto escuro do mesmo tom, nunca texto branco em cor saturada):
 
-| Selo     | Fundo     | Texto     |
-| -------- | --------- | --------- |
-| Atrasada | `#ffedea` | `#831c1e` |
-| Neutro   | `#eeeeee` | `#3d3d3d` |
-| Aviso    | `#fffbeb` | `#92400e` |
+| Selo       | Fundo                            | Texto                           |
+| ---------- | -------------------------------- | ------------------------------- |
+| Atrasada   | `--color-overdue-soft` `#ffedea` | `--color-overdue-ink` `#831c1e` |
+| Vence hoje | `--color-today-soft` `#e8f0fc`   | `--color-today` `#1d5fbf`       |
+| Neutro     | `--color-raised` `#eeeeee`       | `--color-chip-ink` `#3d3d3d`    |
+| Aviso      | `--color-notice-soft` `#fffbeb`  | `--color-notice-ink` `#92400e`  |
+
+Os mesmos pares servem para as caixas de mensagem: erro de uma ação (atrasada), aviso de sessão expirada (aviso).
+
+**Estados de interação.** O hover escurece um degrau; nunca muda de cor.
+
+| Token                   | Valor     | Onde                                             |
+| ----------------------- | --------- | ------------------------------------------------ |
+| `--color-primary-hover` | `#2e2e2e` | Botão principal com o cursor em cima             |
+| `--color-raised-hover`  | `#e4e4e4` | Botão secundário com o cursor em cima            |
+| `--color-today-hover`   | `#174ea0` | Dia escolhido no calendário com o cursor em cima |
+
+O cinza do hover secundário foi escolhido pelo pior caso: o "Excluir" em vermelho continua acima de 4,5:1 sobre ele
+(`#e2e2e2`, um tom mais escuro, já reprovaria).
 
 **Por que o azul é o "hoje".** Azul é a cor que a maioria das agendas e calendários usa para marcar o dia atual; quem
 abre a lista reconhece sem legenda. O vermelho fica reservado para o que já passou do prazo. São as **duas únicas
@@ -89,6 +103,12 @@ Medido para cada par que carrega informação. Texto precisa de **4,5:1**; borda
 | Texto branco no dia escolhido `#1d5fbf`          | 6,10        |
 | Texto no botão secundário `#eeeeee`              | 17,1        |
 | "Excluir" `#c4242a` no botão secundário          | 4,98        |
+| "Excluir" no hover do secundário `#e4e4e4`       | 4,55        |
+| Secundário `#5f6368` no hover `#e4e4e4`          | 4,76        |
+| Texto branco no hover do principal `#2e2e2e`     | 13,6        |
+| Selo hoje `#1d5fbf` em `#e8f0fc`                 | 5,32        |
+| Texto branco no hover do dia `#174ea0`           | 7,97        |
+| Aviso `#92400e` em `#fffbeb`                     | 6,84        |
 | Borda de controle `#80868f` no branco / no fundo | 3,67 / 3,33 |
 
 **Uma decisão contra o costume.** Muitas telas usam bordas de campo bem claras (`#d4d4d4`, cerca de 1,5:1). Elas
@@ -153,16 +173,17 @@ do próprio domínio (`font-src 'self'`), e assim nenhuma requisição revela a 
 
 **Base de 4 px.** Todo espaçamento é múltiplo de 4, e a escala tem poucos degraus para que as distâncias se repitam:
 
-| Token        | Valor | Uso típico                                               |
-| ------------ | ----- | -------------------------------------------------------- |
-| `--space-1`  | 4 px  | Entre um ícone e o texto ao lado; dentro de selos        |
-| `--space-2`  | 8 px  | Entre botões de uma fileira; entre rótulo e campo        |
-| `--space-3`  | 12 px | **A distância entre cartões** (vertical e horizontal)    |
-| `--space-4`  | 16 px | Entre campos de um formulário; margem da tela no celular |
-| `--space-5`  | 20 px | Recuo interno dos cartões                                |
-| `--space-6`  | 24 px | Margem da tela no desktop; entre título e conteúdo       |
-| `--space-8`  | 32 px | Entre seções ("Nova tarefa" → "Tarefas")                 |
-| `--space-12` | 48 px | Do topo da tela ao título, no desktop                    |
+| Token         | Valor | Uso típico                                                |
+| ------------- | ----- | --------------------------------------------------------- |
+| `--space-0-5` | 2 px  | Ajuste fino: altura interna de selos, grade do calendário |
+| `--space-1`   | 4 px  | Entre um ícone e o texto ao lado; dentro de selos         |
+| `--space-2`   | 8 px  | Entre botões de uma fileira; entre rótulo e campo         |
+| `--space-3`   | 12 px | **A distância entre cartões** (vertical e horizontal)     |
+| `--space-4`   | 16 px | Entre campos de um formulário; margem da tela no celular  |
+| `--space-5`   | 20 px | Recuo interno dos cartões                                 |
+| `--space-6`   | 24 px | Margem da tela no desktop; entre título e conteúdo        |
+| `--space-8`   | 32 px | Entre seções ("Nova tarefa" → "Tarefas")                  |
+| `--space-12`  | 48 px | Do topo da tela ao título, no desktop                     |
 
 **Uma distância entre cartões só** (12 px), na vertical e na horizontal. Distâncias misturadas (12 aqui, 16 ali) são o
 que faz uma tela parecer remendada.
@@ -171,11 +192,16 @@ que faz uma tela parecer remendada.
 
 A lista é **esparsa**: uma pessoa tem poucas dezenas de tarefas, e cada uma é lida.
 
-| Token            | Valor  | O que é                                                                                                 |
-| ---------------- | ------ | ------------------------------------------------------------------------------------------------------- |
-| `--size-control` | 40 px  | Altura de campos e botões (o padrão de telas de trabalho é 32–36; 40 dá alvo maior e cabe o calendário) |
-| `--size-touch`   | 44 px  | Altura mínima de qualquer alvo no celular                                                               |
-| `--size-content` | 760 px | Largura máxima da coluna de conteúdo no desktop                                                         |
+| Token              | Valor  | O que é                                                                                                 |
+| ------------------ | ------ | ------------------------------------------------------------------------------------------------------- |
+| `--size-control`   | 40 px  | Altura de campos e botões (o padrão de telas de trabalho é 32–36; 40 dá alvo maior e cabe o calendário) |
+| `--size-touch`     | 44 px  | Altura mínima de qualquer alvo no celular                                                               |
+| `--size-content`   | 760 px | Largura máxima da coluna de conteúdo no desktop                                                         |
+| `--size-form`      | 416 px | Largura do cartão de login e cadastro (um formulário curto não estica)                                  |
+| `--size-popover`   | 288 px | Largura do calendário (sete colunas de dias com alvo de ~40 px)                                         |
+| `--size-field-min` | 160 px | Largura mínima de um campo lado a lado (prazo e prioridade, filtros); abaixo disso, empilham            |
+| `--size-icon`      | 16 px  | Ícones de interface                                                                                     |
+| `--size-checkbox`  | 18 px  | Caixa de concluir tarefa                                                                                |
 
 **Por que uma coluna de 760 px**, e não a tela inteira. A lista tem uma coluna de informação (título, descrição,
 prazo); esticada a 1300 px, o título fica de um lado e o prazo a 1000 px dele. Numa coluna de 760 px tudo se lê numa

@@ -1,19 +1,20 @@
 .container {
   width: 100%;
-  max-width: 48rem;
+  max-width: var(--size-content);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--space-4);
 }
 
 .app-header {
-  margin-bottom: 1.5rem;
-  padding: 1.25rem 0;
-  border-bottom: 1px solid #eaecf0;
-  background: #fff;
+  margin-bottom: var(--space-6);
+  padding: var(--space-5) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
 
   h1 {
     margin: 0;
-    font-size: 1.5rem;
+    font: var(--font-title);
+    letter-spacing: var(--tracking-title);
 
     a {
       color: inherit;
@@ -27,19 +28,19 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem 1.5rem;
+  gap: var(--space-3) var(--space-6);
 }
 
 .app-header__account {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1rem;
-  color: #475467;
+  gap: var(--space-2) var(--space-4);
+  color: var(--color-muted);
 
   a {
-    color: #175cd3;
-    font-weight: 500;
+    color: var(--color-text);
+    font-weight: var(--weight-medium);
   }
 }
 
@@ -48,10 +49,10 @@
 }
 
 .app-header__subtitle {
-  margin: 0.25rem 0 0;
-  color: #475467;
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
 }
 
 main {
-  padding-bottom: 3rem;
+  padding-bottom: var(--space-12);
 }

@@ -1,14 +1,15 @@
 .auth-card {
-  max-width: 26rem;
-  margin: 1rem auto;
-  padding: 1.5rem;
-  border: 1px solid #eaecf0;
-  border-radius: 0.75rem;
-  background: #fff;
+  max-width: var(--size-form);
+  margin: var(--space-4) auto;
+  padding: var(--space-6);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
 
   h2 {
-    margin: 0 0 1rem;
-    font-size: 1.25rem;
+    margin: 0 0 var(--space-4);
+    font: var(--font-title);
+    letter-spacing: var(--tracking-title);
   }
 
   .button--primary {
@@ -17,29 +18,28 @@
 }
 
 .auth-error {
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #fda29b;
-  border-radius: 0.5rem;
-  background: #fef3f2;
-  color: #912018;
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--color-overdue-soft);
+  color: var(--color-overdue-ink);
 }
 
 .auth-notice {
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #b2ddff;
-  border-radius: 0.5rem;
-  background: #eff8ff;
-  color: #175cd3;
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--color-notice-soft);
+  color: var(--color-notice-ink);
 }
 
 .auth-switch {
-  margin: 1.25rem 0 0;
+  margin: var(--space-5) 0 0;
   text-align: center;
-  color: #475467;
+  color: var(--color-muted);
 
   a {
-    color: #175cd3;
+    color: var(--color-text);
+    font-weight: var(--weight-medium);
   }
 }
