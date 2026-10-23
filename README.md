@@ -1,5 +1,7 @@
 # TechX Tasks
 
+[![CI](https://github.com/LeonardoFlorentino/desafio-essentia-tecnologies/actions/workflows/ci.yml/badge.svg?branch=leonardo-florentino-fernandes)](https://github.com/LeonardoFlorentino/desafio-essentia-tecnologies/actions/workflows/ci.yml)
+
 Aplicação web de gerenciamento de tarefas (to-do list) desenvolvida para o desafio Full Stack da Essentia Group:
 cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 
@@ -44,6 +46,7 @@ cada pessoa cria uma conta e organiza as próprias tarefas do dia.
 - [Backend](#backend)
 - [API](#api)
 - [Frontend](#frontend)
+- [Design](#design)
 - [Acessibilidade](#acessibilidade)
 - [Segurança](#segurança)
 - [Operação](#operação)
@@ -393,10 +396,17 @@ demonstração é recriado na próxima subida).
 ├── frontend/src/app/
 │   ├── auth/                Login, cadastro, guards e tratamento de sessão expirada
 │   ├── tasks/               Página de tarefas, cartão, painel de detalhes, serviço da API
-│   └── shared/              Campo de data (dd/mm/aaaa + calendário), datas e erros HTTP
+│   └── shared/              Campo de data (dd/mm/aaaa + calendário), tema, foco no 1º erro, datas e erros HTTP
+├── frontend/public/         Ícones do app e o script que aplica o tema antes da página aparecer
+├── docs/
+│   ├── adr/                 Registros das decisões de arquitetura
+│   ├── design-system.md     Tokens, contraste, tipografia, espaço, movimento e marca
+│   └── screenshots/         Capturas usadas neste README
 ├── docker/mysql-init/       Cria o banco de testes do MySQL
 ├── e2e/                     Testes de ponta a ponta (Playwright)
+├── .github/workflows/       Integração contínua (GitHub Actions)
 ├── docker-compose.yml       MySQL, MongoDB, API e site (nginx)
+├── render.yaml              Deploy no Render (API + site)
 └── start.ps1                Inicialização com um comando (npm start)
 ```
 
@@ -594,6 +604,21 @@ claro e escuro), tipografia, escala de espaços, raios, sombras, densidade e mov
 | `npm run lint`          | Analisa o código e os templates com ESLint (inclui acessibilidade)    |
 | `npm run format`        | Formata o código com Prettier                                         |
 
+## Design
+
+- **Tokens:** cores, tipografia, espaços, raios, sombras e tempos de animação são variáveis CSS em
+  [`styles.scss`](frontend/src/styles.scss); nenhum componente usa uma cor solta. O
+  [design system](docs/design-system.md) explica cada valor, e as mesmas variáveis estão no
+  [arquivo do Figma](https://www.figma.com/design/xRqLFstvQ5bBohItPkQP4C).
+- **Modo escuro:** o tema escuro redefine os mesmos tokens, com o contraste conferido par a par. O script
+  [`theme.js`](frontend/public/theme.js) aplica a escolha antes de o Angular carregar, para não piscar o tema claro.
+- **Densidade:** com mouse, controles de 40 px; em tela de toque (`pointer: coarse`), 44 px, qualquer que seja a
+  largura.
+- **Movimento:** a lista anima a entrada, a saída e a reorganização das tarefas com a Web Animations API
+  ([`list-motion.ts`](frontend/src/app/tasks/list-motion.ts)), em até 200 ms, e respeita "reduzir movimento"
+  ([Acessibilidade](#acessibilidade)).
+- **Marca:** o ícone do app (aba do navegador e tela inicial do celular) é a marca do cabeçalho em versão cheia.
+
 ## Acessibilidade
 
 O alvo é a **WCAG 2.2 nível AA**. O Lighthouse (categoria Acessibilidade) dá 100 no login, no cadastro e na lista
@@ -660,8 +685,8 @@ servidor do Render que faz o _rewrite_ de `/api`, Cloudflare de novo, o balancea
 menos numa chamada direta. Por isso, lá, o `TRUST_PROXY` lista as redes desses proxies (local, privada, as faixas
 oficiais da Cloudflare e a do Render) em vez de uma contagem: a API fica com o primeiro endereço fora delas, o do
 visitante, e um valor forjado à esquerda nunca é alcançado. Um teste de integração lê o valor do `render.yaml` e o
-confere contra a cadeia medida em produção. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de uma instância da API,
-seria preciso um armazenamento compartilhado, como Redis).
+confere contra a cadeia medida em produção. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de
+uma instância da API, seria preciso um armazenamento compartilhado, como Redis).
 
 **Senhas.** No mínimo 8 caracteres e no máximo 72 bytes (o limite do bcrypt — acima disso, o resto seria ignorado sem
 aviso), guardadas com bcrypt (custo 12). O login responde a mesma mensagem, "e-mail ou senha inválidos", para e-mail
@@ -827,12 +852,15 @@ classe CSS):
 | Toque e telas           | Em 360 e 768 px com toque, nenhum alvo abaixo de 44 px; calendário na tela; desktop com 40 px     |
 | Tema                    | Segue o sistema; a escolha sobrevive a recarregar; aplicada antes do app carregar (sem piscar)    |
 | Movimento reduzido      | Com a preferência ligada, criar, concluir, calendário, diálogo e excluir sem nada se deslocar     |
+| Alto contraste          | No modo de alto contraste do Windows, só a tarefa concluída aparece riscada                       |
+| Ícone do app            | A aba recebe o ícone em SVG, com `.ico` e o ícone de toque como alternativas                      |
 
 E de autenticação:
 
 | Área                | O que o teste faz na tela                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------ |
 | Cadastro            | Cria a conta e já entra (e-mail no topo); senha curta explicada antes de enviar; e-mail repetido |
+| Mostrar senha       | O botão de olho mostra e esconde a senha, usado só pelo teclado                                  |
 | Login e logout      | Entra (e-mail em maiúsculas e com espaços também vale); continua conectado ao recarregar; "Sair" |
 | Mensagem genérica   | Senha errada e e-mail inexistente recebem exatamente a mesma mensagem                            |
 | Sessão protegida    | Cookie `HttpOnly` e `SameSite=Strict`; nada em `document.cookie` nem no `localStorage`           |
@@ -863,8 +891,9 @@ Os bancos sobem como containers de serviço do próprio GitHub Actions: **MySQL 
 **MongoDB 7.0**. O Docker Compose e o Atlas usam 8.0, mas o MongoDB 8.x se recusa a iniciar nos kernels Linux 6.19 a
 7.0.13, que são os das máquinas do GitHub
 ([SERVER-125742](https://jira.mongodb.org/browse/SERVER-125742)). As suítes de backend e E2E passam inteiras nas duas
-versões, e o CI volta para 8.0 quando o GitHub atualizar o kernel. Os relatórios de cobertura ficam disponíveis por 7 dias em cada execução; se o E2E falhar, também ficam
-o relatório do Playwright, as capturas de tela e os traces. Um push novo na mesma branch cancela a execução anterior.
+versões, e o CI volta para 8.0 quando o GitHub atualizar o kernel. Os relatórios de cobertura ficam disponíveis por 7
+dias em cada execução; se o E2E falhar, também ficam o relatório do Playwright, as capturas de tela e os traces. Um
+push novo na mesma branch cancela a execução anterior.
 
 ## Deploy
 
