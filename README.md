@@ -240,7 +240,7 @@ Se o `backend/.env` estiver faltando ou incompleto, a API não sobe e informa qu
 | `JWT_EXPIRES_IN`           | não         | `8h`                    | Duração da sessão (`30m`, `8h`, `7d`...)                                                            |
 | `COOKIE_SECURE`            | não         | `true` em produção      | Cookie de sessão só por HTTPS (`false` no Docker local, servido por HTTP)                           |
 | `AUTH_ATTEMPTS_PER_MINUTE` | não         | `5`                     | Falhas de login e cadastros aceitos por IP a cada minuto (depois, `429`)                            |
-| `TRUST_PROXY`              | não         | `0`                     | Quantos proxies há na frente da API (`1` no Docker, por causa do nginx)                             |
+| `TRUST_PROXY`              | não         | `0`                     | Proxies na frente da API: quantos (`1` no Docker, o nginx) ou quais redes (`uniquelocal` no Render) |
 | `LOG_LEVEL`                | não         | `info`                  | Detalhe dos logs: `debug`, `info`, `warn`, `error` ou `silent`                                      |
 
 O `backend/.env.example` já traz valores que funcionam com o `docker-compose.yml`.
@@ -451,7 +451,9 @@ permissão. No uso normal nem é preciso: página e API ficam na mesma origem.
 
 No Docker, a API só recebe requisições pelo nginx e usa o IP do navegador que ele informa (`TRUST_PROXY=1`); sem isso,
 todos os usuários dividiriam o mesmo limite. Um `X-Forwarded-For` forjado pelo cliente não adianta: vale só o endereço
-acrescentado pelo nginx. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de uma instância da API,
+acrescentado pelo nginx. No Render, o caminho pelo site tem um salto interno a mais (o _rewrite_ de `/api`) do que
+uma chamada direta à API; por isso lá `TRUST_PROXY=uniquelocal`: a API pula todo endereço da rede privada e fica com o
+primeiro público — o do visitante — com qualquer número de saltos. Os contadores ficam na memória da API (zeram ao reiniciar; com mais de uma instância da API,
 seria preciso um armazenamento compartilhado, como Redis).
 
 **Senhas.** No mínimo 8 caracteres e no máximo 72 bytes (o limite do bcrypt — acima disso, o resto seria ignorado sem

@@ -62,9 +62,14 @@ export const config = {
   logLevel: process.env.LOG_LEVEL ?? 'info',
   // Login failures and sign-ups allowed per IP per minute before answering 429.
   authAttemptsPerMinute: Number(process.env.AUTH_ATTEMPTS_PER_MINUTE ?? 5),
-  // How many proxies sit in front of the API (nginx in Docker = 1). Only then is the client IP
-  // taken from X-Forwarded-For; without a proxy that header is set by the client and could be faked.
-  trustProxy: Number(process.env.TRUST_PROXY ?? 0),
+  // Which proxies in front of the API may report the client IP in X-Forwarded-For; without a proxy
+  // that header is set by the client and could be faked. A count (nginx in Docker = 1) or, when the
+  // number of hops varies (Render: one more through the static site's rewrite), Express's list of
+  // trusted networks, e.g. "uniquelocal": every private hop is skipped and the first public address
+  // is the client's.
+  trustProxy: /^\d+$/.test(process.env.TRUST_PROXY ?? '0')
+    ? Number(process.env.TRUST_PROXY ?? 0)
+    : process.env.TRUST_PROXY!,
   // HTTPS-only session cookie: on by default in production, but COOKIE_SECURE=false allows a
   // production build served over plain HTTP on localhost (docker compose).
   secureCookies:

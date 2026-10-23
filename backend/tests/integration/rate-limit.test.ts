@@ -17,7 +17,8 @@ afterAll(async () => {
 });
 
 /** A fresh app (fresh counters) with the production limit of 5 per minute. */
-const limitedApp = (trustProxy = 0) => createApp({ authAttemptsPerMinute: 5, trustProxy });
+const limitedApp = (trustProxy: number | string = 0) =>
+  createApp({ authAttemptsPerMinute: 5, trustProxy });
 
 describe('login rate limit', () => {
   it('answers 429 on the 6th failed attempt in a row, and says when to try again', async () => {
@@ -55,6 +56,20 @@ describe('login rate limit', () => {
 
     expect((await from('203.0.113.1')).status).toBe(429);
     expect((await from('203.0.113.2')).status).toBe(401);
+  });
+
+  // Render: browser → static site rewrite (private hop) → load balancer → API. Trusting private
+  // networks finds the browser however many internal hops there are, and a value the client
+  // prepends sits left of its real, public address, so it is never reached.
+  it('trusting private networks, finds the client past several hops and ignores a forged prefix', async () => {
+    // supertest connects from 127.0.0.1, which stands in for the load balancer here.
+    const app = limitedApp('loopback, uniquelocal');
+    const from = (chain: string) =>
+      request(app).post('/api/auth/login').set('X-Forwarded-For', chain).send(wrong);
+    for (let i = 0; i < 5; i++) await from(`198.51.100.${i}, 203.0.113.1, 10.29.166.92`);
+
+    expect((await from('198.51.100.99, 203.0.113.1, 10.29.166.92')).status).toBe(429);
+    expect((await from('203.0.113.2, 10.29.166.92')).status).toBe(401);
   });
 
   it('ignores a forged X-Forwarded-For when there is no proxy', async () => {
