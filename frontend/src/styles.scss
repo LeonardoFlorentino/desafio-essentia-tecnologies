@@ -79,6 +79,8 @@
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  // Something moving from one place to another on screen (a task row taking its new position).
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 // Dark theme: the same roles with other values (design system, 2.3), each pair measured for AA.

@@ -4,9 +4,12 @@ import {
   Injector,
   OnInit,
   afterNextRender,
+  ElementRef,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,6 +18,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, debounceTime, finalize, map, merge } from 'rxjs';
 import { DateField } from '../shared/date-field';
 import { DeleteTaskDialog } from './delete-task-dialog';
+import { fadeOut, measure, play } from './list-motion';
 import { FocusFirstError } from '../shared/focus-first-error';
 import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
 import { today } from '../shared/dates';
@@ -96,6 +100,24 @@ export class TaskListPage implements OnInit {
     const day = today();
     return this.tasks().filter((task) => dueBucket(task, day) === due);
   });
+  /**
+   * What the template draws: visibleTasks, one step behind while rows leave (they fade out first),
+   * so the motion in list-motion.ts can play between the two.
+   */
+  protected readonly shownTasks = signal<Task[]>([]);
+  private readonly taskList = viewChild<ElementRef<HTMLElement>>('taskList');
+  /** Bumped on each change, so a fade that ends after a newer change does not undo it. */
+  private listChange = 0;
+  /**
+   * Set when a change may take the focused control away with its row (a deletion, a reload after an
+   * edit): once the list is drawn, a focus left on <body> goes back to the list's heading. The
+   * button may already have lost it before (it is disabled while its request runs).
+   */
+  private keepFocusOnList = false;
+  private readonly followVisibleTasks = effect(() => {
+    const next = this.visibleTasks();
+    untracked(() => this.show(next));
+  });
   protected readonly loading = signal(true);
   protected readonly loadFailed = signal(false);
   /** Message about the last action that failed (create, update, delete), shown in an alert. */
@@ -176,9 +198,9 @@ export class TaskListPage implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (tasks) => {
+          if (quiet) this.keepFocusOnList = true;
           this.tasks.set(tasks);
           onLoaded?.(tasks);
-          if (quiet) this.focusListIfLost();
         },
         error: () => {
           if (!quiet) this.loadFailed.set(true);
@@ -294,17 +316,36 @@ export class TaskListPage implements OnInit {
   }
 
   private dropTask(task: Task) {
+    this.keepFocusOnList = true;
     this.tasks.update((tasks) => tasks.filter((t) => t.id !== task.id));
     if (this.editingId() === task.id) this.editingId.set(null);
-    this.focusListIfLost();
   }
 
-  /** When the focused control left the page with its task, keep keyboard users on the list. */
-  private focusListIfLost() {
+  /** Brings the drawn list to `next`: rows that leave fade out first, then the rest moves (FLIP). */
+  private show(next: Task[]) {
+    const change = ++this.listChange;
+    const list = this.taskList()?.nativeElement;
+    const fading = fadeOut(list, new Set(next.map((task) => String(task.id))));
+    if (fading) fading.then(() => change === this.listChange && this.commit(next, list));
+    else this.commit(next, list);
+  }
+
+  private commit(next: Task[], list: HTMLElement | undefined) {
+    // The first list of the page just appears: animating every row at once would only be noise.
+    const before = this.shownTasks().length > 0 ? measure(list) : new Map<string, DOMRect>();
+    const rescueFocus = this.keepFocusOnList || !!list?.contains(document.activeElement);
+    this.keepFocusOnList = false;
+    this.shownTasks.set(next);
     afterNextRender(
       () => {
+        play(
+          list,
+          before,
+          globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+        );
+        // The focused control left with its task: keep keyboard users on the list, not on <body>.
         const focused = document.activeElement;
-        if (!focused || focused === document.body) {
+        if (rescueFocus && (!focused || focused === document.body)) {
           document.getElementById('tasks-heading')?.focus();
         }
       },

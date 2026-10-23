@@ -327,16 +327,22 @@ pergunta da tela em números:
 
 O movimento aqui é **resposta**, não espetáculo: confirma que algo aconteceu e mostra de onde veio.
 
-| Token             | Valor                            | Uso                                                              |
-| ----------------- | -------------------------------- | ---------------------------------------------------------------- |
-| `--duration-fast` | 120 ms                           | Pressionar um botão, hover, foco                                 |
-| `--duration-base` | 200 ms                           | Abrir o calendário, o painel de detalhes, entrar uma tarefa nova |
-| `--ease-out`      | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Tudo que aparece (rápido no começo, assenta suave)               |
+| Token             | Valor                             | Uso                                                              |
+| ----------------- | --------------------------------- | ---------------------------------------------------------------- |
+| `--duration-fast` | 120 ms                            | Pressionar um botão, hover, foco                                 |
+| `--duration-base` | 200 ms                            | Abrir o calendário, o painel de detalhes, entrar uma tarefa nova |
+| `--ease-out`      | `cubic-bezier(0.2, 0.8, 0.2, 1)`  | Tudo que aparece ou sai (rápido no começo, assenta suave)        |
+| `--ease-in-out`   | `cubic-bezier(0.77, 0, 0.175, 1)` | O que se **desloca** na tela (uma tarefa indo para o novo lugar) |
 
 - Só **opacidade e posição** (`transform`): nada de animar largura, altura ou cor de fundo da página.
 - **Nenhuma entrada animada** ao abrir a tela: a lista aparece pronta. Anima-se o que muda por ação da pessoa (uma
   tarefa nova entrando, uma tarefa concluída, um painel abrindo).
-- Com `prefers-reduced-motion: reduce`, os deslocamentos somem e ficam só as mudanças de opacidade, instantâneas.
+- **A lista de tarefas** (Web Animations API, sem biblioteca): a tarefa que sai **esmaece** em `--duration-fast`, e só
+  depois a lista se reorganiza; as que mudaram de lugar **deslizam** do lugar antigo para o novo (`--duration-base`,
+  `--ease-in-out`), e a que entra aparece com opacidade e 4 px de deslocamento (`--ease-out`). Nada pula: criar,
+  excluir, concluir com filtro e reordenar movem as vizinhas em vez de teletransportá-las. Nunca `scale(0)`.
+- Com `prefers-reduced-motion: reduce`, os deslocamentos somem e ficam só os esmaecimentos, curtos — menos
+  movimento, não nenhuma resposta.
 
 ## 8. O que não fazer
 
