@@ -15,4 +15,5 @@ export function isUnreachable(error: unknown): boolean {
   return status !== undefined && UNREACHABLE_STATUSES.has(status);
 }
 
-export const UNREACHABLE_MESSAGE = 'Sem conexão com o servidor; verifique se a API está no ar.';
+export const UNREACHABLE_MESSAGE =
+  'Sem conexão com o servidor. Verifique sua internet ou aguarde alguns segundos e tente de novo.';

@@ -74,9 +74,14 @@ test('creates, completes, edits and deletes a task with the keyboard only', asyn
   await expect(saved).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Ligar para a contadora' })).toBeVisible();
 
-  // Delete: confirm with the keyboard; the focus goes to the screen title, not lost on <body>.
-  page.once('dialog', (dialog) => void dialog.accept());
+  // Delete: Enter opens the dialog with the focus on Cancelar, Tab reaches "Excluir tarefa"; after
+  // the deletion the focus goes to the screen title, not lost on <body>.
   await tabTo(page, page.getByRole('button', { name: 'Excluir: Ligar para a contadora' }));
+  await page.keyboard.press('Enter');
+  const confirmDialog = page.getByRole('dialog', { name: 'Excluir a tarefa?' });
+  await expect(confirmDialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(confirmDialog.getByRole('button', { name: 'Excluir tarefa' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { level: 1, name: 'Tarefas' })).toBeFocused();
   await expect(page.getByRole('status').filter({ hasText: 'excluída' })).toHaveText(

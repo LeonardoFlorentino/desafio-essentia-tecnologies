@@ -1,12 +1,14 @@
 import {
   Component,
   DestroyRef,
+  ElementRef,
   Injector,
   OnInit,
   afterNextRender,
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -48,6 +50,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 @Component({
   selector: 'app-task-list-page',
   imports: [ReactiveFormsModule, TaskItem, DateField, FocusFirstError],
+  host: { '(window:beforeunload)': 'warnIfUnsaved($event)' },
   templateUrl: './task-list-page.html',
   styleUrl: './task-list-page.scss',
 })
@@ -71,6 +74,12 @@ export class TaskListPage implements OnInit {
   protected readonly notice = signal<string | null>(null);
   /** Said to screen readers only: what an action did when the screen alone shows it. */
   protected readonly announcement = signal('');
+  /** The task the delete dialog asks about. */
+  protected readonly pendingDelete = signal<Task | null>(null);
+  private readonly confirmDialog =
+    viewChild.required<ElementRef<HTMLDialogElement>>('confirmDelete');
+  private readonly cancelDeleteButton =
+    viewChild.required<ElementRef<HTMLButtonElement>>('cancelDelete');
 
   /** The tasks the API returned for the current filters. */
   protected readonly tasks = signal<Task[]>([]);
@@ -228,9 +237,29 @@ export class TaskListPage implements OnInit {
     this.updateTask(task, changes, () => this.editingId.set(null));
   }
 
+  /** Asks first, in the page's own dialog; the deletion runs when it closes with "Excluir tarefa". */
   protected deleteTask(task: Task) {
-    if (!confirm(`Excluir a tarefa “${task.title}”?`)) return;
+    const dialog = this.confirmDialog().nativeElement;
+    this.pendingDelete.set(task);
+    // A closed dialog keeps its last returnValue: without this, Esc after an earlier "delete" would delete.
+    dialog.returnValue = '';
+    dialog.showModal();
+    // The safe choice has the focus, so a quick Enter never deletes.
+    this.cancelDeleteButton().nativeElement.focus();
+  }
 
+  protected closeConfirm(answer: 'delete' | 'cancel') {
+    this.confirmDialog().nativeElement.close(answer);
+  }
+
+  /** Runs on every way out of the dialog: the buttons, and Esc (which leaves returnValue empty). */
+  protected onConfirmClosed() {
+    const task = this.pendingDelete();
+    this.pendingDelete.set(null);
+    if (task && this.confirmDialog().nativeElement.returnValue === 'delete') this.removeTask(task);
+  }
+
+  private removeTask(task: Task) {
     this.actionError.set(null);
     this.setBusy(task.id, true);
     this.taskService
@@ -243,6 +272,11 @@ export class TaskListPage implements OnInit {
         },
         error: (error) => this.fail(error, 'Não foi possível excluir a tarefa.', task),
       });
+  }
+
+  /** Closing or reloading the tab with a task half typed or being edited: the browser asks first. */
+  protected warnIfUnsaved(event: BeforeUnloadEvent) {
+    if (this.form.dirty || this.editingId() !== null) event.preventDefault();
   }
 
   protected dismissError() {
@@ -271,7 +305,9 @@ export class TaskListPage implements OnInit {
   private fail(error: unknown, message: string, task?: Task) {
     if (task && httpStatus(error) === 404) {
       this.dropTask(task);
-      this.actionError.set('Esta tarefa não existe mais e foi removida da lista.');
+      this.actionError.set(
+        'Esta tarefa já tinha sido excluída (talvez em outra aba) e saiu da lista.',
+      );
     } else if (isUnreachable(error)) {
       this.actionError.set(`${message} ${UNREACHABLE_MESSAGE}`);
     } else {

@@ -89,6 +89,22 @@ describe('TaskListPage — due date, priority, search and filters', () => {
       await answer(req, []);
     });
 
+    it('hides the previous list when loading with new filters fails', async () => {
+      await answer(await open('/'), [base]);
+      expect(page.querySelectorAll('li')).toHaveLength(1);
+
+      choose('#filter-status', 'completed');
+      await fixture.whenStable();
+      listRequest().flush(null, { status: 500, statusText: 'Server Error' });
+      await fixture.whenStable();
+
+      // Only the error: the old tasks would read as the answer to "Concluídas".
+      expect(page.querySelector('[role=alert]')?.textContent).toContain(
+        'Não foi possível carregar as tarefas.',
+      );
+      expect(page.querySelectorAll('li')).toHaveLength(0);
+    });
+
     it('applies a select at once and keeps it in the URL', async () => {
       await answer(await open('/'), [base]);
 

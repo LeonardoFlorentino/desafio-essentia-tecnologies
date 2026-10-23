@@ -109,6 +109,8 @@ Medido para cada par que carrega informação. Texto precisa de **4,5:1**; borda
 | Selo hoje `#1d5fbf` em `#e8f0fc`                 | 5,32        |
 | Texto branco no hover do dia `#174ea0`           | 7,97        |
 | Aviso `#92400e` em `#fffbeb`                     | 6,84        |
+| Texto branco no botão destrutivo `#c4242a`       | 5,78        |
+| Texto branco no hover do destrutivo `#831c1e`    | 9,77        |
 | Borda de controle `#80868f` no branco / no fundo | 3,67 / 3,33 |
 
 **Uma decisão contra o costume.** Muitas telas usam bordas de campo bem claras (`#d4d4d4`, cerca de 1,5:1). Elas
@@ -230,8 +232,10 @@ com aplicativos de consumo; uma ferramenta de trabalho pede cantos mais retos. O
 | Token            | Valor                                                             | Onde                        |
 | ---------------- | ----------------------------------------------------------------- | --------------------------- |
 | `--shadow-float` | `0 8px 24px rgb(16 24 40 / 0.12), 0 2px 6px rgb(16 24 40 / 0.06)` | Calendário, menus, diálogos |
+| `--color-scrim`  | `rgb(16 24 40 / 0.4)`                                             | Atrás de um diálogo modal   |
 
-Duas sombras pequenas sobrepostas imitam a luz natural melhor que uma sombra grande e borrada.
+Duas sombras pequenas sobrepostas imitam a luz natural melhor que uma sombra grande e borrada. O véu atrás de um
+diálogo usa o mesmo tom da sombra: a página continua visível, mas claramente posta de lado.
 
 ### Foco do teclado
 
@@ -244,6 +248,12 @@ Duas sombras pequenas sobrepostas imitam a luz natural melhor que uma sombra gra
   **secundários** (fundo `--color-raised`, sem borda: "Editar", "Detalhes", "Cancelar") ou **de texto** (só a
   palavra, para ações discretas). "Excluir" é secundário com o texto em `--color-overdue`. Todos com 40 px de altura e
   cantos de 6 px; nunca pílulas, nunca gradiente.
+- **Diálogo de confirmação.** Só para o que não se desfaz (excluir uma tarefa). Cartão branco sobre o véu
+  `--color-scrim`, com `--shadow-float`; título em pergunta ("Excluir a tarefa?"), uma frase com o nome do item e o
+  que se perde junto, e dois botões à direita: "Cancelar" (secundário, **com o foco ao abrir**, para que um Enter
+  apressado não apague nada) e a ação nomeada ("Excluir tarefa"), o **único botão vermelho cheio** do produto
+  (`--color-overdue`, texto branco; hover `--color-overdue-ink`). Esc fecha sem fazer nada. É o `<dialog>` nativo do
+  navegador: o foco fica preso dentro dele e volta ao botão que o abriu.
 - **Campos.** Rótulo **acima** do campo, sempre visível; o placeholder nunca substitui o rótulo. Erro numa linha de
   texto abaixo do campo, em `--color-overdue`, e a borda do campo na mesma cor.
 - **Prioridade.** Não usa cor: "Alta" é um selo neutro com texto em tinta e peso 500; "Média" e "Baixa", selos
@@ -302,6 +312,8 @@ Cada item abaixo é um padrão comum em interfaces genéricas que esta não usa:
 - **Vazio:** a moldura e o título ficam; uma frase diz o que fazer ("Nenhuma tarefa cadastrada. Use o formulário acima
   para criar a primeira."). Sem ilustração.
 - **Carregando:** o texto "Carregando tarefas…" no lugar da lista; a tela não pula quando os dados chegam.
-- **Erro:** dentro do bloco que falhou, numa frase que diz o que falhou, com "Tentar novamente". Vermelho só no ícone
-  ou na borda, não num banner.
+- **Erro:** dentro do bloco que falhou, numa frase que diz o que falhou e o que fazer, com "Tentar novamente".
+  Vermelho só no ícone ou na borda, não num banner. Quando a lista não carrega, a lista anterior sai da tela: ela
+  pareceria a resposta aos filtros novos. A frase fala de conexão, nunca de "API" ou "servidor fora do ar" — quem usa
+  não precisa saber como o app é feito.
 - **Desabilitado:** continua legível e diz por quê; nunca só esmaecido a 30%.

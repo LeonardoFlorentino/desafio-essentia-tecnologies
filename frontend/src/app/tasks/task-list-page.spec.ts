@@ -28,6 +28,22 @@ const tasks: Task[] = [
   },
 ];
 
+// jsdom has no <dialog> behaviour: showModal/close are stood in for here (open flag, returnValue,
+// close event, and the focus going back to what opened it, as browsers do). The rest (focus kept
+// inside, Esc, the page behind inert) is covered by the E2E.
+const dialogProto = HTMLDialogElement.prototype as Partial<HTMLDialogElement>;
+const openedFrom = new WeakMap<HTMLDialogElement, Element | null>();
+dialogProto.showModal ??= function (this: HTMLDialogElement) {
+  openedFrom.set(this, document.activeElement);
+  this.open = true;
+};
+dialogProto.close ??= function (this: HTMLDialogElement, value?: string) {
+  if (value !== undefined) this.returnValue = value;
+  this.open = false;
+  (openedFrom.get(this) as HTMLElement | null)?.focus();
+  this.dispatchEvent(new Event('close'));
+};
+
 describe('TaskListPage', () => {
   let fixture: ComponentFixture<TaskListPage>;
   let http: HttpTestingController;
@@ -144,8 +160,41 @@ describe('TaskListPage', () => {
     expect(announced()).toBe('Tarefa “Send the proposal” adicionada.');
   });
 
+  const dialog = () => page.querySelector('dialog')!;
+
+  /** Clicks "Excluir" on a task's card (focusing it, as a real click does), opening the dialog. */
+  async function askToDelete(title: string) {
+    const button = page.querySelector<HTMLButtonElement>(`[aria-label="Excluir: ${title}"]`)!;
+    button.focus();
+    button.click();
+    await fixture.whenStable();
+  }
+
+  function answer(button: 'Excluir tarefa' | 'Cancelar') {
+    [...dialog().querySelectorAll('button')].find((b) => b.textContent?.trim() === button)!.click();
+  }
+
   /** The screen-reader-only status line (always in the page, so each change is read). */
   const announced = () => page.querySelector('p.visually-hidden[role=status]')!.textContent!.trim();
+
+  it('asks before the tab is closed or reloaded only while something is unsaved', async () => {
+    const leave = () => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented; // true: the browser shows its "leave site?" prompt
+    };
+    expect(leave()).toBe(false);
+
+    type('#new-task-title', 'Half typed');
+    await fixture.whenStable();
+    expect(leave()).toBe(true);
+
+    type('#new-task-title', 'Half typed, then sent');
+    submit();
+    http.expectOne('/api/tasks').flush({ ...tasks[1], id: 3, title: 'Half typed, then sent' });
+    await fixture.whenStable();
+    expect(leave()).toBe(false);
+  });
 
   it('sends the focus to the title when the form is sent without one', async () => {
     submit();
@@ -263,23 +312,18 @@ describe('TaskListPage', () => {
   });
 
   describe('deleting', () => {
-    function deleteButtonOf(item: number) {
-      return page
-        .querySelectorAll('li')
-        [item].querySelector<HTMLButtonElement>('button[aria-label^="Excluir"]')!;
-    }
+    it('asks in its own dialog, naming the task, with the focus on Cancelar', async () => {
+      await askToDelete('Write the report');
 
-    afterEach(() => vi.restoreAllMocks());
-
-    it('asks for confirmation naming the task', () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-      deleteButtonOf(1).click();
-      expect(confirmSpy).toHaveBeenCalledWith('Excluir a tarefa “Write the report”?');
+      expect(dialog().open).toBe(true);
+      expect(dialog().querySelector('h2')?.textContent).toBe('Excluir a tarefa?');
+      expect(dialog().textContent).toContain('“Write the report” será excluída');
+      expect(document.activeElement?.textContent?.trim()).toBe('Cancelar');
     });
 
     it('deletes the task with DELETE and removes it from the list when confirmed', async () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
-      deleteButtonOf(1).click();
+      await askToDelete('Write the report');
+      answer('Excluir tarefa');
 
       const req = http.expectOne('/api/tasks/1');
       expect(req.request.method).toBe('DELETE');
@@ -294,12 +338,27 @@ describe('TaskListPage', () => {
     });
 
     it('does nothing when the user gives up', async () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(false);
-      deleteButtonOf(1).click();
+      await askToDelete('Write the report');
+      answer('Cancelar');
       await fixture.whenStable();
 
       http.expectNone('/api/tasks/1');
+      expect(dialog().open).toBe(false);
       expect(page.querySelectorAll('li')).toHaveLength(2);
+    });
+
+    it('does not delete on Esc, even right after a confirmed deletion', async () => {
+      await askToDelete('Call the client');
+      answer('Excluir tarefa');
+      http.expectOne('/api/tasks/2').flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+
+      await askToDelete('Write the report');
+      dialog().close(); // what Esc does: closes without an answer
+      await fixture.whenStable();
+
+      http.expectNone('/api/tasks/1');
+      expect(page.querySelectorAll('li')).toHaveLength(1);
     });
   });
 
@@ -419,8 +478,8 @@ describe('TaskListPage', () => {
     });
 
     it('explains a failed deletion and keeps the task', async () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
-      page.querySelector<HTMLButtonElement>('[aria-label="Excluir: Write the report"]')!.click();
+      await askToDelete('Write the report');
+      answer('Excluir tarefa');
       http.expectOne('/api/tasks/1').flush(null, serverError);
       await fixture.whenStable();
 
@@ -429,12 +488,12 @@ describe('TaskListPage', () => {
     });
 
     it('drops a task that no longer exists (404) and says so', async () => {
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
-      page.querySelector<HTMLButtonElement>('[aria-label="Excluir: Write the report"]')!.click();
+      await askToDelete('Write the report');
+      answer('Excluir tarefa');
       http.expectOne('/api/tasks/1').flush(null, { status: 404, statusText: 'Not Found' });
       await fixture.whenStable();
 
-      expect(alertText()).toContain('Esta tarefa não existe mais');
+      expect(alertText()).toContain('Esta tarefa já tinha sido excluída');
       expect(page.querySelectorAll('li')).toHaveLength(1);
     });
 

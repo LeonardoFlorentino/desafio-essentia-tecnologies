@@ -65,7 +65,7 @@
 <section class="details__history" [attr.aria-labelledby]="'history-heading-' + task().id">
   <h4 [id]="'history-heading-' + task().id">Histórico</h4>
   @if (history().length === 0) {
-    <p class="details__state">Nenhum registro ainda.</p>
+    <p class="details__state">Nenhuma alteração registrada ainda.</p>
   } @else {
     <ol>
       @for (event of history(); track $index) {

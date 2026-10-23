@@ -25,6 +25,9 @@
   --color-chip-ink: #3d3d3d;
   --color-notice-soft: #fffbeb;
   --color-notice-ink: #92400e;
+  --color-scrim: rgb(
+    16 24 40 / 0.4
+  ); // behind a modal dialog: the page stays visible, clearly set aside
 
   // Type: one family (Geist, served by this site), five sizes, 600 at most.
   --font-family: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -222,6 +225,48 @@ button {
 // The one destructive action on a card: a secondary button whose word is in the overdue red.
 .button--danger {
   color: var(--color-overdue);
+}
+
+// The answer to "delete?" in the confirmation dialog: the only filled red button in the product.
+.button--destructive {
+  background: var(--color-overdue);
+  color: var(--color-on-strong);
+
+  &:hover:not(:disabled) {
+    background: var(--color-overdue-ink);
+  }
+}
+
+// Modal dialog (the delete confirmation): a card floating over the page, like the calendar.
+.dialog {
+  width: min(var(--size-form), calc(100% - 2 * var(--space-4)));
+  padding: var(--space-6);
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-float);
+
+  &::backdrop {
+    background: var(--color-scrim);
+  }
+
+  h2 {
+    margin: 0 0 var(--space-2);
+  }
+
+  p {
+    margin: 0 0 var(--space-6);
+    overflow-wrap: anywhere;
+  }
+}
+
+// Cancel first (where the focus starts), the destructive answer last, both on the right.
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 @media (prefers-reduced-motion: reduce) {

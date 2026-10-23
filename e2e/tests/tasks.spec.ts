@@ -150,16 +150,26 @@ test('deletes a task only after confirming', async ({ page }) => {
   await createTask(page, { title: 'Tarefa descartável' });
   await page.goto('/');
   const remove = page.getByRole('button', { name: 'Excluir: Tarefa descartável' });
+  const confirmDialog = page.getByRole('dialog', { name: 'Excluir a tarefa?' });
 
-  page.once('dialog', (dialog) => {
-    expect(dialog.message()).toBe('Excluir a tarefa “Tarefa descartável”?');
-    void dialog.dismiss();
-  });
+  // The page's own dialog names the task and what goes with it; the focus starts on Cancelar.
   await remove.click();
+  await expect(confirmDialog).toContainText(
+    '“Tarefa descartável” será excluída, junto com as notas e tags dela.',
+  );
+  await expect(confirmDialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+
+  // Cancelar and Esc both keep the task, and the focus goes back to its "Excluir" button.
+  await confirmDialog.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(confirmDialog).toBeHidden();
+  await expect(remove).toBeFocused();
+  await remove.click();
+  await page.keyboard.press('Escape');
+  await expect(confirmDialog).toBeHidden();
   await expect(card(page, 'Tarefa descartável')).toBeVisible();
 
-  page.once('dialog', (dialog) => void dialog.accept());
   await remove.click();
+  await confirmDialog.getByRole('button', { name: 'Excluir tarefa' }).click();
   await expect(page.getByText('Nenhuma tarefa cadastrada')).toBeVisible();
   await page.reload();
   await expect(page.getByRole('listitem')).toHaveCount(0);

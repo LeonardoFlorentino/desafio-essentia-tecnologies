@@ -144,7 +144,7 @@
     <p class="list-state">Carregando tarefas…</p>
   } @else if (loadFailed()) {
     <div class="list-state list-state--error" role="alert">
-      <p>Não foi possível carregar as tarefas. Verifique se a API está no ar.</p>
+      <p>Não foi possível carregar as tarefas. Verifique sua conexão e tente de novo.</p>
       <button type="button" (click)="loadTasks()">Tentar novamente</button>
     </div>
   } @else if (visibleTasks().length === 0 && filtered()) {
@@ -158,20 +158,45 @@
     </p>
   }
 
-  <ul class="task-list">
-    @for (task of visibleTasks(); track task.id) {
-      <li>
-        <app-task-item
-          [task]="task"
-          [busy]="busyIds().has(task.id)"
-          [editing]="editingId() === task.id"
-          [locked]="editingId() !== null && editingId() !== task.id"
-          (completedChange)="setCompleted(task, $event)"
-          (editingChange)="setEditing(task, $event)"
-          (save)="saveEdit(task, $event)"
-          (remove)="deleteTask(task)"
-        />
-      </li>
-    }
-  </ul>
+  <!-- After a failed load the old list would look like the answer to the new filters: hidden. -->
+  @if (!loadFailed()) {
+    <ul class="task-list">
+      @for (task of visibleTasks(); track task.id) {
+        <li>
+          <app-task-item
+            [task]="task"
+            [busy]="busyIds().has(task.id)"
+            [editing]="editingId() === task.id"
+            [locked]="editingId() !== null && editingId() !== task.id"
+            (completedChange)="setCompleted(task, $event)"
+            (editingChange)="setEditing(task, $event)"
+            (save)="saveEdit(task, $event)"
+            (remove)="deleteTask(task)"
+          />
+        </li>
+      }
+    </ul>
+  }
 </section>
+
+<!-- Native modal dialog: focus stays inside, Esc cancels, the page behind is inert, and on close
+     the focus returns to the "Excluir" button that opened it. -->
+<dialog
+  #confirmDelete
+  class="dialog"
+  aria-labelledby="confirm-title"
+  aria-describedby="confirm-text"
+  (close)="onConfirmClosed()"
+>
+  <h2 id="confirm-title">Excluir a tarefa?</h2>
+  <p id="confirm-text">
+    “{{ pendingDelete()?.title }}” será excluída, junto com as notas e tags dela. Não dá para
+    desfazer.
+  </p>
+  <div class="dialog__actions">
+    <button #cancelDelete type="button" (click)="closeConfirm('cancel')">Cancelar</button>
+    <button type="button" class="button--destructive" (click)="closeConfirm('delete')">
+      Excluir tarefa
+    </button>
+  </div>
+</dialog>
