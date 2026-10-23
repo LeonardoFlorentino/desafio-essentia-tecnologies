@@ -10,6 +10,7 @@ export type AuthMode = 'login' | 'register';
 const TEXTS = {
   login: {
     heading: 'Entrar',
+    lead: 'Acesse suas tarefas e prazos.',
     submit: 'Entrar',
     submitting: 'Entrando…',
     passwordAutocomplete: 'current-password',
@@ -19,6 +20,7 @@ const TEXTS = {
   },
   register: {
     heading: 'Criar conta',
+    lead: 'Só e-mail e senha; você já entra em seguida.',
     submit: 'Criar conta',
     submitting: 'Criando conta…',
     passwordAutocomplete: 'new-password',
@@ -50,7 +52,8 @@ export class AuthPage {
   protected readonly error = signal<string | null>(null);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
-    email: ['', [Validators.required, Validators.email]],
+    // Validators.email accepts "ana@exemplo"; the API does not, so the domain must have a dot.
+    email: ['', [Validators.required, Validators.email, Validators.pattern(/@[^@\s]+\.[^@\s]+$/)]],
     password: ['', Validators.required],
   });
 
@@ -72,6 +75,12 @@ export class AuthPage {
       password.dirty &&
       !password.hasError('required')
     );
+  }
+
+  /** Points the password field at what is shown under it: the error, else the sign-up hint. */
+  protected passwordDescription() {
+    if (this.showError('password') || this.showPasswordTooShort()) return 'auth-password-error';
+    return this.mode() === 'register' ? 'auth-password-hint' : null;
   }
 
   protected submit() {

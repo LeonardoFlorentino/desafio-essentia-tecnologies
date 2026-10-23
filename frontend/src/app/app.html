@@ -9,14 +9,13 @@
       TechX Tasks
     </a>
 
-    <nav class="app-header__account" aria-label="Conta">
-      @if (auth.currentUser(); as user) {
+    <!-- Signed out, the sign-in and sign-up cards link to each other; the bar carries only the brand. -->
+    @if (auth.currentUser(); as user) {
+      <nav class="app-header__account" aria-label="Conta">
         <span class="app-header__user">{{ user.email }}</span>
         <button type="button" (click)="logout()">Sair</button>
-      } @else {
-        <a routerLink="/login">Entrar</a>
-      }
-    </nav>
+      </nav>
+    }
   </div>
 </header>
 

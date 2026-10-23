@@ -26,8 +26,8 @@ describe('App', () => {
     expect((await render()).querySelector('header h1')).toBeNull();
   });
 
-  it('offers to sign in when nobody is signed in', async () => {
-    expect((await render()).querySelector('nav a')?.textContent).toContain('Entrar');
+  it('shows only the brand when nobody is signed in (the auth cards link to each other)', async () => {
+    expect((await render()).querySelector('nav')).toBeNull();
   });
 
   it('shows who is signed in', async () => {
@@ -38,7 +38,6 @@ describe('App', () => {
 
     const page = await render();
     expect(page.querySelector('nav')?.textContent).toContain('ana@techx.com');
-    expect(page.querySelector('nav a')).toBeNull();
   });
 
   it('signs out from the header and goes to the sign-in page', async () => {
@@ -55,8 +54,6 @@ describe('App', () => {
 
     expect(TestBed.inject(AuthService).isLoggedIn()).toBe(false);
     expect(navigate).toHaveBeenCalledWith('/login');
-    expect((fixture.nativeElement as HTMLElement).querySelector('nav a')?.textContent).toContain(
-      'Entrar',
-    );
+    expect((fixture.nativeElement as HTMLElement).querySelector('nav')).toBeNull();
   });
 });

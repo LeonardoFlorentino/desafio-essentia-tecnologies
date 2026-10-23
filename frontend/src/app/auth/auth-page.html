@@ -1,60 +1,65 @@
 <section class="auth-card" aria-labelledby="auth-heading">
-  <h1 id="auth-heading">{{ texts().heading }}</h1>
+  <div class="auth-card__body">
+    <h1 id="auth-heading">{{ texts().heading }}</h1>
+    <p class="auth-lead">{{ texts().lead }}</p>
 
-  @if (error(); as message) {
-    <p class="auth-error" role="alert">{{ message }}</p>
-  } @else if (expired() && mode() === 'login') {
-    <p class="auth-notice" role="status">Sua sessão expirou. Entre novamente para continuar.</p>
-  }
+    @if (error(); as message) {
+      <p class="auth-error" role="alert">{{ message }}</p>
+    } @else if (expired() && mode() === 'login') {
+      <p class="auth-notice" role="status">Sua sessão expirou. Entre novamente para continuar.</p>
+    }
 
-  <form class="task-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <div class="field">
-      <label for="auth-email">E-mail</label>
-      <input
-        id="auth-email"
-        type="email"
-        formControlName="email"
-        autocomplete="email"
-        inputmode="email"
-        spellcheck="false"
-        [attr.aria-invalid]="showError('email')"
-        [attr.aria-describedby]="showError('email') ? 'auth-email-error' : null"
-      />
-      @if (showError('email')) {
-        <p id="auth-email-error" class="field__error">
-          {{
-            form.controls.email.hasError('required')
-              ? 'Informe o e-mail.'
-              : 'Informe um e-mail válido.'
-          }}
-        </p>
-      }
-    </div>
+    <form class="task-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label for="auth-email">E-mail</label>
+        <input
+          id="auth-email"
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          inputmode="email"
+          spellcheck="false"
+          [attr.aria-invalid]="showError('email')"
+          [attr.aria-describedby]="showError('email') ? 'auth-email-error' : null"
+        />
+        @if (showError('email')) {
+          <p id="auth-email-error" class="field__error">
+            {{
+              form.controls.email.hasError('required')
+                ? 'Informe o e-mail.'
+                : 'Informe um e-mail válido.'
+            }}
+          </p>
+        }
+      </div>
 
-    <div class="field">
-      <label for="auth-password">Senha</label>
-      <input
-        id="auth-password"
-        type="password"
-        formControlName="password"
-        [attr.autocomplete]="texts().passwordAutocomplete"
-        [attr.aria-invalid]="showError('password') || showPasswordTooShort()"
-        [attr.aria-describedby]="mode() === 'register' ? 'auth-password-hint' : null"
-      />
-      @if (mode() === 'register') {
-        <p id="auth-password-hint" class="field__hint">Mínimo de 8 caracteres.</p>
-      }
-      @if (showError('password')) {
-        <p class="field__error">Informe a senha.</p>
-      } @else if (showPasswordTooShort()) {
-        <p class="field__error">A senha precisa de pelo menos 8 caracteres.</p>
-      }
-    </div>
+      <div class="field">
+        <label for="auth-password">Senha</label>
+        <input
+          id="auth-password"
+          type="password"
+          formControlName="password"
+          [attr.autocomplete]="texts().passwordAutocomplete"
+          [attr.aria-invalid]="showError('password') || showPasswordTooShort()"
+          [attr.aria-describedby]="passwordDescription()"
+        />
+        <!-- The error takes the hint's place, so the field never says the same thing twice. -->
+        @if (showError('password')) {
+          <p id="auth-password-error" class="field__error">Informe a senha.</p>
+        } @else if (showPasswordTooShort()) {
+          <p id="auth-password-error" class="field__error">
+            A senha precisa de pelo menos 8 caracteres.
+          </p>
+        } @else if (mode() === 'register') {
+          <p id="auth-password-hint" class="field__hint">Mínimo de 8 caracteres.</p>
+        }
+      </div>
 
-    <button type="submit" class="button--primary" [disabled]="submitting()">
-      {{ submitting() ? texts().submitting : texts().submit }}
-    </button>
-  </form>
+      <button type="submit" class="button--primary" [disabled]="submitting()">
+        {{ submitting() ? texts().submitting : texts().submit }}
+      </button>
+    </form>
+  </div>
 
   <p class="auth-switch">
     {{ texts().switchQuestion }} <a [routerLink]="texts().switchRoute">{{ texts().switchLink }}</a>

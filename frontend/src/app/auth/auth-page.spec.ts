@@ -146,6 +146,15 @@ describe('AuthPage', () => {
       expect(navigate).toHaveBeenCalledWith('/');
     });
 
+    it('refuses an email without a dot in the domain, as the API does', async () => {
+      type('#auth-email', 'ana@exemplo');
+      type('#auth-password', 'correct-horse');
+      await submit();
+
+      http.expectNone('/api/auth/register');
+      expect(page.textContent).toContain('Informe um e-mail válido.');
+    });
+
     it('does not send a password shorter than 8 characters', async () => {
       type('#auth-email', 'ana@techx.com');
       type('#auth-password', 'short');
@@ -153,6 +162,11 @@ describe('AuthPage', () => {
 
       http.expectNone('/api/auth/register');
       expect(page.textContent).toContain('A senha precisa de pelo menos 8 caracteres.');
+      // The error takes the hint's place, and the field is described by the error.
+      expect(page.textContent).not.toContain('Mínimo de 8 caracteres.');
+      expect(page.querySelector('#auth-password')!.getAttribute('aria-describedby')).toBe(
+        'auth-password-error',
+      );
     });
 
     it('explains an email that is already registered', async () => {

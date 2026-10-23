@@ -1,20 +1,40 @@
+:host {
+  display: block;
+  padding-top: var(--space-12);
+}
+
+// The card: title and one line of context, the form, then the switch to the other screen under a rule.
 .auth-card {
   max-width: var(--size-form);
-  margin: var(--space-4) auto;
-  padding: var(--space-6);
+  margin: 0 auto;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-card);
   background: var(--color-surface);
 
   h1 {
-    margin: 0 0 var(--space-4);
+    margin: 0;
     font: var(--font-title);
     letter-spacing: var(--tracking-title);
   }
 
   .button--primary {
     justify-self: stretch;
+    margin-top: var(--space-2);
   }
+}
+
+.auth-card__body {
+  padding: var(--space-6);
+}
+
+.auth-lead {
+  margin: var(--space-1) 0 var(--space-6);
+  color: var(--color-muted);
+}
+
+p.field__hint {
+  margin: 0;
+  font: var(--font-small);
 }
 
 .auth-error {
@@ -34,12 +54,28 @@
 }
 
 .auth-switch {
-  margin: var(--space-5) 0 0;
-  text-align: center;
+  margin: 0;
+  padding: var(--space-4) var(--space-6);
+  border-top: var(--border-width) solid var(--color-rule);
   color: var(--color-muted);
+  text-align: center;
 
   a {
     color: var(--color-text);
     font-weight: var(--weight-medium);
+  }
+}
+
+@media (max-width: 640px) {
+  :host {
+    padding-top: var(--space-6);
+  }
+
+  .auth-card__body {
+    padding: var(--space-5);
+  }
+
+  .auth-switch {
+    padding-inline: var(--space-5);
   }
 }
