@@ -1,7 +1,6 @@
 import {
   Component,
   DestroyRef,
-  ElementRef,
   Injector,
   OnInit,
   afterNextRender,
@@ -15,6 +14,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, debounceTime, finalize, map, merge } from 'rxjs';
 import { DateField } from '../shared/date-field';
+import { DeleteTaskDialog } from './delete-task-dialog';
 import { FocusFirstError } from '../shared/focus-first-error';
 import { UNREACHABLE_MESSAGE, httpStatus, isUnreachable } from '../shared/http-errors';
 import { today } from '../shared/dates';
@@ -49,7 +49,7 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 @Component({
   selector: 'app-task-list-page',
-  imports: [ReactiveFormsModule, TaskItem, DateField, FocusFirstError],
+  imports: [ReactiveFormsModule, TaskItem, DateField, FocusFirstError, DeleteTaskDialog],
   host: { '(window:beforeunload)': 'warnIfUnsaved($event)' },
   templateUrl: './task-list-page.html',
   styleUrl: './task-list-page.scss',
@@ -74,12 +74,7 @@ export class TaskListPage implements OnInit {
   protected readonly notice = signal<string | null>(null);
   /** Said to screen readers only: what an action did when the screen alone shows it. */
   protected readonly announcement = signal('');
-  /** The task the delete dialog asks about. */
-  protected readonly pendingDelete = signal<Task | null>(null);
-  private readonly confirmDialog =
-    viewChild.required<ElementRef<HTMLDialogElement>>('confirmDelete');
-  private readonly cancelDeleteButton =
-    viewChild.required<ElementRef<HTMLButtonElement>>('cancelDelete');
+  private readonly deleteDialog = viewChild.required(DeleteTaskDialog);
 
   /** The tasks the API returned for the current filters. */
   protected readonly tasks = signal<Task[]>([]);
@@ -237,29 +232,12 @@ export class TaskListPage implements OnInit {
     this.updateTask(task, changes, () => this.editingId.set(null));
   }
 
-  /** Asks first, in the page's own dialog; the deletion runs when it closes with "Excluir tarefa". */
+  /** Asks first; the deletion runs when the dialog answers with `confirmed` (removeTask). */
   protected deleteTask(task: Task) {
-    const dialog = this.confirmDialog().nativeElement;
-    this.pendingDelete.set(task);
-    // A closed dialog keeps its last returnValue: without this, Esc after an earlier "delete" would delete.
-    dialog.returnValue = '';
-    dialog.showModal();
-    // The safe choice has the focus, so a quick Enter never deletes.
-    this.cancelDeleteButton().nativeElement.focus();
+    this.deleteDialog().open(task);
   }
 
-  protected closeConfirm(answer: 'delete' | 'cancel') {
-    this.confirmDialog().nativeElement.close(answer);
-  }
-
-  /** Runs on every way out of the dialog: the buttons, and Esc (which leaves returnValue empty). */
-  protected onConfirmClosed() {
-    const task = this.pendingDelete();
-    this.pendingDelete.set(null);
-    if (task && this.confirmDialog().nativeElement.returnValue === 'delete') this.removeTask(task);
-  }
-
-  private removeTask(task: Task) {
+  protected removeTask(task: Task) {
     this.actionError.set(null);
     this.setBusy(task.id, true);
     this.taskService

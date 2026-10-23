@@ -179,24 +179,4 @@
   }
 </section>
 
-<!-- Native modal dialog: focus stays inside, Esc cancels, the page behind is inert, and on close
-     the focus returns to the "Excluir" button that opened it. -->
-<dialog
-  #confirmDelete
-  class="dialog"
-  aria-labelledby="confirm-title"
-  aria-describedby="confirm-text"
-  (close)="onConfirmClosed()"
->
-  <h2 id="confirm-title">Excluir a tarefa?</h2>
-  <p id="confirm-text">
-    “{{ pendingDelete()?.title }}” será excluída, junto com as notas e tags dela. Não dá para
-    desfazer.
-  </p>
-  <div class="dialog__actions">
-    <button #cancelDelete type="button" (click)="closeConfirm('cancel')">Cancelar</button>
-    <button type="button" class="button--destructive" (click)="closeConfirm('delete')">
-      Excluir tarefa
-    </button>
-  </div>
-</dialog>
+<app-delete-task-dialog (confirmed)="removeTask($event)" />

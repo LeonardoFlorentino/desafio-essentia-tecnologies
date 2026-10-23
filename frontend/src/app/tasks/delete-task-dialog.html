@@ -1,0 +1,18 @@
+<dialog
+  #dialog
+  class="dialog"
+  aria-labelledby="delete-dialog-title"
+  aria-describedby="delete-dialog-text"
+  (close)="onClose()"
+>
+  <h2 id="delete-dialog-title">Excluir a tarefa?</h2>
+  <p id="delete-dialog-text">
+    “{{ task()?.title }}” será excluída, junto com as notas e tags dela. Não dá para desfazer.
+  </p>
+  <div class="dialog__actions">
+    <button #cancel type="button" (click)="answer('cancel')">Cancelar</button>
+    <button type="button" class="button--destructive" (click)="answer('delete')">
+      Excluir tarefa
+    </button>
+  </div>
+</dialog>
